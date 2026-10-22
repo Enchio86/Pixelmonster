@@ -230,6 +230,7 @@ body.mini #toast{bottom:6px;font-size:12px;padding:6px 10px}
               <option value="1">1× (normal)</option><option value="10">10×</option><option value="60">60× (Test)</option>
             </select>
           </label>
+          <button onclick="togglePension()" id="pensionBtn">🏨 In die Pension geben</button>
           <button onclick="releaseMonster()">🕊️ Monster freilassen</button>
           <button onclick="resetGame()">🗑️ Neues Spiel</button>
         </div>
@@ -1101,6 +1102,7 @@ function simulate(m){
     S.poopTimer+=m;
     if(S.poopTimer>=45&&S.poop<4){S.poop++;S.poopTimer=0;log(`${S.name} hat ein Häufchen gemacht. 💩`)}
   }
+  if(OFFLINE){for(const k of['hunger','mood','energy','clean'])S[k]=Math.max(S[k],50);S.poop=Math.min(S.poop,2)}
   const bad=(S.hunger<15)+(S.clean<15)+(S.energy<5)+(S.mood<10);
   if(bad)S.health-=1.5*bad*m;else if(S.hunger>40&&S.clean>40)S.health+=0.3*m;
   mistake('hunger',S.hunger<15,S.hunger>40,'hat großen Hunger!');
@@ -1127,15 +1129,23 @@ function evolve(sp){
     log(`✨ ${S.name} hat sich zu ${speciesLabel(S)} entwickelt!`)}
   seen(S);effect('✨');toast(`${S.name} ist jetzt ${SPECIES[sp].name}!`);renderLists();
 }
+// Abwesenheit: War die App zu (oder der Rechner im Ruhezustand), sinken die Werte nur bis zur Hälfte.
+// So entstehen keine Pflegefehler, nur weil du ein paar Tage weg warst. In der Pension steht die Zeit ganz still.
+let OFFLINE=false;
 function tick(){
-  const now=Date.now();
-  let m=Math.min((now-S.lastTick)/60000,720)*S.speed;S.lastTick=now;
+  const now=Date.now(),away=now-S.lastTick;
+  if(S.pension){S.lastTick=now;curWeek();save();renderStatus();return}
+  let m=Math.min(away/60000,720)*S.speed;S.lastTick=now;
+  OFFLINE=away>3*60000;
   while(m>0){const st=Math.min(0.5,m);simulate(st);m-=st}
+  if(OFFLINE&&away>60*60000&&S.stage>0)log(`💤 Während du weg warst, hat ${S.name} viel gedöst. Es freut sich, dass du wieder da bist!`);
+  OFFLINE=false;
   curWeek();checkGrowth();checkQuests();seen(S);checkAch();save();renderStatus();
 }
 
 // ---------- Pflege ----------
 function canAct(needAwake=true){
+  if(S.pension){toast(`${S.name} ist in der Pension. Hol es im Tab „Info“ ab.`);return false}
   if(S.stage===0){toast('Das Ei muss erst schlüpfen.');return false}
   if(S.quest){toast(`${S.name} ist gerade auf Quest.`);return false}
   if(needAwake&&S.sleeping){toast(`${S.name} schläft gerade. Psst!`);return false}
@@ -2062,6 +2072,20 @@ function useStern(){if(!S.items.stern){toast('Du hast keinen Sternenstaub. Den g
 
 // ---------- Laden ----------
 function buy(k){const it=ITEMS[k];if(S.coins<it.price){toast('Nicht genug Münzen.');return}S.coins-=it.price;S.items[k]=(S.items[k]||0)+1;toast(`${it.icon} ${it.name} gekauft.`);save();renderStatus();renderLists()}
+// Pension für Urlaub: die Zeit steht still, keine Pflegefehler, keine Entwicklung
+async function togglePension(){
+  if(S.pension){
+    const d=Math.max(1,Math.round((Date.now()-S.pension.since)/864e5));
+    S.pension=null;S.lastTick=Date.now();for(const k of['hunger','mood','energy','clean','health'])S[k]=Math.max(S[k],85);S.poop=0;S.sick=false;
+    log(`🏨 ${S.name} ist nach ${d} ${d===1?'Tag':'Tagen'} aus der Pension zurück, satt, sauber und gut gelaunt.`);effect('❤️');
+  }else{
+    if(S.stage===0){toast('Ein Ei kann nicht in die Pension.');return}
+    if(S.quest){toast(`${S.name} ist gerade auf Quest.`);return}
+    if(!await ask(`${S.name} geht in die Pension. Dort steht die Zeit still: keine Pflegefehler, aber auch keine Entwicklung. Abholen kannst du es jederzeit hier im Tab „Info“.`,'In die Pension'))return;
+    S.pension={since:Date.now()};S.sleeping=false;log(`🏨 ${S.name} ist in der Pension. Gute Reise!`);
+  }
+  save();renderStatus();renderLists();
+}
 // Eigene Nachfrage statt confirm(): in der Desktop-App blockiert confirm() danach die Tastatur in Eingabefeldern
 function ask(text,yes='Ja',no='Abbrechen'){
   return new Promise(res=>{
@@ -2129,6 +2153,7 @@ function renderLists(){
   }).join(''):'<p class="muted">Noch niemand zu Besuch.</p>';
   // Laden
   renderRaid();
+  if($('#pensionBtn'))$('#pensionBtn').textContent=S.pension?`🏨 ${S.name} aus der Pension abholen`:'🏨 In die Pension geben';
   $('#shop').innerHTML=Object.entries(ITEMS).filter(([,it])=>it.price>0).map(([k,it])=>`<div class="item"><div style="font-size:30px">${it.icon}</div><div class="grow"><div class="t">${it.name}</div><div class="muted">${it.desc} · Du hast ${S.items[k]||0}</div></div><button onclick="buy('${k}')">${it.price} 🪙 kaufen</button></div>`).join('')+
     `<div class="row"><button onclick="useTrank()">🧪 Heiltrank jetzt benutzen</button><button onclick="useStern()">✨ Sternenstaub benutzen (${S.items.stern||0})</button></div>`+`<h3 style="margin-top:16px">🎒 Raid-Beute</h3>${gearHtml()}`;
   renderNest();renderBoss();renderDex();
@@ -2140,7 +2165,11 @@ function drawScreen(t){
   const ctx=$('#screen').getContext('2d'),W=288;
   if(S){
     drawScene(ctx,S.element,W,W,t);
-    if(S.quest){
+    if(S.pension){
+      ctx.textAlign='center';ctx.font='64px serif';ctx.fillText('🏨',W/2,140);
+      ctx.font='bold 18px Georgia,serif';ctx.fillStyle='#f3dfb0';ctx.fillText('In der Pension',W/2,185);
+      ctx.font='13px sans-serif';ctx.fillText('Abholen im Tab „Info“',W/2,208);
+    }else if(S.quest){
       const q=QUESTS.find(x=>x.id===S.quest.id);
       ctx.textAlign='center';ctx.font='64px serif';ctx.fillText(q.icon,W/2,140);
       ctx.font='bold 18px Georgia,serif';ctx.fillStyle='#f3dfb0';ctx.fillText('Auf Quest unterwegs'+'.'.repeat(Math.floor(t/400)%4),W/2,190);
