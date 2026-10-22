@@ -43,12 +43,21 @@ li time{color:var(--muted);margin-right:6px}
 #toast{position:fixed;left:16px;right:16px;bottom:calc(20px + env(safe-area-inset-bottom));max-width:428px;margin:0 auto;background:#2c2538;border:1px solid var(--accent);border-radius:12px;padding:12px;text-align:center;opacity:0;transition:opacity .3s;pointer-events:none}
 #toast.on{opacity:1}
 a{color:var(--accent)}
+#chatLog{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.bub{max-width:85%;padding:9px 12px;border-radius:14px;white-space:pre-wrap;word-wrap:break-word}
+.bub.me{align-self:flex-end;background:#3a3150;border-bottom-right-radius:4px}
+.bub.mon{align-self:flex-start;background:#2a2238;border:1px solid #4a3e5c;border-bottom-left-radius:4px}
+.bub.wait{opacity:.7;font-style:italic}
+.chatrow{display:flex;gap:8px}
+.chatrow input{font-size:16px;letter-spacing:0;text-transform:none;text-align:left;padding:12px}
+.chatrow button{flex:none;font-size:20px;padding:10px 14px}
 </style>
 </head>
 <body>
 <main>
 <h1>📱 Pixelmonster</h1>
 <div id="app"></div>
+<div id="chat"></div>
 <div id="install"></div>
 </main>
 <div id="toast"></div>
@@ -68,7 +77,7 @@ async function api(path,body){
   if(!r.ok||d.error)throw Error(d.error||'Fehler '+r.status);
   return d;
 }
-function unpairLocal(){token=null;try{localStorage.removeItem(KEY)}catch(e){}clearInterval(timer);renderPair()}
+function unpairLocal(){token=null;try{localStorage.removeItem(KEY)}catch(e){}clearInterval(timer);$('#chat').innerHTML='';renderPair()}
 function renderPair(){
   $('#app').innerHTML=`<div class="card"><p>Steuere dein Monster vom Handy aus.</p>
     <ol class="muted" style="padding-left:20px"><li>Öffne am PC die Pixelmonster-App, Tab <b>🌐 Online</b>.</li><li>Tippe dort auf <b>📱 Handy koppeln</b>.</li><li>Gib den Code hier ein.</li></ol>
@@ -105,7 +114,40 @@ async function send(cmd){
   try{last=await api('/r/cmd',{cmd});render();toast(last.now-last.updated<45000?'Gesendet. Kommt in ein paar Sekunden an.':'Gesendet. Kommt an, sobald die PC-App läuft.')}
   catch(e){toast(e.message)}
 }
-async function poll(){try{last=await api('/r/status');render()}catch(e){if(token)toast(e.message)}}
+async function poll(){try{last=await api('/r/status');render();if(!$('#chatLog'))renderChat()}catch(e){if(token)toast(e.message)}}
+// ---------- Reden: Chat mit dem Monster, Antworten werden vorgelesen ----------
+const CKEY='pixelmonster.chat';let chat=[],chatBusy=false,voiceOff=false;
+try{chat=JSON.parse(localStorage.getItem(CKEY)||'[]');voiceOff=localStorage.getItem(CKEY+'.voice')==='off'}catch(e){}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function saveChat(){try{localStorage.setItem(CKEY,JSON.stringify(chat.slice(-40)))}catch(e){}}
+function speak(text){
+  if(voiceOff||!window.speechSynthesis)return;const t=text.replace(/\*[^*]*\*/g,'').replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'').trim();if(!t)return;
+  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='de-DE';const v=speechSynthesis.getVoices().find(v=>/^de/i.test(v.lang));if(v)u.voice=v;
+  const st=last?.status?.stage??1;u.pitch=[1.9,1.9,1.4,.7][st]??1;u.rate=[1.15,1.15,1.05,.92][st]??1;speechSynthesis.speak(u);
+}
+function renderChat(){
+  const s=last?.status,box=$('#chat');if(!s||!token){box.innerHTML='';return}
+  if(s.stage===0){box.innerHTML='';return}
+  const keep=$('#chatIn')?.value||'';
+  box.innerHTML=`<div class="card"><div class="muted" style="margin-bottom:8px">💬 Mit ${esc(s.name)} reden</div><div id="chatLog">
+    ${chat.length?'':`<div class="muted" style="text-align:center">Sag ${esc(s.name)} hallo!</div>`}
+    ${chat.map(m=>`<div class="bub ${m.role==='user'?'me':'mon'}">${esc(m.content)}</div>`).join('')}${chatBusy?`<div class="bub mon wait">${esc(s.name)} denkt nach …</div>`:''}</div>
+    <div class="chatrow"><input id="chatIn" maxlength="300" placeholder="Schreib etwas …" autocomplete="off">${SR?'<button id="micBtn">🎤</button>':''}<button id="sendBtn" ${chatBusy?'disabled':''}>➤</button></div>
+    <div class="muted" style="margin-top:8px;display:flex;justify-content:space-between"><label><input type="checkbox" id="voiceCb" style="width:auto" ${voiceOff?'':'checked'}> 🔊 Vorlesen</label>${chat.length?'<a href="#" id="chatClr">Verlauf löschen</a>':''}</div></div>`;
+  const log=$('#chatLog');log.scrollTop=log.scrollHeight;$('#chatIn').value=keep;
+  $('#chatIn').onkeydown=e=>{if(e.key==='Enter')sendChat()};$('#sendBtn').onclick=sendChat;
+  $('#voiceCb').onchange=e=>{voiceOff=!e.target.checked;try{localStorage.setItem(CKEY+'.voice',voiceOff?'off':'on')}catch(x){}};
+  if($('#chatClr'))$('#chatClr').onclick=e=>{e.preventDefault();chat=[];saveChat();renderChat()};
+  if($('#micBtn'))$('#micBtn').onclick=()=>{const r=new SR();r.lang='de-DE';$('#micBtn').textContent='👂';
+    r.onresult=e=>{$('#chatIn').value=e.results[0][0].transcript;sendChat()};r.onerror=()=>toast('Spracheingabe klappt gerade nicht.');r.onend=()=>{if($('#micBtn'))$('#micBtn').textContent='🎤'};r.start()};
+}
+async function sendChat(){
+  const text=$('#chatIn')?.value.trim();if(!text||chatBusy)return;
+  chat.push({role:'user',content:text});$('#chatIn').value='';chatBusy=true;renderChat();
+  try{const d=await api('/r/chat',{messages:chat.slice(-12)});chat.push({role:'assistant',content:d.reply});speak(d.reply)}
+  catch(e){toast(e.message);chat.pop();chatBusy=false;renderChat();$('#chatIn').value=text;return}
+  chatBusy=false;saveChat();renderChat();
+}
 function start(){$('#app').innerHTML='<div class="card muted">Lade …</div>';poll();clearInterval(timer);timer=setInterval(()=>{if(!document.hidden)poll()},5000)}
 // Als App installieren: Android/Chrome zeigt einen Knopf, iPhone bekommt eine Anleitung
 let installEv=null;const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
