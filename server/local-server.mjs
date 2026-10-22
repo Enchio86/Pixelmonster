@@ -15,10 +15,13 @@ const DB={prepare:sql=>stmt(sql),batch:async list=>{sqlite.exec('BEGIN');try{con
 // Mit PXM_FAKE_AI=1 antwortet eine Test-KI, die nur zeigt, was sie bekommen hat (die echte Cloudflare-KI gibt es lokal nicht)
 const AI=process.env.PXM_FAKE_AI?{run:async(model,{messages})=>{const sys=messages[0].content,last=messages.at(-1).content;
   if(process.env.PXM_FAKE_AI==='log')console.log('SYSTEM:\n'+sys);return{response:`*grrr* Du hast „${last}“ gesagt! (${(sys.match(/So geht es dir gerade: (.*)/)||[])[1]})`}}}:undefined;
+// Mit PXM_GAME_FILE liefert /handy die lokale Spieldatei statt der Version auf GitHub
+import {readFileSync} from 'node:fs';
+const gameFile=process.env.PXM_GAME_FILE;
 const port=+(process.argv[2]||8787);
 http.createServer(async(req,res)=>{
   const chunks=[];for await(const c of req)chunks.push(c);
   const body=chunks.length?Buffer.concat(chunks):undefined;
-  const r=await worker.fetch(new Request(`http://localhost:${port}${req.url}`,{method:req.method,headers:req.headers,body:req.method==='GET'||req.method==='OPTIONS'?undefined:body}),{DB,AI});
+  const r=await worker.fetch(new Request(`http://localhost:${port}${req.url}`,{method:req.method,headers:req.headers,body:req.method==='GET'||req.method==='OPTIONS'?undefined:body}),{DB,AI,...(gameFile?{GAME_HTML:readFileSync(gameFile,'utf8')}:{})});
   res.writeHead(r.status,Object.fromEntries(r.headers));res.end(Buffer.from(await r.arrayBuffer()));
 }).listen(port,()=>console.log(`Pixelmonster-Treffpunkt läuft auf http://localhost:${port}`));

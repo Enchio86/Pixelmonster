@@ -7,7 +7,16 @@ const fail=(msg,status=400)=>json({error:msg},status);
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const MAX_MONSTER=8000,MAX_STATUS=6000,MAX_SPRITE=120000;
 const REMOTE_CMDS=['feed','snack','play','clean','sleep','med'];
-const CHAT_PER_DAY=80;
+const CHAT_PER_DAY=80,MAX_SAVE=500000;
+// Das ganze Spiel fürs Handy kommt immer frisch aus dem GitHub-Ordner „update“
+const GAME_URL='https://raw.githubusercontent.com/Enchio86/Pixelmonster/main/update/pixelmonster.html';
+const PWA_HEAD='<link rel="manifest" href="/handy/manifest.json"><link rel="icon" href="/handy/icon-192.png"><link rel="apple-touch-icon" href="/handy/icon-192.png"><meta name="theme-color" content="#120e18"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Pixelmonster"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">';
+const PWA_BODY="<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/handy/sw.js',{scope:'/handy/'}).catch(()=>{})</script>";
+async function gameHtml(env){
+  let html=env.GAME_HTML;
+  if(!html){const r=await fetch(env.GAME_URL||GAME_URL,{cf:{cacheTtl:300,cacheEverything:true}});if(!r.ok)return null;html=await r.text()}
+  return html.replace('</head>',PWA_HEAD+'</head>').replace('</body>',PWA_BODY+'</body>');
+}
 
 // ---------- Mit dem Monster reden ----------
 // Nimmt Claude, wenn ANTHROPIC_API_KEY als Secret gesetzt ist, sonst die kostenlose Cloudflare-KI (Binding „AI“)
@@ -94,7 +103,8 @@ async function init(db){
     db.prepare('CREATE TABLE IF NOT EXISTS remotes(token TEXT PRIMARY KEY,player TEXT,created INTEGER)'),
     db.prepare('CREATE TABLE IF NOT EXISTS rstatus(player TEXT PRIMARY KEY,data TEXT,sprite TEXT,updated INTEGER)'),
     db.prepare('CREATE TABLE IF NOT EXISTS cmds(id INTEGER PRIMARY KEY AUTOINCREMENT,player TEXT,cmd TEXT,created INTEGER)'),
-    db.prepare('CREATE TABLE IF NOT EXISTS chatcount(player TEXT,day TEXT,n INTEGER,PRIMARY KEY(player,day))')
+    db.prepare('CREATE TABLE IF NOT EXISTS chatcount(player TEXT,day TEXT,n INTEGER,PRIMARY KEY(player,day))'),
+    db.prepare('CREATE TABLE IF NOT EXISTS saves(player TEXT PRIMARY KEY,data TEXT,rev INTEGER,updated INTEGER)')
   ]);
   ready=true;
 }
@@ -134,7 +144,8 @@ async function handle(req,env){
     const body=req.method==='POST'?await req.json().catch(()=>({})):{};
     if(path===''||path==='/ping')return json({ok:true,game:'pixelmonster'});
     if(new URL(req.url).pathname==='/handy')return Response.redirect(new URL('/handy/',req.url).href,301);
-    if(path==='/handy')return new Response(HANDY_HTML,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'}});
+    if(path==='/handy'){const h=await gameHtml(env);return h?new Response(h,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'}}):fail('Das Spiel konnte gerade nicht geladen werden.',502)}
+    if(path==='/fernbedienung')return new Response(HANDY_HTML,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'}});
     if(path==='/handy/manifest.json')return new Response(JSON.stringify(MANIFEST),{headers:{'Content-Type':'application/manifest+json','Cache-Control':'max-age=3600'}});
     if(path==='/handy/sw.js')return new Response(SW_JS,{headers:{'Content-Type':'text/javascript','Cache-Control':'no-cache'}});
     if(path==='/handy/icon-192.png'||path==='/handy/icon-512.png'){const b=atob(path.includes('192')?ICON_192:ICON_512),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);
@@ -147,7 +158,8 @@ async function handle(req,env){
       if(!p||p.expires<Date.now())return fail('Der Code ist falsch oder abgelaufen. Lass dir in der PC-App einen neuen zeigen.',404);
       const token=crypto.randomUUID().replace(/-/g,'')+crypto.randomUUID().replace(/-/g,'');
       await db.batch([db.prepare('DELETE FROM pairs WHERE code=?').bind(code),db.prepare('INSERT INTO remotes(token,player,created) VALUES(?,?,?)').bind(token,p.player,Date.now())]);
-      return json({token});
+      const pl=await db.prepare('SELECT id,secret FROM players WHERE id=?').bind(p.player).first();
+      return json({token,id:pl.id,secret:pl.secret});
     }
     if(path.startsWith('/r/')){
       const tok=(req.headers.get('Authorization')||'').replace('Remote ','');
@@ -203,8 +215,21 @@ async function handle(req,env){
       return json({code,expires:Date.now()+6e5});
     }
     if(path==='/pair/reset'){
-      await db.batch([db.prepare('DELETE FROM remotes WHERE player=?').bind(me.id),db.prepare('DELETE FROM cmds WHERE player=?').bind(me.id)]);
-      return json(await state(db,me));
+      // Neues Geheimnis: gekoppelte Handys verlieren den Zugang, nur das Gerät, das entkoppelt, bekommt es
+      const secret=crypto.randomUUID().replace(/-/g,'');
+      await db.batch([db.prepare('DELETE FROM remotes WHERE player=?').bind(me.id),db.prepare('DELETE FROM cmds WHERE player=?').bind(me.id),db.prepare('UPDATE players SET secret=? WHERE id=?').bind(secret,me.id)]);
+      return json({...await state(db,me),secret});
+    }
+    // Spielstand in der Cloud, damit PC und Handy dasselbe Monster pflegen. rev zählt jede Änderung hoch;
+    // wer mit einem veralteten Stand speichert, bekommt den neueren zurück (409) und übernimmt ihn
+    if(path==='/save'){
+      const cur=await db.prepare('SELECT data,rev,updated FROM saves WHERE player=?').bind(me.id).first();
+      if(req.method!=='POST')return json(cur?{rev:cur.rev,updated:cur.updated,data:+new URL(req.url).searchParams.get('have')===cur.rev?null:JSON.parse(cur.data)}:{rev:0,data:null});
+      const d=JSON.stringify(body.data||null);if(!body.data||d.length>MAX_SAVE)return fail('Spielstand ungültig oder zu groß.');
+      if(cur&&!body.force&&+body.base!==cur.rev)return json({error:'conflict',rev:cur.rev,data:JSON.parse(cur.data)},409);
+      const rev=(cur?.rev||0)+1;
+      await db.prepare('INSERT INTO saves(player,data,rev,updated) VALUES(?,?,?,?) ON CONFLICT(player) DO UPDATE SET data=excluded.data,rev=excluded.rev,updated=excluded.updated').bind(me.id,d,rev,Date.now()).run();
+      return json({rev});
     }
     if(path==='/friend'){
       const code=clean(body.code,7).toUpperCase().replace(/^([A-Z0-9]{3})([A-Z0-9]{3})$/,'$1-$2');
@@ -284,7 +309,7 @@ async function handle(req,env){
 }
 
 // ---------- Handy-App: Manifest, Service Worker und App-Symbole ----------
-const MANIFEST={name:'Pixelmonster',short_name:'Pixelmonster',description:'Fernbedienung für dein Pixelmonster',start_url:'/handy/',scope:'/handy/',display:'standalone',orientation:'portrait',
+const MANIFEST={name:'Pixelmonster',short_name:'Pixelmonster',description:'Dein Pixelmonster für unterwegs',start_url:'/handy/',scope:'/handy/',display:'standalone',orientation:'portrait',
   background_color:'#120e18',theme_color:'#120e18',lang:'de',icons:[{src:'/handy/icon-192.png',sizes:'192x192',type:'image/png',purpose:'any maskable'},{src:'/handy/icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
 // Lädt immer frisch vom Server und zeigt ohne Netz die zuletzt gespeicherte Seite
 const SW_JS=`self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open('pxm-handy').then(c=>c.add('/handy/')))});

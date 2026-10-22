@@ -7,6 +7,8 @@
 <style>
 :root{--bg:#120e18;--panel:#1f1a28;--panel2:#2c2538;--text:#f3ecdf;--muted:#a99fb8;--accent:#e2b65c;--gold:#b8945a;--good:#5fd38a;--bad:#ff6b6b;--warn:#ffb347}
 *{box-sizing:border-box}
+html{background:#0d0a12}
+@media(max-width:700px){.miniBtn{display:none}}
 body{margin:0;font-family:system-ui,"Segoe UI",sans-serif;background:radial-gradient(ellipse at top,#2e2240,#0d0a12 70%) fixed;color:var(--text);min-height:100vh}
 .wrap{max-width:1000px;margin:0 auto;padding:16px}
 .top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
@@ -113,7 +115,7 @@ body.mini #toast{bottom:6px;font-size:12px;padding:6px 10px}
 <div class="wrap">
   <div class="top">
     <h1>👾 Pixelmonster</h1>
-    <div class="row"><div id="topinfo"></div><button onclick="toggleMini(true)" title="Nur das Monster in einem kleinen Fenster zeigen">🗕 Mini-Ansicht</button></div>
+    <div class="row"><div id="topinfo"></div><button class="miniBtn" onclick="toggleMini(true)" title="Nur das Monster in einem kleinen Fenster zeigen">🗕 Mini-Ansicht</button></div>
   </div>
   <div class="grid">
     <div>
@@ -1315,6 +1317,7 @@ function canAct(needAwake=true){
   return true;
 }
 function act(a){
+  if(CLOUD&&!cloudActs.includes(a))cloudActs.push(a);
   if(a==='sleep'){
     if(!canAct(false))return;
     if(S.sleeping){S.sleeping=false;if(S.energy<60){S.mood-=10;bondUp(-3);log(`${S.name} wurde geweckt und ist grummelig.`)}else log(`${S.name} ist wach.`)}
@@ -1628,6 +1631,79 @@ async function netSync(){
   }catch(e){netErr=e.message;if(/angemeldet/.test(e.message))S.net.sent=''}
   finally{netBusy=false;renderOnline()}
 }
+// ---------- Cloud-Spielstand: PC und Handy pflegen dasselbe Monster ----------
+// Der Server zählt jede gespeicherte Änderung (rev). Wer gerade spielt, lädt seine Änderungen hoch;
+// die anderen Geräte holen regelmäßig den neuesten Stand. Speichert ein Gerät auf einem veralteten Stand,
+// bekommt es den neueren zurück und übernimmt ihn.
+const CLOUD_KEY='pixelmonster.cloud';
+let CLOUD=null,cloudBusy=false,cloudDirty=false,cloudSent='',lastInput=0,cloudPushT=null,cloudPulled=0,cloudPushed=0,cloudTimer=null,cloudActs=[];
+try{CLOUD=JSON.parse(localStorage.getItem(CLOUD_KEY))}catch(e){}
+function cloudMeta(){try{localStorage.setItem(CLOUD_KEY,JSON.stringify(CLOUD))}catch(e){}}
+const cloudIdle=()=>!(train?.run||B||MG||chatBusy||tour);
+async function cloudReq(body,have){
+  const url=serverUrl()+'/save'+(body?'':'?have='+(have??''));
+  const r=await fetch(url,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',Authorization:`Bearer ${S.net.id}.${S.net.secret}`},body:body?JSON.stringify(body):undefined});
+  return{status:r.status,d:await r.json().catch(()=>({}))};
+}
+function cloudAdopt(data,rev){
+  S=data;migrate(S);CLOUD.rev=rev;cloudMeta();cloudSent=JSON.stringify(S);save();
+  $('#speedSel').value=String(S.speed);renderLog();renderLists();renderOnline();renderChat();renderStatus();
+}
+async function cloudPush(force){
+  if(!CLOUD||!S?.net?.id||cloudBusy)return;
+  const data=JSON.stringify(S);if(!force&&data===cloudSent){cloudDirty=false;return}
+  cloudBusy=true;
+  try{
+    const {status,d}=await cloudReq({data:S,base:CLOUD.rev,force:!!force});
+    if(status===200){CLOUD.rev=d.rev;cloudSent=data;cloudDirty=false;cloudPushed=Date.now();cloudActs=[];cloudMeta()}
+    else if(status===409&&d.data){
+      // Neuerer Stand vom anderen Gerät: übernehmen und die eigene Pflege (Füttern, Putzen …) darauf noch einmal ausführen
+      const acts=cloudActs;cloudActs=[];cloudDirty=false;cloudAdopt(d.data,d.rev);
+      for(const a of acts)act(a);
+      toast(acts.length?'📱 Auf deinem anderen Gerät wurde gerade gespielt. Stand übernommen und deine Pflege nachgeholt.':'📱 Auf deinem anderen Gerät wurde gerade gespielt. Dieser Stand ist jetzt übernommen.');
+      if(acts.length){cloudBusy=false;return cloudPush()}
+    }
+    else if(status===401)cloudLost();
+  }catch(e){}finally{cloudBusy=false}
+}
+async function cloudPull(){
+  if(!CLOUD||!S?.net?.id||cloudBusy||cloudDirty||!cloudIdle())return;
+  cloudBusy=true;
+  try{const {status,d}=await cloudReq(null,CLOUD.rev);cloudPulled=Date.now();
+    if(status===200&&d.data&&d.rev>CLOUD.rev&&!cloudDirty)cloudAdopt(d.data,d.rev);else if(status===401)cloudLost()}
+  catch(e){}finally{cloudBusy=false}
+}
+function cloudLost(){if(location.protocol.startsWith('http')){CLOUD=null;try{localStorage.removeItem(CLOUD_KEY);localStorage.removeItem(SAVE_KEY)}catch(e){}ask('Dieses Handy wurde am PC entkoppelt.').then(()=>location.reload())}}
+// Jede Eingabe macht dieses Gerät zum aktiven: Änderungen gehen kurz danach hoch
+function cloudInput(){
+  if(!CLOUD)return;lastInput=Date.now();cloudDirty=true;clearTimeout(cloudPushT);cloudPushT=setTimeout(()=>cloudPush(),1500);
+}
+['pointerdown','keydown'].forEach(ev=>addEventListener(ev,cloudInput,true));
+function cloudStart(){if(!cloudTimer)cloudTimer=setInterval(cloudLoop,15000)}
+function cloudLoop(){
+  if(!CLOUD||!S)return;const active=Date.now()-lastInput<120000;
+  if(active){if(!cloudBusy)cloudPush()}
+  else if(document.hidden){if(Date.now()-cloudPulled>60000)cloudPull()}
+  else if(Date.now()-cloudPushed>300000)cloudPush();else cloudPull();
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)cloudPull();else if(cloudDirty)cloudPush()});
+// Koppeln auf dem Handy: Code vom PC eingeben, Spielstand laden, neu starten
+function renderPhonePair(){
+  $('#quiz').innerHTML=`<h3>📱 Monster vom PC holen</h3><ol class="muted" style="padding-left:20px"><li>Öffne am PC die Pixelmonster-App, Tab <b>🌐 Online</b>.</li><li>Tippe dort auf <b>📱 Handy koppeln</b>.</li><li>Gib den Code hier ein.</li></ol>
+    <input type="text" id="pairIn" maxlength="7" placeholder="ABC123" style="font-size:22px;letter-spacing:4px;text-transform:uppercase;text-align:center">
+    <div style="height:12px"></div><button class="primary" onclick="phonePair()">Koppeln</button> <button onclick="renderQuiz()">Zurück</button>`;
+}
+async function phonePair(){
+  const code=$('#pairIn').value.trim();if(!code)return;
+  try{
+    const post=async(p,body,auth)=>{const r=await fetch(location.origin+p,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',...(auth?{Authorization:auth}:{})},body:body?JSON.stringify(body):undefined});const d=await r.json();if(!r.ok||d.error)throw Error(d.error||'Fehler '+r.status);return d};
+    const c=await post('/pair/claim',{code}),sv=await post('/save',null,`Bearer ${c.id}.${c.secret}`);
+    if(!sv.data)throw Error('Am PC ist noch kein Spielstand hochgeladen. Starte die PC-App neu und versuch es noch mal.');
+    sv.data.net={...sv.data.net,id:c.id,secret:c.secret,url:location.origin};
+    localStorage.setItem(SAVE_KEY,JSON.stringify(sv.data));localStorage.setItem(CLOUD_KEY,JSON.stringify({rev:sv.rev}));location.reload();
+  }catch(e){toast(e.message)}
+}
+
 // ---------- Handy-Fernbedienung ----------
 // Das Handy schickt Befehle an den Server, die PC-App holt sie bei jedem Abgleich ab und meldet den Zustand zurück
 let pairInfo=null,remoteSprite='';
@@ -1698,16 +1774,20 @@ function chatMic(){
   r.onerror=()=>toast('Spracheingabe klappt hier gerade nicht.');r.onend=()=>{const b=$('#micBtn');if(b)b.textContent='🎤'};r.start();
 }
 async function pairPhone(){
+  if(!CLOUD){CLOUD={rev:0};cloudMeta();await cloudPush(true)}else await cloudPush();cloudStart();
   const d=await netDo(()=>api('/pair/new',{}));
   if(d){pairInfo={...d,n:NET?.remotes||0};renderOnline();netSync()}
 }
-async function unpairPhones(){if(await ask('Alle gekoppelten Handys entkoppeln?'))netDo(()=>api('/pair/reset',{}),'Handys entkoppelt.')}
+async function unpairPhones(){
+  if(!await ask('Alle gekoppelten Handys entkoppeln? Sie verlieren dann den Zugang zu deinem Monster.'))return;
+  const d=await netDo(()=>api('/pair/reset',{}),'Handys entkoppelt.');if(d?.secret){S.net.secret=d.secret;save();cloudPush(true)}
+}
 function phoneHtml(N){
   if(pairInfo&&(N.remotes||0)>pairInfo.n){pairInfo=null;toast('📱 Handy gekoppelt!');log('📱 Ein Handy ist jetzt als Fernbedienung gekoppelt.')}
   const url=serverUrl()+'/handy',live=pairInfo&&pairInfo.expires>Date.now();if(!live)pairInfo=null;
   return`<h3 style="margin-top:14px">📱 Handy-Fernbedienung</h3>
-    <p class="muted">Füttere, spiele und putze vom Handy aus. Die Befehle kommen an, solange diese App läuft und online ist.</p>
-    ${live?`<div class="item"><div style="font-size:30px">📲</div><div class="grow"><div class="muted">Öffne auf dem Handy</div><div class="t" style="word-break:break-all">${esc(url)}</div>
+    <p class="muted">Spiel mit deinem Monster auch unterwegs. Das Handy bekommt das ganze Spiel, und PC und Handy teilen sich denselben Spielstand. Der PC muss dafür nicht an sein.</p>
+    ${live?`<div class="item"><div style="font-size:30px">📲</div><div class="grow"><div class="muted">Öffne auf dem Handy und tippe auf „Ich habe schon ein Monster“</div><div class="t" style="word-break:break-all">${esc(url)}</div>
       <div class="muted" style="margin-top:6px">und gib diesen Code ein (10 Minuten gültig):</div><div class="t" style="font-size:26px;letter-spacing:4px">${esc(pairInfo.code)}</div></div><button onclick="copyText('${esc(url)}')">📋</button></div>`:''}
     <div class="row"><button class="primary" onclick="pairPhone()">📱 Handy koppeln</button>${N.remotes?`<button onclick="unpairPhones()">Entkoppeln</button>`:''}</div>
     <div class="muted" style="margin-top:6px">${N.remotes?`${N.remotes} ${N.remotes===1?'Handy ist':'Handys sind'} gekoppelt.`:'Noch kein Handy gekoppelt.'}</div>`;
@@ -2451,7 +2531,8 @@ function renderQuiz(){
   if(Q.step<0){
     box.innerHTML=`${dots}<h3>🥚 Willkommen bei Pixelmonster!</h3><p class="muted">Bevor du dein Ei bekommst, möchte ich dich kennenlernen. Aus deinen Antworten entsteht ein Monster, das genau zu dir passt. Kein Monster gleicht einem anderen.</p>
       <label class="muted">Wie heißt du?</label><input type="text" id="ownerIn" maxlength="20" placeholder="z. B. Enchio" value="${esc(Q.owner)}">
-      <div style="height:14px"></div><button class="primary" onclick="quizNames()">Weiter</button>`;
+      <div style="height:14px"></div><button class="primary" onclick="quizNames()">Weiter</button>
+      ${location.protocol.startsWith('http')?'<div style="height:10px"></div><button onclick="renderPhonePair()" style="width:100%">📱 Ich habe schon ein Monster am PC</button>':''}`;
     setTimeout(()=>$('#ownerIn')?.focus(),50);return;
   }
   if(Q.step<QUIZ.length){
@@ -2518,6 +2599,7 @@ function boot(){
   if(booted)return;booted=true;
   $('#speedSel').value=String(S.speed);
   tick();renderLog();renderLists();renderOnline();renderChat();setInterval(tick,1000);
+  if(CLOUD){cloudSent=JSON.stringify(S);cloudPull();cloudStart()}
   netSync().then(()=>{loadBoss();loadRaid()});setInterval(()=>{if(NET?.remotes||pairInfo||Date.now()-netLast>19000)netSync()},8000);setInterval(()=>{loadBoss();loadRaid()},120000);
 }
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
