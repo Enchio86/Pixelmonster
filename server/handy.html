@@ -7,6 +7,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Pixelmonster Fernbedienung</title>
+<link rel="manifest" href="/handy/manifest.json">
+<link rel="icon" href="/handy/icon-192.png">
+<link rel="apple-touch-icon" href="/handy/icon-192.png">
+<meta name="apple-mobile-web-app-title" content="Pixelmonster">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 :root{--bg:#120e18;--panel:#1f1a28;--panel2:#2c2538;--text:#f3ecdf;--muted:#a99fb8;--accent:#e2b65c;--good:#5fd38a;--bad:#ff6b6b;--warn:#ffb347}
 *{box-sizing:border-box}
@@ -44,6 +49,7 @@ a{color:var(--accent)}
 <main>
 <h1>📱 Pixelmonster</h1>
 <div id="app"></div>
+<div id="install"></div>
 </main>
 <div id="toast"></div>
 <script>
@@ -68,7 +74,7 @@ function renderPair(){
     <ol class="muted" style="padding-left:20px"><li>Öffne am PC die Pixelmonster-App, Tab <b>🌐 Online</b>.</li><li>Tippe dort auf <b>📱 Handy koppeln</b>.</li><li>Gib den Code hier ein.</li></ol>
     <input id="code" maxlength="7" autocomplete="off" placeholder="ABC123">
     <button class="primary" id="pairBtn">Koppeln</button></div>
-    <p class="muted" style="text-align:center">Tipp: Über „Zum Startbildschirm hinzufügen“ im Browser-Menü wird daraus ein App-Symbol.</p>`;
+`;
   $('#pairBtn').onclick=pair;$('#code').onkeydown=e=>{if(e.key==='Enter')pair()};
 }
 async function pair(){
@@ -101,6 +107,19 @@ async function send(cmd){
 }
 async function poll(){try{last=await api('/r/status');render()}catch(e){if(token)toast(e.message)}}
 function start(){$('#app').innerHTML='<div class="card muted">Lade …</div>';poll();clearInterval(timer);timer=setInterval(()=>{if(!document.hidden)poll()},5000)}
+// Als App installieren: Android/Chrome zeigt einen Knopf, iPhone bekommt eine Anleitung
+let installEv=null;const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+function renderInstall(){
+  const box=$('#install');if(standalone){box.innerHTML='';return}
+  if(installEv)box.innerHTML='<button class="primary" id="instBtn">📲 Als App installieren</button>';
+  else if(/iPhone|iPad|iPod/.test(navigator.userAgent))box.innerHTML='<div class="card muted">📲 <b>Als App aufs iPhone:</b> Unten in Safari auf <b>Teilen</b> (Quadrat mit Pfeil) tippen, dann <b>Zum Home-Bildschirm</b>.</div>';
+  else box.innerHTML='<div class="card muted">📲 <b>Als App aufs Handy:</b> Im Browser-Menü (⋮) auf <b>App installieren</b> oder <b>Zum Startbildschirm hinzufügen</b> tippen.</div>';
+  const b=$('#instBtn');if(b)b.onclick=async()=>{installEv.prompt();await installEv.userChoice.catch(()=>{});installEv=null;renderInstall()};
+}
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEv=e;renderInstall()});
+addEventListener('appinstalled',()=>{installEv=null;toast('Installiert! Du findest Pixelmonster jetzt bei deinen Apps.');$('#install').innerHTML=''});
+if('serviceWorker'in navigator)navigator.serviceWorker.register('/handy/sw.js',{scope:'/handy/'}).catch(()=>{});
+renderInstall();
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&token)poll()});
 token?start():renderPair();
 </script>
