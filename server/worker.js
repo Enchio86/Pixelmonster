@@ -18,6 +18,16 @@ async function bossState(db,week,me){
   return{week,hp:BOSS_HP,dmg:hits.reduce((a,h)=>a+h.dmg,0),hit:mine?mine.dmg:null,claimed:!!mine?.claimed,players:hits.map(h=>h.name)};
 }
 
+// Raid des Monats: ein riesiger Boss, alle Spieler zusammen, jeder einmal pro Tag (UTC)
+const RAID_HP=20000,RAID_MAX_HIT=1500;
+const monthId=(d=new Date())=>d.toISOString().slice(0,7),dayId=(d=new Date())=>d.toISOString().slice(0,10);
+async function raidState(db,month,me){
+  const hits=(await db.prepare('SELECT r.player,r.day,r.dmg,p.name FROM raidhits r JOIN players p ON p.id=r.player WHERE r.month=?').bind(month).all()).results;
+  const mine=hits.filter(h=>h.player===me),names=[...new Set(hits.map(h=>h.name))];
+  const claimed=!!(await db.prepare('SELECT 1 FROM raidclaims WHERE month=? AND player=?').bind(month,me).first());
+  return{month,hp:RAID_HP,dmg:hits.reduce((a,h)=>a+h.dmg,0),fights:mine.length,myDmg:mine.reduce((a,h)=>a+h.dmg,0),today:mine.some(h=>h.day===dayId()),claimed,players:names};
+}
+
 let ready=false;
 async function init(db){
   if(ready)return;
@@ -26,7 +36,9 @@ async function init(db){
     db.prepare('CREATE TABLE IF NOT EXISTS friends(a TEXT,b TEXT,PRIMARY KEY(a,b))'),
     db.prepare('CREATE TABLE IF NOT EXISTS guests(id TEXT PRIMARY KEY,owner TEXT,host TEXT,monster TEXT,created INTEGER)'),
     db.prepare('CREATE TABLE IF NOT EXISTS returns(id TEXT PRIMARY KEY,owner TEXT,data TEXT,created INTEGER)'),
-    db.prepare('CREATE TABLE IF NOT EXISTS bosshits(week TEXT,player TEXT,dmg INTEGER,claimed INTEGER DEFAULT 0,PRIMARY KEY(week,player))')
+    db.prepare('CREATE TABLE IF NOT EXISTS bosshits(week TEXT,player TEXT,dmg INTEGER,claimed INTEGER DEFAULT 0,PRIMARY KEY(week,player))'),
+    db.prepare('CREATE TABLE IF NOT EXISTS raidhits(month TEXT,player TEXT,day TEXT,dmg INTEGER,PRIMARY KEY(month,player,day))'),
+    db.prepare('CREATE TABLE IF NOT EXISTS raidclaims(month TEXT,player TEXT,PRIMARY KEY(month,player))')
   ]);
   ready=true;
 }
@@ -135,6 +147,25 @@ async function handle(req,env){
         await db.prepare('UPDATE bosshits SET claimed=1 WHERE week=? AND player=?').bind(week,me.id).run();
       }
       return json(await bossState(db,week,me.id));
+    }
+    if(path==='/raid'||path==='/raid/hit'||path==='/raid/claim'){
+      const near=[-1,0,1].map(k=>monthId(new Date(Date.now()+k*432e5)));
+      const month=near.includes(body.month)?body.month:monthId();
+      if(path==='/raid/hit'){
+        if(body.month!==month)return fail('Dieser Raid ist vorbei.');
+        const st=await raidState(db,month,me.id);if(st.dmg>=st.hp)return fail('Der Raidboss ist schon besiegt.');
+        const dmg=Math.min(Math.max(Math.round(+body.dmg||0),0),RAID_MAX_HIT);
+        const r=await db.prepare('INSERT OR IGNORE INTO raidhits(month,player,day,dmg) VALUES(?,?,?,?)').bind(month,me.id,dayId(),dmg).run();
+        if(!(r.meta?.changes??r.changes))return fail('Du hast heute schon gegen den Raidboss gekämpft.');
+      }
+      if(path==='/raid/claim'){
+        const st=await raidState(db,month,me.id);
+        if(st.dmg<st.hp)return fail('Der Raidboss ist noch nicht besiegt.');
+        if(!st.fights)return fail('Du hast in diesem Raid nicht mitgekämpft.');
+        const r=await db.prepare('INSERT OR IGNORE INTO raidclaims(month,player) VALUES(?,?)').bind(month,me.id).run();
+        if(!(r.meta?.changes??r.changes))return fail('Beute schon abgeholt.');
+      }
+      return json(await raidState(db,month,me.id));
     }
     return fail('Unbekannte Adresse.',404);
   }

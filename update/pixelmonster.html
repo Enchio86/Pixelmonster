@@ -82,6 +82,13 @@ body.mini #toast{bottom:6px;font-size:12px;padding:6px 10px}
 .dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
 .dexcard{background:var(--panel2);border-radius:10px;padding:8px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px}
 .dexcard img{width:72px;height:72px}.dexcard span{color:var(--muted);font-size:11px}.dexcard.unknown b{color:var(--muted)}
+.raid{background:linear-gradient(135deg,#1a1222,#120d18);border:1px solid var(--rc);border-radius:14px;padding:12px;margin-bottom:12px;box-shadow:0 0 18px color-mix(in srgb,var(--rc) 25%,transparent)}
+.raidtop{display:flex;gap:12px;align-items:flex-start}.raidtop img{width:120px;height:120px;flex:none}.raidname{font:700 22px Georgia,serif;color:var(--rc);text-shadow:0 0 10px color-mix(in srgb,var(--rc) 50%,transparent)}
+.raidsub{font-style:italic;color:#e8d9a8;margin-bottom:4px}.raid details{margin-top:10px}.raid summary{cursor:pointer;color:#e8d9a8}
+.raidgrid{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-top:6px}.raidab{display:flex;gap:8px;margin:6px 0}.raidab>span{font-size:20px}
+.loot{background:#0006;border:1px solid var(--rc);border-radius:10px;padding:6px;text-align:center;font-size:12px;width:92px;display:flex;flex-direction:column}.loot span{font-size:24px}.loot i{font-style:normal;color:var(--muted);font-size:10px}
+.raidquote{text-align:center;font-style:italic;color:var(--rc);margin:10px 0 0}
+@media(max-width:700px){.raidgrid{grid-template-columns:1fr}}
 .dexgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}.dexfam{background:var(--panel2);border-radius:10px;padding:8px 10px}.dexhead{font-weight:700;margin-bottom:4px}
 .dexrow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.dexslot{display:flex;flex-direction:column;align-items:center;text-align:center;font-size:12px}
 .dexslot img{width:64px;height:64px}.dexslot i{font-style:normal;color:var(--muted);font-size:10px}.dexslot.unknown span{color:var(--muted)}
@@ -157,6 +164,7 @@ body.mini #toast{bottom:6px;font-size:12px;padding:6px 10px}
         <div class="muted">Ein Kampf kostet Energie. Siege bringen Erfahrung und Münzen. Monster von Freunden importierst du im Tab „Austausch".</div>
         <div class="muted">Element-Vorteile: 🔥 Feuer schlägt 🌿 Natur, Natur schlägt 🪨 Erde, Erde schlägt ⚡ Blitz, Blitz schlägt 💧 Wasser, Wasser schlägt Feuer. ☀️ Licht und 🌑 Dunkelheit sind gegen alle etwas stärker und gegeneinander sehr stark.</div>
         <div class="row" style="margin:10px 0"><button class="primary" onclick="wildBattle()">🌿 Wildes Monster suchen</button><button onclick="startTournament()">🏆 Freundesturnier (1× pro Tag)</button></div>
+        <div id="raidBox"></div>
         <div id="bossBox"></div>
         <div id="fightOnline"></div>
         <div id="fightList"></div>
@@ -1015,6 +1023,10 @@ function drawSprite(ctx,m,x,y,size,flip,t=performance.now()){
     const[hx,hy]=HEAD[sp];
     ctx.save();ctx.translate(0,BOBF[sp](t));accessory(ctx,P,hx,hy,t);ctx.restore();
   }
+  const ga=GEAR[m.gear?.acc];
+  if(ga&&HEAD[sp]){// Raid-Accessoire schwebt als leuchtender Stein um den Kopf
+    const[hx,hy]=HEAD[sp],a=t/900,x=hx+Math.cos(a)*14,y=hy+4+Math.sin(a)*4+BOBF[sp](t);glow(ctx,x,y,7,ga.color,.8);gemK(ctx,x,y,2.6,ga.color,1.2);
+  }
   ctx.restore();
 }
 
@@ -1047,7 +1059,7 @@ function drawScene(ctx,el,W,H,t){
 
 const spriteCache={};
 function spriteURL(m){
-  const key=m.species+(m.ult?'u':'')+(m.shiny?'s':'')+(m.boss?'b':'')+JSON.stringify(lookOf(m));
+  const key=m.species+(m.gear?.acc||'')+(m.ult?'u':'')+(m.shiny?'s':'')+(m.boss?'b':'')+JSON.stringify(lookOf(m));
   if(!spriteCache[key]){const c=document.createElement('canvas');c.width=c.height=112;drawSprite(c.getContext('2d'),m,4,4,104,false,1000);spriteCache[key]=c.toDataURL()}
   return spriteCache[key];
 }
@@ -1156,7 +1168,7 @@ function act(a){
 }
 
 // ---------- Werte & Level ----------
-function eff(m){normMon(m);const md=SPECIES[m.species].mod,u=m.ult?1.15:1;const atk=Math.round(m.atk*md[0]*u),def=Math.round(m.def*md[1]*u),spd=Math.round(m.spd*md[2]*u);return{atk,def,spd,maxHp:30+m.level*6+def*2}}
+function eff(m){normMon(m);const md=SPECIES[m.species].mod,u=m.ult?1.15:1,g=gearBonus(m);const atk=Math.round(m.atk*md[0]*u)+g.atk,def=Math.round(m.def*md[1]*u)+g.def,spd=Math.round(m.spd*md[2]*u)+g.spd;return{atk,def,spd,maxHp:30+m.level*6+def*2}}
 const xpNeed=l=>40+l*30;
 function gainXp(n){
   if(S.trait==='schlau')n=Math.round(n*1.25);S.xp+=n;
@@ -1227,7 +1239,7 @@ function hit(f,t,mult,defF=1,sure=false){
   if(!sure&&Math.random()<dodge){bl(`💨 ${t.name} weicht aus!`);return}
   const em=elemMult(f.element,t.element),bond=1+((f.bond??50)-50)/400;
   let d=f.atk*1.3*mult*bond*rand(.85,1.15)-t.def*0.5*defF*(t.buff>0?2:1);
-  d=Math.max(1,d)*em;const crit=Math.random()<0.08+((f.bond??50)-50)/1000;if(crit)d*=1.5;if(t.guard)d/=2;d=Math.round(d);
+  d=Math.max(1,d)*em*raidHitMod(f,t);const crit=Math.random()<0.08+((f.bond??50)-50)/1000;if(crit)d*=1.5;if(t.guard)d/=2;d=Math.round(d);
   t.hp=Math.max(0,t.hp-d);bl(`💥 ${f.name} trifft: ${d} Schaden${crit?' (Volltreffer!)':''}${em>1?' Sehr effektiv!':em<1?' Nicht sehr effektiv …':''}`);
   if(t.hp<=0&&!t.boss&&(t.bond??50)>=80&&!t.endured&&Math.random()<.5){t.hp=1;t.endured=true;bl(`💞 ${t.name} hält aus Zuneigung durch!`)}
   return d;
@@ -1262,6 +1274,7 @@ function battleAct(a){
   if(!B||B.over)return;
   if(a==='spc'&&B.me.cd>0)return;
   if(a==='item'&&!S.items.trank){toast('Du hast keinen Heiltrank.');return}
+  if(B.kind==='raid'){raidRound(a);renderBattle();return}
   const acts=[{f:B.me,t:B.foe,a},{f:B.foe,t:B.me,a:aiChoose()}];
   acts.sort((x,y)=>((y.a==='def')-(x.a==='def'))||(y.f.spd-x.f.spd)||(Math.random()-0.5));
   for(const x of acts){if(x.f.hp<=0||x.t.hp<=0)continue;doAct(x.f,x.t,x.a)}
@@ -1300,6 +1313,9 @@ function hpBar(f){const p=f.hp/f.maxHp*100,c=p>50?'var(--good)':p>20?'var(--warn
 function renderBattle(){
   const info=f=>`<b>${esc(f.name)}</b> <span class="muted">Lv ${f.level}</span>${hpBar(f)}<div class="muted">${f.hp}/${f.maxHp} KP · ⚔️${f.atk} 🛡️${f.def} ⚡${f.spd}${f.buff>0?' · 🪨':''}</div>`;
   $('#bMeInfo').innerHTML=info(B.me);$('#bFoeInfo').innerHTML=info(B.foe);
+  if(B.rs){const rs=B.rs,st=[];if(rs.mark)st.push(`👁️ markiert (${rs.mark})`);if(rs.dot)st.push(`${rs.dot.icon} ${rs.dot.n} Runden`);if(rs.stun)st.push('😵 bewegungsunfähig');if(rs.healcut)st.push('☠️ Heilung halbiert');if(rs.root)st.push('🌱 festgewurzelt');if(rs.vuln)st.push('🌵 verwundbar');
+    $('#bMeInfo').innerHTML+=st.length?`<div class="muted">${st.join(' · ')}</div>`:'';
+    $('#bFoeInfo').innerHTML+=`<div class="muted">Phase ${rs.phase} · Runde ${Math.min(B.round+1,RAID_ROUNDS)}/${RAID_ROUNDS}${rs.adds?` · ${rs.raid.special.summon.icon} Helfer (${rs.adds})`:''}${rs.immune?' · immun':''}</div>`}
   const sp=SPECIALS[SPECIES[B.me.species].sp];
   $('#bSpc').textContent=`✨ ${sp.name}${B.me.cd>0?` (${B.me.cd})`:''}`;$('#bSpc').title=sp.desc;$('#bSpc').disabled=B.me.cd>0;
   $('#bItem').textContent=`🧪 Heiltrank (${S.items.trank||0})`;$('#bItem').disabled=!S.items.trank;
@@ -1394,7 +1410,7 @@ const DEFAULT_SERVER='https://pixelmonster.sebastiandh88.workers.dev';
 let NET=null,netBusy=false,netErr='',netLast=0;
 const finishing=new Set();
 function serverUrl(){return(S.net?.url||DEFAULT_SERVER||'').trim().replace(/\/+$/,'')}
-function snapshot(){return{t:'monster',v:2,id:S.id,owner:S.owner,name:S.name,species:S.species,family:S.family,element:S.element,trait:S.trait,look:S.look,title:S.title,stage:S.stage,level:S.level,atk:S.atk,def:S.def,spd:S.spd,wins:S.wins,losses:S.losses,bond:Math.round(S.bond),ult:!!S.ult,shiny:!!S.shiny,elder:!!S.elder,at:Date.now()}}
+function snapshot(){return{t:'monster',v:2,id:S.id,owner:S.owner,name:S.name,species:S.species,family:S.family,element:S.element,trait:S.trait,look:S.look,title:S.title,stage:S.stage,level:S.level,atk:S.atk,def:S.def,spd:S.spd,wins:S.wins,losses:S.losses,bond:Math.round(S.bond),ult:!!S.ult,shiny:!!S.shiny,elder:!!S.elder,gear:S.gear,at:Date.now()}}
 async function api(path,body){
   const url=serverUrl();if(!url)throw Error('Es ist noch keine Server-Adresse eingetragen.');
   let r;
@@ -1519,6 +1535,7 @@ function elemMult(a,b){
 function migrate(s){
   s.bond??=50;s.nest??=[];s.hall??=[];s.dex??={};s.ach??={};s.cnt??={};s.trophies??=[];
   s.week??={id:'',quests:0,boss:null};s.items.stern??=0;
+  s.loot??={};s.gear??={armor:null,acc:null};
   s.family??=EL_FAM[s.element]||'feuer';normMon(s);s.hall.forEach(normMon);s.friends.forEach(normMon);
   for(const e of s.nest)e.family??=EL_FAM[e.element]||'feuer';
   for(const k of Object.keys(s.dex)){const n=k.replace(/^(ult:)?(.*)$/,(_,u,sp)=>{const o=normMon({species:sp,element:s.element,family:s.family});return(u||'')+o.species});if(n!==k){s.dex[n]??=s.dex[k];delete s.dex[k]}}
@@ -1625,7 +1642,7 @@ async function hatchEgg(id){
   if(!name){toast('Gib dem Baby zuerst einen Namen.');return}
   if(!await ask(`${S.name} zieht dann in die Ruhmeshalle, und aus dem Ei schlüpft ${name}. Fortfahren?`))return;
   const keep={owner:S.owner,coins:S.coins,items:S.items,friends:S.friends,claimed:S.claimed,log:S.log,net:S.net,netGuests:S.netGuests,speed:S.speed,
-    dex:S.dex,ach:S.ach,cnt:S.cnt,trophies:S.trophies,week:S.week,lastTour:S.lastTour,nest:S.nest.filter(e=>e.id!==id),hall:[...S.hall,{...snapshot(),retired:Date.now()}].slice(-20)};
+    dex:S.dex,ach:S.ach,cnt:S.cnt,trophies:S.trophies,week:S.week,lastTour:S.lastTour,loot:S.loot,raid:S.raid,nest:S.nest.filter(e=>e.id!==id),hall:[...S.hall,{...snapshot(),retired:Date.now()}].slice(-20)};
   const fam=egg.family||EL_FAM[egg.element];
   const n=newState(S.owner,name,egg.element,egg.trait,egg.hue,fam);
   Object.assign(n,{id:egg.id,look:makeLook(egg.id,egg.hue,egg.element,fam),gameTime:S.gameTime,born:S.gameTime,bond:egg.bond,parents:egg.parents});
@@ -1702,6 +1719,250 @@ function renderBoss(){
     <div class="row" style="margin-top:6px">${btn}</div></div></div>`;
 }
 
+// ----- Raid des Monats: ein übermächtiger Boss, alle Spieler kämpfen gemeinsam, jeder einmal am Tag -----
+const RAID_HP_SOLO=4000,RAID_ROUNDS=10,RAID_MIN_LEVEL=10;
+const GEAR={
+  drachenherz:{name:'Drachenherz',icon:'❤️‍🔥',type:'mat',stat:'atk',desc:'Upgrade-Material: +3 Kraft für immer'},
+  flammenruestung:{name:'Flammenrüstung',icon:'🛡️',type:'armor',bonus:{def:6,atk:2},desc:'Rüstungsteil: +6 Abwehr, +2 Kraft'},
+  infernostein:{name:'Infernostein',icon:'🔴',type:'acc',bonus:{atk:6},color:'#ff6a1e',desc:'Accessoire: +6 Kraft'},
+  frostkristall:{name:'Frostkristall',icon:'💠',type:'mat',stat:'def',desc:'Upgrade-Material: +3 Abwehr für immer'},
+  eisruestung:{name:'Eisrüstung',icon:'🧊',type:'armor',bonus:{def:8},desc:'Rüstungsteil: +8 Abwehr'},
+  valgorthkrone:{name:'Valgorths Krone',icon:'👑',type:'acc',bonus:{def:4,atk:3},color:'#7fe8ff',desc:'Accessoire: +4 Abwehr, +3 Kraft'},
+  lebensessenz:{name:'Lebensessenz',icon:'💚',type:'mat',stat:'def',heal:true,desc:'Upgrade-Material: +3 Abwehr für immer und volle Gesundheit'},
+  waldpanzer:{name:'Waldpanzer',icon:'🪵',type:'armor',bonus:{def:7,spd:1},desc:'Rüstungsteil: +7 Abwehr, +1 Tempo'},
+  baumherz:{name:'Baumherz',icon:'💗',type:'acc',bonus:{def:3,spd:3},color:'#7dff4a',desc:'Accessoire: +3 Abwehr, +3 Tempo'},
+  schattenessenz:{name:'Schattenessenz',icon:'🟣',type:'mat',stat:'atk',desc:'Upgrade-Material: +3 Kraft für immer'},
+  leerenkristall:{name:'Leerenkristall',icon:'🔮',type:'armor',bonus:{atk:4,def:4},desc:'Rüstungsteil: +4 Kraft, +4 Abwehr'},
+  nergathsiegel:{name:'Nergaths Siegel',icon:'🧿',type:'acc',bonus:{atk:5,spd:2},color:'#d36bff',desc:'Accessoire: +5 Kraft, +2 Tempo'},
+  sturmkristall:{name:'Sturmkristall',icon:'🔷',type:'mat',stat:'spd',desc:'Upgrade-Material: +3 Tempo für immer'},
+  drachenfedern:{name:'Drachenfedern',icon:'🪶',type:'armor',bonus:{spd:5,def:3},desc:'Rüstungsteil: +5 Tempo, +3 Abwehr'},
+  aethonsauge:{name:'Aethons Auge',icon:'👁️',type:'acc',bonus:{spd:6},color:'#8fe3ff',desc:'Accessoire: +6 Tempo'}
+};
+// Fähigkeiten: aoe = Flächenschaden, dot = Schaden über Zeit, buff = Boss wird stärker, mark = Markierung (verteidigen!),
+// summon = Helfer greifen mit an, heal = Boss heilt sich, drain = saugt Leben ab, stun = Monster kann eine Runde nichts tun, healcut = Heilung halbiert
+const RAIDS=[
+  {key:'infernodrake',name:'Infernodrake',title:'Der Brennende Abgrund',element:'feuer',elName:'Feuer',immune:{el:'feuer',text:'Immun gegen Feuer'},
+    bio:'Der Infernodrake war einst ein mächtiger Beschützer der Feuerlande, bis er von den Schattenwesen verdorben wurde. Nun erhebt er sich aus den Tiefen des Vulkans, getrieben von unstillbarem Hunger und dem Wunsch, die Welt in Flammen zu setzen. Nur eine Handvoll mutiger Helden können ihn aufhalten.',
+    quote:'Wenn die Flammen erlöschen, werde ich selbst das Feuer sein.',
+    abilities:[{name:'Feueratem',icon:'🔥',type:'aoe',m:1.7,desc:'Ein massiver Flächenangriff, der allen Gegnern hohen Feuerschaden zufügt.'},
+      {name:'Lavasturm',icon:'🌋',type:'dot',m:.45,n:3,slow:true,desc:'Beschwört einen Lavasturm, der über Zeit Schaden verursacht und die Bewegung verlangsamt.'},
+      {name:'Drachenwut',icon:'💢',type:'buff',m:1.25,desc:'Steigert seine Angriffskraft und wirft kleinere Gegner in die Luft.'},
+      {name:'Flammenaugen',icon:'👁️',type:'mark',m:2.4,desc:'Markiert dein Monster. Wer nach 2 Runden nicht in Deckung ist, erleidet enormen Feuerschaden.'}],
+    specials:['Immun gegen Feuer','Reduziert erlittenen Schaden bei weniger als 30 % Leben','Ruft Lava-Elementare zu Hilfe'],
+    special:{lowArmor:.3,summon:{name:'Lava-Elementare',icon:'🔥'}},loot:['drachenherz','flammenruestung','infernostein'],
+    plan:'drake horns:curved wings:bat tail:flame spikes mane fx:ember',look:{main:'hsl(4,55%,26%)',light:'hsl(18,85%,52%)',dark:'hsl(0,45%,11%)',accent:'#ff8a1e'}},
+  {key:'valgorth',name:'Eisfürst Valgorth',title:'Herrscher der Frostgräber',element:'wasser',elName:'Eis',immune:{fam:['eis','arktis'],text:'Immun gegen Eis'},
+    bio:'Valgorth war einst ein ehrenwerter König, bis ihn der Verlust seines Volkes in den Wahnsinn trieb. Er stieg in die Tiefen der Eisgräber hinab, wo er die Macht der Toten erlangte. Nun herrscht er über ein Heer aus Eis und Knochen und will die lebenden Welten in ewige Kälte tauchen.',
+    quote:'Der Tod ist nur ein weiterer Teil meines Reiches.',
+    abilities:[{name:'Froststurm',icon:'❄️',type:'aoe',m:1.5,stun:.35,desc:'Friert alle Gegner in einem großen Radius ein und verursacht hohen Eisschaden.'},
+      {name:'Skelettarmee',icon:'💀',type:'summon',n:3,desc:'Beschwört untote Krieger, die die Spieler angreifen.'},
+      {name:'Eisige Ketten',icon:'⛓️',type:'stun',m:.8,desc:'Fesselt einen Spieler und zieht ihn zu sich.'},
+      {name:'Todesblick',icon:'☠️',type:'healcut',m:1.4,desc:'Verursacht hohen Schaden und reduziert die Heilungseffekte.'}],
+    specials:['Immun gegen Eis','Regeneriert Leben, wenn Untote in der Nähe sind','Phasenwechsel bei 50 % Leben'],
+    special:{regenWithAdds:true,summon:{name:'Untote Krieger',icon:'💀'}},loot:['frostkristall','eisruestung','valgorthkrone'],
+    plan:'biped head:helm horns:crystal cape weapon:sword fx:snow',look:{main:'hsl(214,32%,30%)',light:'hsl(198,70%,76%)',dark:'hsl(222,40%,14%)',accent:'#7fe8ff'}},
+  {key:'tharzul',name:"Waldältester Thar'Zul",title:'Wächter des Lebensbaums',element:'natur',elName:'Pflanze',immune:{fam:['gift'],text:'Immun gegen Gift'},
+    bio:"Thar'Zul ist der letzte lebende Wächter des uralten Lebensbaums. Seit er von Menschen und Gierern verletzt wurde, wacht er über die letzten heiligen Wälder. Wer seine Heimat bedroht, wird mit brutaler Kraft bestraft. Doch tief in seinem Herzen trägt er noch den Wunsch, die Natur zu erhalten, wenn auch auf seine eigene, uralte Weise.",
+    quote:'Solange ich atme, wird der Wald leben. Und mit ihm ich.',
+    abilities:[{name:'Wurzelschlag',icon:'🌱',type:'dot',m:.4,n:3,root:true,desc:'Befestigt Spieler im Boden und verursacht kontinuierlichen Schaden.'},
+      {name:'Naturwoge',icon:'🍃',type:'heal',desc:'Heilt sich selbst und seine Verbündeten und entfernt negative Effekte.'},
+      {name:'Dornenregen',icon:'🌵',type:'aoe',m:1.4,vuln:true,desc:'Verursacht Flächenschaden und erhöht den erlittenen Schaden der Spieler.'},
+      {name:'Lebensbaum-Ruf',icon:'🌳',type:'summon',n:3,desc:'Ruft Waldgeister, die im Kampf unterstützen oder Spieler angreifen.'}],
+    specials:['Immun gegen Gift','Regeneriert Leben in der Umgebung von Bäumen','Starke Heilungseffekte'],
+    special:{regen:true,summon:{name:'Waldgeister',icon:'🌳'}},loot:['lebensessenz','waldpanzer','baumherz'],
+    plan:'brute branches moss horns:antler fx:leaf',look:{main:'hsl(32,35%,30%)',light:'hsl(85,45%,52%)',dark:'hsl(28,35%,14%)',accent:'#7dff4a'}},
+  {key:'nergath',name:'Schattenfürst Nergath',title:'Herr der Leere',element:'dunkel',elName:'Dunkelheit',immune:{el:'dunkel',text:'Immun gegen Dunkelheit'},
+    bio:'Nergath war einst ein gefallener Engel, der die Leere suchte. Nachdem er die Kontrolle über die Schattenwelt erlangte, verschmolz er mit der Dunkelheit und wurde zu einer unaufhaltsamen Macht. Jetzt strebt er danach, die Realität zu zerreißen und alles in ein ewiges Nichts zu hüllen.',
+    quote:'Die Realität ist nur ein Traum, und ich bin der Albtraum.',
+    abilities:[{name:'Schattenstoß',icon:'🌑',type:'aoe',m:1.6,desc:'Zieht alle Gegner in eine Zone und verursacht hohen Dunkelschaden.'},
+      {name:'Leerenportal',icon:'🌀',type:'summon',n:3,desc:'Beschwört Portale, aus denen Schattenwesen erscheinen.'},
+      {name:'Seelenraub',icon:'👻',type:'drain',m:1.2,desc:'Sammelt Lebensenergie von getroffenen Spielern und heilt sich selbst.'},
+      {name:'Realitätsriss',icon:'💥',type:'aoe',m:2,desc:'Zerstört die Umgebung und verursacht massiven Flächenschaden.'}],
+    specials:['Immun gegen Dunkelheit','Kann Spieler in die Schattenwelt ziehen','Starke Phasenmechanik (50 % / 20 %)'],
+    special:{shadow:.2,strongPhases:true,summon:{name:'Schattenwesen',icon:'🌀'}},loot:['schattenessenz','leerenkristall','nergathsiegel'],
+    plan:'biped head:beast horns:curved wings:bat cape tail:spike fx:smoke',look:{main:'hsl(272,38%,22%)',light:'hsl(285,60%,52%)',dark:'hsl(268,40%,10%)',accent:'#d36bff'}},
+  {key:'aethon',name:'Sturmdrachen Aethon',title:'Herrscher der Wolken',element:'blitz',elName:'Luft',immune:{fam:['elektro'],text:'Immun gegen Blitz'},
+    bio:'Aethon, der Sturmdrache, wurde einst als Symbol der Freiheit verehrt. Doch als die Menschen die Wolkeninseln zerstörten, erwachte in ihm der Zorn. Nun zieht er durch den Himmel, um alles zu bestrafen, was seine Heimat bedroht. Sein Donner hallt über die Länder, und seine Blitze brennen selbst durch stärkste Rüstungen.',
+    quote:'Der Himmel ist nicht das Ende, er ist erst der Anfang!',
+    abilities:[{name:'Blitzschlag',icon:'⚡',type:'aoe',m:1.5,pierce:true,desc:'Zielt einen Spieler und verursacht hohen Schaden mit anschließendem Flächeneffekt.'},
+      {name:'Sturmböen',icon:'🌪️',type:'stun',m:.9,desc:'Wirbelt die Spieler in die Luft und wirft sie zurück.'},
+      {name:'Donnerbrüllen',icon:'📢',type:'stun',m:.5,desc:'Lähmt alle Gegner in der Nähe für kurze Zeit.'},
+      {name:'Wolkenrüstung',icon:'☁️',type:'buff',m:1.15,armor:true,desc:'Erhöht seine Verteidigung und verursacht zusätzlichen Blitzschaden.'}],
+    specials:['Immun gegen Blitz','Fliegt während des Kampfes','Ruft Sturmgeister zu Hilfe'],
+    special:{fly:.15,summon:{name:'Sturmgeister',icon:'🌩️'}},loot:['sturmkristall','drachenfedern','aethonsauge'],
+    plan:'drake horns:curved wings:bat tail:bolt spikes mane fx:spark',look:{main:'hsl(212,35%,42%)',light:'hsl(200,55%,80%)',dark:'hsl(216,45%,18%)',accent:'#8fe3ff'}}
+];
+// Zusätzliche Details, damit die Raidbosse mächtiger wirken als normale Monster
+const spikeK=(ctx,x,y,len,ang,w,c)=>{ctx.save();ctx.translate(x,y);ctx.rotate(ang);facet(ctx,[[-w,0],[0,-len],[w,0]],c,{lw:1.8,k:22});ctx.restore()};
+const RAID_FX={
+  infernodrake:{back(ctx,P,t){for(let i=0;i<5;i++)spikeK(ctx,76-i*2,14+i*3,16-i,-1.9+i*.25,3,tone(P.dark,-4));glow(ctx,50,40,46,'#ff4a1a',.25)},
+    front(ctx,P,t){const p=.6+Math.sin(t/300)*.3;for(const q of[[[44,56],[48,62],[46,68]],[[56,50],[58,58],[62,64]],[[40,74],[44,80]],[[60,68],[63,74]]])line(ctx,q,tone(P.accent,10,0,p),1.6,7);
+      glow(ctx,59,58,9,P.accent,p);gemK(ctx,59,58,2.6,'#ffd04a',1);glow(ctx,80,19,6,'#ffb02e',.8)}},
+  valgorth:{back(ctx,P,t){for(const[x,a]of[[30,-.5],[70,.5],[24,-.9],[76,.9]])crystalK(ctx,x,40,a*a>.5?18:26,5,a,P.light);for(let i=-2;i<=2;i++)crystalK(ctx,50+i*4,8,10+(2-Math.abs(i))*5,2.4,i*.22,tone(P.light,8));glow(ctx,50,46,48,P.accent,.22)},
+    front(ctx,P,t){glow(ctx,72,40,10,P.accent,.5+Math.sin(t/400)*.2)}},
+  tharzul:{back(ctx,P,t){const sw=Math.sin(t/900)*1.5;for(const[x,y,s]of[[22,14,11],[38,6,12],[56,4,13],[74,10,11],[86,22,9],[12,28,8],[64,18,8],[30,22,8]]){const c=tone(P.light,-(x%3)*5);facet(ctx,[[x-s,y+sw*.3],[x-s*.4,y-s*.7+sw],[x+s*.5,y-s*.8+sw],[x+s,y+sw*.2],[x+s*.4,y+s*.6],[x-s*.5,y+s*.6]],c,{lw:1.8,k:20})}
+      for(let i=0;i<5;i++){const ph=(t/2500+i/5)%1;ctx.globalAlpha=Math.sin(ph*Math.PI);glow(ctx,18+i*16,30-ph*20,3,P.accent,.9);ctx.globalAlpha=1}},
+    front(ctx,P,t){for(const x of[46,54])glow(ctx,x,22,5,P.accent,.9)}},
+  nergath:{back(ctx,P,t){glow(ctx,84,14,12,P.accent,.6);ctx.fillStyle='#08040c';ctx.beginPath();ctx.arc(84,14,6,0,7);ctx.fill();
+      for(const sd of[-1,1])for(let i=0;i<3;i++)spikeK(ctx,50+sd*(18+i*3),36+i*2,14-i*2,sd*(.5+i*.35),2.6,tone(P.dark,-2));glow(ctx,50,50,46,P.accent,.25)},
+    front(ctx,P,t){const p=.7+Math.sin(t/250)*.3;for(const x of[45.5,54.5])glow(ctx,x,17,5,P.accent,p);glow(ctx,50,46,12,P.accent,p*.8);
+      for(let i=0;i<3;i++){const a=t/700+i*2.1;sparkle(ctx,50+Math.cos(a)*30,50+Math.sin(a)*24,2.2,tone(P.accent,15))}}},
+  aethon:{back(ctx,P,t){for(const[x,y,w]of[[14,20,18],[40,10,22],[70,6,20],[90,26,14]]){const dx=Math.sin(t/2000+x)*3;facet(ctx,[[x-w+dx,y+4],[x-w*.5+dx,y-4],[x+dx,y-6],[x+w*.6+dx,y-3],[x+w+dx,y+4],[x+dx,y+7]],'hsl(215,20%,32%)',{lw:1.6,k:12})}},
+    front(ctx,P,t){if(Math.sin(t/180)>.6)line(ctx,[[40,4],[34,18],[40,20],[30,36]],'#e8fbff',1.8,9);if(Math.sin(t/230+2)>.7)line(ctx,[[70,6],[76,16],[71,18],[78,30]],'#e8fbff',1.6,9);
+      for(let i=0;i<3;i++){const a=t/300+i*2;line(ctx,[[50+Math.cos(a)*14,60+Math.sin(a)*10],[52+Math.cos(a+.3)*16,58+Math.sin(a+.3)*12]],P.accent,1.2,6)}}}
+};
+for(const r of RAIDS){
+  const pl={arch:r.plan.split(' ')[0],F:parseFeat(r.plan)},key='raid_'+r.key;
+  SPECIES[key]={name:r.name,stage:3,mod:[1,1,1],sp:EL_SPECIAL[r.element],raid:r.key};
+  ART[key]=(ctx,P,t)=>{
+    // Dunkle Aura und Bodenrisse, dann der Boss selbst
+    glow(ctx,50,62,52,P.accent,.35+Math.sin(t/600)*.08);
+    for(let i=0;i<5;i++){const a=i*1.26+t/4000;line(ctx,[[50,90],[50+Math.cos(a)*30,90+Math.sin(a)*4],[50+Math.cos(a)*44,90+Math.sin(a)*6]],tone(P.accent,0,0,.5),1.2,4)}
+    RAID_FX[r.key]?.back?.(ctx,P,t);
+    ARCH[pl.arch].draw(ctx,P,t,pl.F);fxK(ctx,P,t,pl.F);
+    RAID_FX[r.key]?.front?.(ctx,P,t);
+  };
+  HEAD[key]=ARCH[pl.arch].head;BOBF[key]=t=>ARCH_BOB[pl.arch](t,pl.F);NOACC[key]=1;
+}
+function monthId(d=new Date()){return d.toISOString().slice(0,7)}
+function dayId(d=new Date()){return d.toISOString().slice(0,10)}
+function raidOfMonth(){const[y,m]=monthId().split('-').map(Number);return RAIDS[(y*12+m)%RAIDS.length]}
+function raidMonster(){const r=raidOfMonth();return{name:r.name,species:'raid_'+r.key,element:r.element,level:100,stage:3,boss:true,raid:true,look:{...r.look,pattern:'keine',accessory:'keins'},owner:'Raidboss',atk:40,def:30,spd:20}}
+function curRaid(){const m=monthId();if(S.raid?.month!==m)S.raid={month:m,day:'',fights:0,dmg:0,claimed:false};return S.raid}
+let RAID=null;
+async function loadRaid(){if(!S?.net?.id)return;try{RAID=await api('/raid',{month:monthId()})}catch(e){RAID=null}renderRaid()}
+function raidTotal(){return RAID?RAID.hp:RAID_HP_SOLO}
+function raidLeft(){return RAID?Math.max(0,RAID.hp-RAID.dmg):Math.max(0,RAID_HP_SOLO-curRaid().dmg)}
+function raidFoughtToday(){return RAID?RAID.today:curRaid().day===dayId()}
+function raidImmune(f,r){return r.immune.el?f.element===r.immune.el:r.immune.fam.includes(famOf(f))}
+function startRaid(){
+  const rd=curRaid(),r=raidOfMonth();
+  if(S.stage<3||S.level<RAID_MIN_LEVEL){toast(`Für den Raid brauchst du ein erwachsenes Monster ab Level ${RAID_MIN_LEVEL}.`);return}
+  if(raidFoughtToday()){toast('Du hast heute schon gegen den Raidboss gekämpft. Morgen geht es weiter!');return}
+  if(raidLeft()<=0){toast('Der Raidboss ist diesen Monat schon besiegt.');return}
+  if(S.energy<25){toast(`${S.name} braucht mindestens 25 Energie für den Raid.`);return}
+  startBattle(raidMonster(),'raid');if(!B)return;S.energy-=10;
+  const lv=S.level;Object.assign(B.foe,{atk:10+Math.round(lv*1.1),def:12+Math.round(lv*.6),spd:10+Math.round(lv*.5),maxHp:raidLeft(),hp:raidLeft()});
+  B.startHp=B.foe.hp;B.rs={raid:r,phase:raidPhase(B.foe.hp),mark:0,dot:null,stun:0,healcut:0,adds:0,vuln:0,buff:1,immune:raidImmune(B.me,r)};
+  $('#btitle').textContent=`🐉 Raid des Monats: ${r.name}`;
+  bl(`🐉 ${r.name}, ${r.title}, erscheint! Stufe 100.`);bl(`Du hast ${RAID_ROUNDS} Runden. Jeder Schaden zählt für alle.`);
+  if(B.rs.immune)bl(`⚠️ ${r.immune.text}: Deine Angriffe richten kaum Schaden an.`);
+  renderBattle();
+}
+function raidPhase(hp){const f=(hp)/raidTotal();return f>.5?1:f>.2?2:3}
+// Treffer gegen den Raidboss berücksichtigen Immunität, Flug und Panzer
+function raidHitMod(f,t){
+  const rs=B?.rs;if(!rs||!t.raid)return 1;let m=1;
+  if(rs.immune)m*=.3;
+  if(rs.raid.special.lowArmor&&t.hp<raidTotal()*rs.raid.special.lowArmor)m*=.8;
+  if(rs.armorUp)m*=.8;
+  return m;
+}
+function raidBossTurn(playerAct){
+  const rs=B.rs,f=B.foe,me=B.me,r=rs.raid,sp=r.special;
+  const ph=raidPhase(f.hp);
+  if(ph>rs.phase){rs.phase=ph;const k=sp.strongPhases?(ph===2?1.25:1.5):(ph===2?1.15:1.3);rs.buff=Math.max(rs.buff,k);bl(`🔥 Phase ${ph}! ${r.name} wird ${ph===3?'rasend':'wütend'} (Angriff ×${k}).`)}
+  const atk=f.atk;f.atk=Math.round(atk*rs.buff);
+  const strike=(m,pierce)=>{const d=hit(f,me,m*(rs.vuln?1.2:1),pierce?.3:1,true);return d||0};
+  // Markierung von Flammenaugen löst aus
+  if(rs.mark>0){rs.mark--;if(rs.mark===0){if(playerAct==='def')bl('🛡️ Dein Monster ist in Deckung und entgeht den Flammenaugen!');else{bl('👁️ Die Flammenaugen entladen sich!');strike(2.4)}}}
+  const useAbility=B.round%2===1||rs.phase===3;
+  if(f.hp>0&&me.hp>0){
+    if(!useAbility){bl(`🐉 ${r.name} greift an.`);strike(1)}
+    else{
+      const a=r.abilities[rint(0,r.abilities.length-1)];bl(`${a.icon} ${r.name} setzt ${a.name} ein!`);
+      if(a.type==='aoe'){strike(a.m,a.pierce);if(a.stun&&Math.random()<a.stun){rs.stun=1;bl('🧊 Dein Monster ist eingefroren!')}if(a.vuln){rs.vuln=3;bl('🌵 Dein Monster erleidet 3 Runden lang mehr Schaden.')}}
+      else if(a.type==='dot'){rs.dot={n:a.n,dmg:Math.max(2,Math.round(f.atk*a.m)),name:a.name,icon:a.icon};if(a.slow){me.spd=Math.max(1,Math.round(me.spd*.8));bl('🐢 Dein Monster wird langsamer.')}if(a.root){rs.root=a.n;bl('🌱 Dein Monster ist festgewurzelt und kann nicht in Deckung gehen.')}}
+      else if(a.type==='buff'){rs.buff*=a.m;bl(`💢 Angriff von ${r.name} steigt.`);if(a.armor){rs.armorUp=3;bl('☁️ Seine Verteidigung steigt für 3 Runden.')}}
+      else if(a.type==='mark'){rs.mark=2;bl('👁️ Dein Monster ist markiert! Geh in 2 Runden in Deckung.')}
+      else if(a.type==='summon'){rs.adds=a.n;bl(`${sp.summon.icon} ${sp.summon.name} erscheinen!`)}
+      else if(a.type==='heal'){const h=Math.min(Math.round((B.startHp-f.hp)*.4),60+S.level*5);f.hp+=h;rs.dot=null;bl(`🍃 ${r.name} heilt ${h} Lebenspunkte.`)}
+      else if(a.type==='drain'){const d=strike(a.m);const h=Math.min(B.startHp-f.hp,d);f.hp+=h;if(h)bl(`👻 ${r.name} raubt ${h} Lebenspunkte.`)}
+      else if(a.type==='stun'){strike(a.m);if(Math.random()<.6){rs.stun=1;bl('⛓️ Dein Monster kann sich nächste Runde nicht bewegen!')}}
+      else if(a.type==='healcut'){strike(a.m);rs.healcut=3;bl('☠️ Heilung ist 3 Runden lang halbiert.')}
+    }
+    if(sp.shadow&&Math.random()<sp.shadow&&!rs.stun){rs.stun=1;bl('🌑 Nergath zieht dein Monster in die Schattenwelt!')}
+  }
+  f.atk=atk;
+  // Laufende Effekte
+  if(rs.dot&&me.hp>0){const d=Math.min(me.hp,rs.dot.dmg);me.hp-=d;bl(`${rs.dot.icon} ${rs.dot.name}: ${d} Schaden.`);if(--rs.dot.n<=0)rs.dot=null}
+  if(rs.adds>0&&me.hp>0){const d=Math.min(me.hp,Math.max(2,Math.round(f.atk*.35-me.def*.2)));me.hp-=d;bl(`${sp.summon.icon} ${sp.summon.name} greifen an: ${d} Schaden.`);
+    if(sp.regenWithAdds){const h=Math.min(Math.round((B.startHp-f.hp)*.15),15+S.level*2);f.hp+=h;if(h)bl(`💀 Valgorth regeneriert ${h} Lebenspunkte durch seine Untoten.`)}rs.adds--}
+  if(sp.regen){const h=Math.min(Math.round((B.startHp-f.hp)*.15),8+S.level);if(h){f.hp+=h;bl(`🌳 ${r.name} regeneriert ${h} Lebenspunkte.`)}}
+  for(const k of['vuln','healcut','root','armorUp'])if(rs[k]>0)rs[k]--;
+}
+function raidPlayerAct(a){
+  const rs=B.rs,me=B.me,f=B.foe;
+  if(rs.stun>0){rs.stun--;bl(`😵 ${me.name} kann sich nicht bewegen.`);return}
+  if(a==='def'&&rs.root){bl('🌱 Festgewurzelt! Keine Deckung möglich.');hit(me,f,.6);return}
+  if(rs.raid.special.fly&&a!=='def'&&a!=='item'&&Math.random()<rs.raid.special.fly){bl(`🌪️ ${rs.raid.name} fliegt hoch, dein Angriff geht ins Leere.`);return}
+  const hp0=me.hp;doAct(me,f,a);
+  if(rs.healcut&&me.hp>hp0){const cut=Math.floor((me.hp-hp0)/2);me.hp-=cut;bl(`☠️ Heilung halbiert (−${cut}).`)}
+}
+function raidRound(a){
+  B.rs.lastAct=a;
+  raidPlayerAct(a);
+  if(B.foe.hp>0&&B.me.hp>0)raidBossTurn(a);
+  B.me.guard=false;B.foe.guard=false;if(B.me.cd>0)B.me.cd--;if(B.me.buff>0)B.me.buff--;
+  B.round++;
+  if(B.foe.hp<=0||B.me.hp<=0||B.round>=RAID_ROUNDS){if(B.me.hp<=0)bl(`😵 ${S.name} ist erschöpft und zieht sich zurück.`);else if(B.foe.hp>0)bl(`🐉 ${B.rs.raid.name} schwingt sich davon. Morgen kannst du wieder angreifen.`);endRaid()}
+}
+function endRaid(){
+  B.over=true;const r=B.rs.raid,rd=curRaid();
+  const dmg=Math.max(0,B.startHp-B.foe.hp),xp=30+Math.round(dmg/4),coins=Math.round(dmg/6);
+  rd.day=dayId();rd.fights++;rd.dmg+=dmg;count('raids');gainXp(xp);S.coins+=coins;bondUp(2);
+  bl(`⚔️ Du hast ${r.name} ${dmg} Schaden zugefügt. +${xp} EP, +${coins} Münzen.`);log(`🐉 ${S.name} hat gegen ${r.name} gekämpft: ${dmg} Schaden.`);
+  if(RAID){api('/raid/hit',{month:monthId(),dmg}).then(d=>{RAID=d;renderRaid()}).catch(e=>toast(e.message))}
+  else if(raidLeft()<=0)raidLoot();
+  clampAll();save();renderStatus();renderRaid();
+  $('#bActs').style.display='none';$('#bDone').style.display='flex';
+}
+function raidLoot(){
+  const r=raidOfMonth(),rd=curRaid(),fights=RAID?RAID.fights:rd.fights,got=[];
+  const give=k=>{S.loot[k]=(S.loot[k]||0)+1;got.push(GEAR[k].icon+' '+GEAR[k].name)};
+  give(r.loot[0]);give(r.loot[0]);
+  if(fights>=3)give(r.loot[1]);
+  if(fights>=6||Math.random()<.35)give(r.loot[2]);
+  rd.claimed=true;S.coins+=300;gainXp(400);S.trophies.push({type:'raid',name:r.name,month:monthId()});
+  log(`🏆 ${r.name} ist besiegt! Beute: ${got.join(', ')}, +300 Münzen, +400 EP.`);toast('Raidboss besiegt! Beute erhalten.');
+}
+function claimRaid(){api('/raid/claim',{month:monthId()}).then(d=>{RAID=d;raidLoot();save();renderStatus();renderLists()}).catch(e=>toast(e.message))}
+function renderRaid(){
+  const box=$('#raidBox');if(!box||!S)return;
+  const r=raidOfMonth(),m=raidMonster(),left=raidLeft(),tot=raidTotal(),rd=curRaid();
+  const fights=RAID?RAID.fights:rd.fights,claimed=RAID?RAID.claimed:rd.claimed;
+  let btn;
+  if(left<=0)btn=RAID&&fights&&!claimed?`<button class="primary" onclick="claimRaid()">🎁 Beute abholen</button>`:`<span class="muted">✅ Besiegt! Nächsten Monat erscheint ein neuer Raidboss.</span>`;
+  else if(raidFoughtToday())btn=`<span class="muted">Heute schon gekämpft. Morgen geht es weiter.</span>`;
+  else btn=`<button class="primary" onclick="startRaid()" ${S.stage<3||S.level<RAID_MIN_LEVEL?'disabled':''}>🐉 Raid angreifen</button>${S.stage<3||S.level<RAID_MIN_LEVEL?`<span class="muted">ab Level ${RAID_MIN_LEVEL} und erwachsen</span>`:''}`;
+  const days=new Date(new Date().getUTCFullYear(),new Date().getUTCMonth()+1,1)-Date.now();
+  box.innerHTML=`<div class="raid" style="--rc:${r.look.accent}">
+    <div class="raidtop"><img src="${spriteURL(m)}"><div class="grow"><div class="raidname">${esc(r.name)}</div><div class="raidsub">${esc(r.title)}</div>
+      <div class="muted"><span class="pill">RAID BOSS</span> Stufe 100 · Element: ${esc(r.elName)} ${ELEMENTS[r.element].icon} · noch ${Math.max(1,Math.ceil(days/864e5))} Tage</div>
+      <div class="track" style="margin:8px 0 4px"><div class="fill" style="width:${left/tot*100}%;background:linear-gradient(90deg,#b3261e,${r.look.accent})"></div></div>
+      <div class="muted">${left.toLocaleString('de-DE')} / ${tot.toLocaleString('de-DE')} Lebenspunkte · ${RAID?`${RAID.players.length} Kämpfer: ${esc(RAID.players.join(', ')||'noch niemand')}`:'allein (online kämpfen alle zusammen)'} · deine Kämpfe: ${fights}</div>
+      <div class="row" style="margin-top:8px">${btn}</div></div></div>
+    <details><summary>📜 Biografie, Fähigkeiten und Beute</summary>
+      <p class="muted">${esc(r.bio)}</p>
+      <div class="raidgrid"><div><b>Hauptfähigkeiten</b>${r.abilities.map(a=>`<div class="raidab"><span>${a.icon}</span><div><b>${esc(a.name)}</b><div class="muted">${esc(a.desc)}</div></div></div>`).join('')}</div>
+      <div><b>Besonderheiten</b><ul>${r.specials.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><b>Mögliche Beute</b><div class="row">${r.loot.map(k=>`<div class="loot" title="${esc(GEAR[k].desc)}"><span>${GEAR[k].icon}</span>${esc(GEAR[k].name)}<i>${{mat:'Upgrade-Material',armor:'Rüstungsteil',acc:'Accessoire'}[GEAR[k].type]}</i></div>`).join('')}</div>
+      <p class="muted" style="font-size:12px">Jeder Mitkämpfer bekommt 2× Material. Ab 3 Kämpfen gibt es das Rüstungsteil, ab 6 Kämpfen sicher das Accessoire (sonst mit Glück).</p></div></div>
+      <p class="raidquote">„${esc(r.quote)}“</p></details></div>`;
+}
+// ----- Raid-Beute: Material benutzen, Rüstung und Accessoire anlegen -----
+function gearBonus(m){const b={atk:0,def:0,spd:0};for(const k of[m.gear?.armor,m.gear?.acc])if(GEAR[k])for(const[s,v]of Object.entries(GEAR[k].bonus||{}))b[s]+=v;return b}
+function useGear(k){
+  const g=GEAR[k];if(!g||!(S.loot[k]>0))return;
+  if(g.type==='mat'){if(!canAct(false))return;S.loot[k]--;S[g.stat]+=3;if(g.heal){S.health=100;S.sick=false}effect('✨');log(`${g.icon} ${S.name} nimmt ${g.name} auf: +3 ${STATN[g.stat]}.`)}
+  else{const slot=g.type;S.gear[slot]=S.gear[slot]===k?null:k;log(S.gear[slot]?`${g.icon} ${S.name} trägt jetzt ${g.name}.`:`${g.icon} ${g.name} abgelegt.`)}
+  save();renderStatus();renderLists();
+}
+function gearHtml(){
+  const own=Object.keys(GEAR).filter(k=>S.loot[k]>0);
+  if(!own.length)return'<p class="muted">Noch keine Raid-Beute. Besiege mit allen zusammen den Raidboss des Monats.</p>';
+  return own.map(k=>{const g=GEAR[k],on=S.gear.armor===k||S.gear.acc===k;return`<div class="item"><div style="font-size:28px">${g.icon}</div><div class="grow"><div class="t">${esc(g.name)}${on?' <span class="pill">angelegt</span>':''}</div><div class="muted">${esc(g.desc)} · Du hast ${S.loot[k]}</div></div><button onclick="useGear('${k}')">${g.type==='mat'?'✨ Benutzen':on?'Ablegen':'Anlegen'}</button></div>`}).join('');
+}
+
 // ----- Freundesturnier -----
 let tour=null;
 function startTournament(){
@@ -1772,6 +2033,8 @@ const ACH=[
   ['beeren','Beerenprofi','Hole 25 Punkte im Beerenregen.',s=>(s.cnt.mgBest||0)>=25,40],
   ['level10','Erfahren','Erreiche Level 10.',s=>s.level>=10,60],
   ['forscher','Forscher','Entdecke 8 Formen im Lexikon.',s=>Object.keys(s.dex).length>=8,60],
+  ['raid','Raidkämpfer','Kämpfe gegen einen Raidboss.',s=>(s.cnt.raids||0)>=1,80],
+  ['raidsieg','Legendenbezwinger','Besiege mit allen zusammen einen Raidboss.',s=>s.trophies.some(t=>t.type==='raid'),400],
   ['sammler','Sammler','Entdecke 30 Formen im Lexikon.',s=>Object.keys(s.dex).length>=30,150],
   ['mutation','Mutation','Bekomme ein Zucht-Ei, das zu einer anderen Familie mutiert ist.',s=>s.nest.some(e=>e.mutation)||(s.cnt.mutations||0)>0,60]
 ];
@@ -1793,7 +2056,7 @@ function renderDex(){
     <div class="dexfam"><div class="dexhead">🫠 Sonderformen</div><div class="dexrow">${slot('ei','Anfang')}${slot('schleim','zu wenig Pflege')}${slot('ult:schleim','Ur-Form')}</div></div></div>
     <h3 style="margin-top:16px">🏅 Erfolge (${a}/${ACH.length})</h3>
     ${ACH.map(([id,name,desc,,coins])=>`<div class="item" style="padding:8px;${S.ach[id]?'':'opacity:.55'}"><div style="font-size:22px">${S.ach[id]?'🏅':'🔒'}</div><div class="grow"><div class="t">${name}</div><div class="muted">${desc}</div></div><span class="muted">${coins} 🪙</span></div>`).join('')}
-    ${S.trophies.length?`<h3 style="margin-top:16px">🏆 Trophäen</h3>${S.trophies.map(t=>`<span class="pill">${t.type==='boss'?'👹 '+esc(t.name)+' ('+t.week+')':'🏆 Freundesturnier'}</span>`).join('')}`:''}`;
+    ${S.trophies.length?`<h3 style="margin-top:16px">🏆 Trophäen</h3>${S.trophies.map(t=>`<span class="pill">${t.type==='boss'?'👹 '+esc(t.name)+' ('+t.week+')':t.type==='raid'?'🐉 '+esc(t.name)+' ('+t.month+')':'🏆 Freundesturnier'}</span>`).join('')}`:''}`;
 }
 function useStern(){if(!S.items.stern){toast('Du hast keinen Sternenstaub. Den gibt es für besiegte Wochen-Bosse.');return}if(!canAct(false))return;S.items.stern--;bondUp(15);effect('✨');log(`✨ ${S.name} wurde mit Sternenstaub verwöhnt. +15 Zuneigung`);save();renderStatus();renderLists()}
 
@@ -1813,7 +2076,7 @@ function ask(text,yes='Ja',no='Abbrechen'){
 // Freilassen: das Monster kehrt in die Wildnis zurück, über den Fragebogen gibt es ein neues Ei
 function keepData(extra={}){
   return{owner:S.owner,coins:S.coins,items:S.items,friends:S.friends,claimed:S.claimed,log:S.log,net:S.net,netGuests:S.netGuests,speed:S.speed,
-    dex:S.dex,ach:S.ach,cnt:S.cnt,trophies:S.trophies,week:S.week,lastTour:S.lastTour,nest:S.nest,hall:[...S.hall,{...snapshot(),retired:Date.now()}].slice(-20),...extra};
+    dex:S.dex,ach:S.ach,cnt:S.cnt,trophies:S.trophies,week:S.week,lastTour:S.lastTour,loot:S.loot,raid:S.raid,nest:S.nest,hall:[...S.hall,{...snapshot(),retired:Date.now()}].slice(-20),...extra};
 }
 async function releaseMonster(){
   if(S.quest){toast(`${S.name} ist gerade auf Quest.`);return}
@@ -1865,8 +2128,9 @@ function renderLists(){
     return`<div class="item" style="align-items:flex-start"><img src="${spriteURL(f)}"><div class="grow"><div class="t">${esc(f.name)} <span class="muted">von ${esc(f.owner)}</span></div><div class="muted">${esc(speciesLabel(f))}${f.element?' '+ELEMENTS[f.element].icon:''} · Lv ${f.level} · ⚔️${e.atk} 🛡️${e.def} ⚡${e.spd} · Siege ${f.wins}</div>${qa}</div><button title="Entfernen" onclick="removeFriend('${f.exportId}')">✖</button></div>`;
   }).join(''):'<p class="muted">Noch niemand zu Besuch.</p>';
   // Laden
+  renderRaid();
   $('#shop').innerHTML=Object.entries(ITEMS).filter(([,it])=>it.price>0).map(([k,it])=>`<div class="item"><div style="font-size:30px">${it.icon}</div><div class="grow"><div class="t">${it.name}</div><div class="muted">${it.desc} · Du hast ${S.items[k]||0}</div></div><button onclick="buy('${k}')">${it.price} 🪙 kaufen</button></div>`).join('')+
-    `<div class="row"><button onclick="useTrank()">🧪 Heiltrank jetzt benutzen</button><button onclick="useStern()">✨ Sternenstaub benutzen (${S.items.stern||0})</button></div>`;
+    `<div class="row"><button onclick="useTrank()">🧪 Heiltrank jetzt benutzen</button><button onclick="useStern()">✨ Sternenstaub benutzen (${S.items.stern||0})</button></div>`+`<h3 style="margin-top:16px">🎒 Raid-Beute</h3>${gearHtml()}`;
   renderNest();renderBoss();renderDex();
   renderStatus();
 }
@@ -1974,7 +2238,7 @@ function boot(){
   if(booted)return;booted=true;
   $('#speedSel').value=String(S.speed);
   tick();renderLog();renderLists();renderOnline();setInterval(tick,1000);
-  netSync().then(loadBoss);setInterval(netSync,20000);setInterval(loadBoss,120000);
+  netSync().then(()=>{loadBoss();loadRaid()});setInterval(netSync,20000);setInterval(()=>{loadBoss();loadRaid()},120000);
 }
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
