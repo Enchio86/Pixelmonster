@@ -1,6 +1,6 @@
 {
- "version": "0.9.3",
- "sha256": "6bc9d92ab3c303ba519a5adf3b5b0b1b2b86354c7682deab50fc968f364eb1cd",
- "notes": "Pension und Schutz bei Abwesenheit",
+ "version": "0.9.4",
+ "sha256": "1f56b1ba89dbcedec62af266038d6e6ac2626fec99ed087bd1593a1cd859ec89",
+ "notes": "Neues Monster-Design: mehr Details, grimmiger, mehr Abwechslung",
  "download": "https://github.com/Enchio86/Pixelmonster/releases/latest"
 }

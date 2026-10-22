@@ -403,11 +403,34 @@ function glow(ctx,x,y,r,c,a=1){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.a
 function line(ctx,pts,c,w,blur=0){ctx.save();ctx.strokeStyle=c;ctx.lineWidth=w;ctx.lineCap='round';ctx.lineJoin='round';if(blur){ctx.shadowColor=c;ctx.shadowBlur=blur*SC}ctx.beginPath();pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.stroke();ctx.restore()}
 function bone(ctx,x0,y0,x1,y1){return lin(ctx,x0,y0,x1,y1,'#f6ecd2','#8a7656')}
 function pattern(ctx,p,P,x0,y0,w,h){
+  if(RIM&&CUR_F.det)detail(ctx,p,P,x0,y0,w,h,CUR_F.det);
   if(P.pattern==='keine')return;
   const r=seeded(P.seed);ctx.save();ctx.clip(p);ctx.fillStyle=tone(P.main,-24,0,.6);
   if(P.pattern==='punkte'){for(let i=0;i<10;i++){ctx.beginPath();ctx.arc(x0+r()*w,y0+r()*h,1.4+r()*2.4,0,7);ctx.fill()}}
   else if(P.pattern==='streifen'){for(let i=-1;i<7;i++){const x=x0+i*w/6;ctx.beginPath();ctx.moveTo(x,y0-6);ctx.lineTo(x+4,y0-6);ctx.lineTo(x+w*.2+4,y0+h+6);ctx.lineTo(x+w*.2,y0+h+6);ctx.fill()}}
   else{for(let i=0;i<5;i++){ctx.beginPath();ctx.ellipse(x0+r()*w,y0+r()*h,3+r()*6,2+r()*4,r()*3,0,7);ctx.fill()}}
+  ctx.restore();
+}
+// Oberflächen-Details je Familie: Schuppen, Fell, Risse, Panzerplatten, Rinde, Runen ...
+function detail(ctx,p,P,x0,y0,w,h,k){
+  const r=seeded(P.seed^hash32(k+x0+','+y0));ctx.save();ctx.clip(p);ctx.lineCap='round';ctx.lineJoin='round';
+  const dk=tone(P.main,-20,0,.55),lt=tone(P.main,18,0,.4);
+  if(k==='scales'){ctx.lineWidth=.8;for(let j=0,y=y0+3;y<y0+h;y+=4.2,j++)for(let x=x0+(j%2?2.6:0);x<x0+w;x+=5.2){ctx.strokeStyle=dk;ctx.beginPath();ctx.moveTo(x-2.4,y-1);ctx.lineTo(x,y+1.6);ctx.lineTo(x+2.4,y-1);ctx.stroke();ctx.strokeStyle=lt;ctx.beginPath();ctx.moveTo(x-1.6,y-1.6);ctx.lineTo(x,y);ctx.stroke()}}
+  else if(k==='fur'){ctx.lineWidth=.9;for(let i=0;i<w*h/26;i++){const x=x0+r()*w,y=y0+r()*h,a=1.9+r()*.5;ctx.strokeStyle=r()<.6?dk:lt;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*3.2,y+Math.sin(a)*3.2);ctx.stroke()}}
+  else if(k==='cracks'||k==='marks'||k==='runes'||k==='veins'){
+    ctx.shadowColor=P.accent;ctx.shadowBlur=5*SC;ctx.strokeStyle=tone(P.accent,k==='veins'?-10:8,0,.9);ctx.lineWidth=k==='marks'?1.6:1.1;
+    if(k==='runes'){ctx.fillStyle=ctx.strokeStyle;for(let i=0;i<Math.max(2,w*h/260);i++){const x=x0+4+r()*(w-8),y=y0+4+r()*(h-8),s=1.6+r();ctx.beginPath();ctx.moveTo(x-s,y-s);ctx.lineTo(x+s,y-s);ctx.lineTo(x-s,y+s);ctx.lineTo(x+s,y+s);ctx.moveTo(x,y-s*1.5);ctx.lineTo(x,y+s*1.5);ctx.stroke()}}
+    else if(k==='marks'){for(let i=0;i<3;i++){const y=y0+h*(.3+i*.2),xs=x0+w*.15;ctx.beginPath();ctx.moveTo(xs,y);for(let x=xs;x<x0+w*.85;x+=4)ctx.lineTo(x+2,y+((x-xs)/4%2?-2:2));ctx.stroke()}}
+    else for(let i=0;i<Math.max(2,w*h/220);i++){let x=x0+r()*w,y=y0+r()*h;ctx.beginPath();ctx.moveTo(x,y);for(let j=0;j<4;j++){x+=r()*7-3.5;y+=r()*7-2;ctx.lineTo(x,y)}ctx.stroke()}}
+  else if(k==='stone'){for(let i=0;i<w*h/160;i++){let x=x0+r()*w,y=y0+r()*h;ctx.strokeStyle=tone(P.main,-28,0,.7);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,y);for(let j=0;j<3;j++){x+=r()*8-4;y+=r()*6;ctx.lineTo(x,y)}ctx.stroke()}
+    for(let i=0;i<w*h/200;i++){const x=x0+r()*w,y=y0+r()*h;ctx.fillStyle=tone(P.main,r()<.5?-14:12,0,.6);ctx.fill(poly([[x,y],[x+3,y-2],[x+5,y+1],[x+2,y+3]]))}}
+  else if(k==='plates'){ctx.strokeStyle=tone(P.main,-30,0,.75);ctx.lineWidth=.9;for(let y=y0+7;y<y0+h;y+=9){ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x0+w,y);ctx.stroke()}
+    for(let y=y0+7,j=0;y<y0+h;y+=9,j++)for(let x=x0+(j%2?5:9);x<x0+w;x+=10){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+9);ctx.stroke();ctx.fillStyle=tone(P.main,22,0,.8);ctx.fillRect(x+1.6,y+1.6,1.1,1.1)}}
+  else if(k==='bark'){ctx.strokeStyle=tone(P.main,-26,0,.7);ctx.lineWidth=1.1;for(let x=x0+2;x<x0+w;x+=4.5){ctx.beginPath();ctx.moveTo(x+r()*2,y0);for(let y=y0;y<y0+h;y+=5)ctx.lineTo(x+r()*2.4-1.2,y);ctx.stroke()}}
+  else if(k==='shell'){ctx.strokeStyle=tone(P.main,-26,0,.7);ctx.lineWidth=.9;for(let j=0,y=y0;y<y0+h;y+=6,j++)for(let x=x0+(j%2?4:0);x<x0+w;x+=8){ctx.stroke(poly([[x-3,y],[x-1.5,y-2.6],[x+1.5,y-2.6],[x+3,y],[x+1.5,y+2.6],[x-1.5,y+2.6]]))}}
+  else if(k==='feathers'){ctx.lineWidth=.9;for(let j=0,y=y0+3;y<y0+h;y+=4.4,j++)for(let x=x0+(j%2?3:0);x<x0+w;x+=6){ctx.strokeStyle=dk;ctx.beginPath();ctx.moveTo(x-3,y-1.6);ctx.quadraticCurveTo(x,y+2.6,x+3,y-1.6);ctx.stroke()}}
+  else if(k==='stars'){for(let i=0;i<w*h/90;i++){const x=x0+r()*w,y=y0+r()*h;ctx.fillStyle=`rgba(255,250,220,${.3+r()*.6})`;ctx.fillRect(x,y,.9+r()*.8,.9+r()*.8)}}
+  else if(k==='slime'){for(let i=0;i<w*h/180;i++){const x=x0+r()*w,y=y0+r()*h,s=1.2+r()*2.2;ctx.fillStyle=tone(P.light,10,0,.45);ctx.beginPath();ctx.arc(x,y,s,0,7);ctx.fill();ctx.strokeStyle=tone(P.main,-20,0,.5);ctx.lineWidth=.6;ctx.stroke()}}
   ctx.restore();
 }
 function eye(ctx,x,y,r,P,t,slit=true){
@@ -444,7 +467,7 @@ function accessory(ctx,P,x,y,t){
 
 function sparkle(ctx,x,y,r,c){ctx.save();ctx.fillStyle=c;ctx.shadowColor=c;ctx.shadowBlur=6*SC;ctx.beginPath();ctx.moveTo(x,y-r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.quadraticCurveTo(x,y,x,y+r);ctx.quadraticCurveTo(x,y,x-r,y);ctx.quadraticCurveTo(x,y,x,y-r);ctx.fill();ctx.restore()}
 // ---------- Kantige Monster: Low-Poly-Facetten ----------
-const LDIR=[-.5,-.86];
+const LDIR=[-.5,-.86];let RIM=true,CUR_F={};
 // Füllt ein Polygon als geschliffene Facetten: jede Kante bekommt ein Dreieck zur Mitte, hell zum Licht hin, dunkel davon weg
 function facet(ctx,pts,c,o={}){
   const lw=o.lw??2.4;ctx.save();ctx.lineJoin='miter';ctx.miterLimit=5;
@@ -458,6 +481,12 @@ function facet(ctx,pts,c,o={}){
     const col=tone(c,(nx*LDIR[0]+ny*LDIR[1])*k);
     ctx.fillStyle=ctx.strokeStyle=col;ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.closePath();ctx.fill();ctx.stroke();
   }
+  if(lw&&o.rim!==false&&RIM){ctx.clip(p);ctx.lineCap='round';
+    for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length];let nx=b[1]-a[1],ny=a[0]-b[0];const L=Math.hypot(nx,ny)||1;nx/=L;ny/=L;
+      if(nx*((a[0]+b[0])/2-cx)+ny*((a[1]+b[1])/2-cy)<0){nx=-nx;ny=-ny}
+      const d=nx*LDIR[0]+ny*LDIR[1];
+      if(d>.35){ctx.strokeStyle=tone(c,26,-8,.85);ctx.lineWidth=1.5}else if(d<-.4){ctx.strokeStyle=tone(c,-22,4,.7);ctx.lineWidth=3.2}else continue;
+      ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}}
   ctx.restore();return p;
 }
 const mir=(pts,cx=50)=>pts.map(([x,y])=>[2*cx-x,y]);
@@ -490,6 +519,7 @@ function eyeK(ctx,x,y,r,P,t,dir=1,f=.6){
   ctx.fillStyle=g;ctx.fill(poly([[ix,y-r*.8],[ix+r*.6,y],[ix,y+r*.75],[ix-r*.6,y]]));ctx.restore();
   ctx.fillStyle='#07050b';ctx.fill(poly([[ix+r*.06*s,y-r*.6],[ix+r*.22*s,y],[ix+r*.06*s,y+r*.6],[ix-r*.1*s,y]]));
   ctx.fillStyle='#fff';ctx.fill(poly([[x-r*.42*s,y-r*.5],[x-r*.12*s,y-r*.62],[x-r*.3*s,y-r*.22]]));
+  if(f>.2&&RIM){ctx.fillStyle=OUT;ctx.fill(poly([[x-r*1.25*s,y-r*(.55+f*.2)],[x+r*1.15*s,y-r*(.25-f*.75)],[x+r*1.05*s,y+r*(.1-f*.6)],[x-r*.2*s,y-r*(.6+f*.15)]]))}
 }
 function flameK(ctx,x,y,s,c,t,ph=0,ang=0){
   const f=Math.sin(t/110+ph)*1.6,g=Math.cos(t/140+ph)*1.2;
@@ -633,6 +663,7 @@ function jawK(ctx,x,y,len,P,open=0){
   line(ctx,[[x,y],[x+len*.5,y+.6+open],[x+len,y-.4]],OUT,1.6);
   tri(ctx,[x+len*.55,y+.2+open],[x+len*.66,y+3.2+open],[x+len*.75,y],'#f6efe0',1);
 }
+function claws(ctx,x,y,n=3,dir=1,c='#efe3c4'){for(let i=0;i<n;i++)tri(ctx,[x+i*2.8-1.4,y-2.6],[x+i*2.8+1.4*dir+1.2,y+.6],[x+i*2.8-.4,y],c,.9)}
 // ---------- Körperbaupläne ----------
 // Alle zeichnen im 100×100-Raster, Boden bei y≈90, Blick nach rechts (bzw. nach vorn)
 const ARCH={
@@ -642,14 +673,15 @@ const ARCH={
     if(F.wings)for(const sd of[-1,1])wingK(ctx,P,t,F,50+sd*10,64,.42,sd,true);
     tailK(ctx,P,t,F,38,80,.7);
     if(fl){facet(ctx,[[38,72],[62,72],[58,82],[52,94],[46,84]],tone(P.main,-6));glow(ctx,52,92,6,P.accent,.4)}
-    else for(const sd of[-1,1])facet(ctx,sd<0?[[37,78],[47,78],[47,90],[34,90]]:[[53,78],[63,78],[66,90],[53,90]],tone(P.main,-8),{lw:2.2});
+    else for(const sd of[-1,1]){facet(ctx,sd<0?[[37,78],[47,78],[47,90],[34,90]]:[[53,78],[63,78],[66,90],[53,90]],tone(P.main,-8),{lw:2.2});claws(ctx,sd<0?35:55,90,3)}
     const body=[[36,64],[50,59+b],[64,64],[66,78],[58,86],[42,86],[34,78]];
     const bp=facet(ctx,body,P.main);pattern(ctx,bp,P,30,58,40,30);
     facet(ctx,[[44,68],[56,68],[54,81],[46,81]],P.light,{lw:0,k:10});
     if(F.moss)facet(ctx,[[36,70],[42,66],[44,74],[38,78]],tone(P.accent,-35,-20),{lw:1.2});
-    for(const sd of[-1,1])facet(ctx,sd<0?[[37,66],[27,77],[33,79],[39,74]]:[[63,66],[73,77],[67,79],[61,74]],tone(P.main,-4),{lw:2});
-    ctx.translate(0,b);
-    const hy=F.helm?1:0;
+    for(const sd of[-1,1]){facet(ctx,sd<0?[[37,66],[27,77],[33,79],[39,74]]:[[63,66],[73,77],[67,79],[61,74]],tone(P.main,-4),{lw:2});
+      for(let i=0;i<2;i++){const x=sd<0?28+i*2.6:72-i*2.6;tri(ctx,[x-1,78],[x+1,78],[x,81],'#efe3c4',.7)}}
+    for(let i=0;i<2;i++)line(ctx,[[45,73+i*4],[55,73+i*4]],tone(P.light,-30,0,.6),.8);
+    ctx.translate(0,b);ctx.translate(50,60);ctx.scale(.9,.9);ctx.translate(-50,-60);
     earsK(ctx,P,t,F,50,22,40,true);hornsK(ctx,P,t,F,50,22,40,true);
     const head=F.helm?[[30,30],[36,22],[64,22],[70,30],[70,48],[62,58],[38,58],[30,48]]:[[29,40],[34,27],[50,21],[66,27],[71,40],[66,54],[50,60],[34,54]];
     const hp=facet(ctx,head,F.helm?tone(P.main,4):P.main,{c:[47,36]});pattern(ctx,hp,P,28,20,44,40);
@@ -658,12 +690,14 @@ const ARCH={
       if(!sleepy&&(t+P.seed%3000)%4300>=130){ctx.fill(poly([[39,40],[46,39],[46,44],[40,44]]));ctx.fill(poly([[54,39],[61,40],[60,44],[54,44]]))}else{ctx.fillRect(39,42,7,1.2);ctx.fillRect(54,42,7,1.2)}
       ctx.restore();line(ctx,[[44,53],[56,53]],OUT,1.6);
     }else{
-      if(F.muzzle)facet(ctx,[[40,49],[50,46],[60,49],[57,57],[50,60],[43,57]],P.light,{lw:0,k:8});
-      eyeK(ctx,41.5,42,5.6,P,t,1,.15);eyeK(ctx,58.5,42,5.6,P,t,-1,.15);
-      if(F.muzzle)tri(ctx,[48,49],[52,49],[50,51.5],OUT,0);
-      line(ctx,[[46.5,53],[50,55.5],[53.5,53]],OUT,1.5);
-      if(F.horns||F.tail==='spike')tri(ctx,[51,54.4],[52.6,54.4],[51.8,57],'#fff',.8);
-      ctx.fillStyle=tone(P.accent,0,0,.45);ctx.fill(poly([[32,48],[37,47],[35,50]]));ctx.fill(poly([[68,48],[63,47],[65,50]]));
+      if(F.snout){facet(ctx,[[38,48],[50,45],[62,48],[64,56],[56,63],[44,63],[36,56]],tone(P.main,-2),{lw:2,k:16,c:[50,52]});
+        facet(ctx,[[42,57],[58,57],[55,62],[45,62]],P.light,{lw:0,k:8});for(const x of[46,54])tri(ctx,[x-1.4,50],[x+1.4,50],[x,51.6],OUT,0);
+        line(ctx,[[40,56],[45,57.5],[50,56.5],[55,57.5],[60,56]],OUT,1.5);for(const x of[44,56])tri(ctx,[x-1.2,57],[x+1.2,57],[x,60.4],'#fff',.7)}
+      else if(F.muzzle)facet(ctx,[[40,49],[50,46],[60,49],[57,57],[50,60],[43,57]],P.light,{lw:0,k:8});
+      eyeK(ctx,41.5,41,4.8,P,t,1,.65);eyeK(ctx,58.5,41,4.8,P,t,-1,.65);
+      if(!F.snout){if(F.muzzle)tri(ctx,[48,49],[52,49],[50,51.5],OUT,0);
+        line(ctx,[[45,53.5],[48,54.5],[50,53.6],[52,54.5],[55,53.5]],OUT,1.5);
+        for(const x of[47.4,52.6])tri(ctx,[x-1,54],[x+1,54],[x,56.6],'#fff',.7)}
     }
     topK(ctx,P,t,F,50,22,40);
     ctx.restore();
@@ -910,50 +944,165 @@ const ARCH={
   }}
 };
 
+// ---------- Körperbau-Varianten: gleiche Grundform, anderer Aufbau ----------
+const BUILDS={brute:{
+  // Oger: gebückt, Kopf tief zwischen den Schultern, lange Arme bis zum Boden, Hauer
+  beast(ctx,P,t,F){
+    const b=Math.sin(t/800)*1;shadow(ctx,50,92,40);
+    for(const sd of[-1,1]){const L=[[30,72],[45,72],[46,82],[48,90],[27,90],[29,82]];facet(ctx,sd<0?L:mir(L),tone(P.main,-12),{lw:2.4});claws(ctx,sd<0?29:63,90,4)}
+    ctx.save();ctx.translate(0,b);
+    const tp=facet(ctx,[[20,44],[30,30],[42,26],[58,26],[70,30],[80,44],[80,60],[70,78],[50,82],[30,78],[20,60]],P.main,{c:[46,46]});pattern(ctx,tp,P,18,24,64,60);
+    const bp=facet(ctx,[[36,52],[64,52],[66,68],[58,78],[42,78],[34,68]],tone(P.light,-6),{lw:1.4,k:12});for(let i=0;i<3;i++)line(ctx,[[38+i,58+i*6],[62-i,58+i*6]],tone(P.light,-30,0,.7),1);
+    if(F.rocks)for(const[x,y,s]of[[30,34,6],[68,36,5],[50,28,4]])facet(ctx,[[x-s,y+2],[x-s*.6,y-s],[x+s*.4,y-s*1.2],[x+s,y+1],[x,y+s*.6]],tone(P.main,-6),{lw:1.6,k:24});
+    if(F.moss)for(const[x,y]of[[28,40],[70,46],[40,74]])facet(ctx,[[x-6,y],[x-2,y-4],[x+6,y-3],[x+3,y+3],[x-3,y+3]],tone(P.accent,-38,-22),{lw:1.2});
+    for(const sd of[-1,1]){const o=pts=>sd<0?pts:mir(pts);
+      facet(ctx,o([[12,38],[26,34],[28,54],[18,60]]),tone(P.main,-4),{lw:2.2});
+      if(F.weapon==='club'&&sd>0){ctx.save();ctx.translate(86,82);ctx.rotate(-.35);facet(ctx,[[-3,0],[3,0],[7,-34],[0,-42],[-7,-34]],'#7a5634',{lw:2,k:16});for(const[x,y]of[[-6,-30],[6,-28],[0,-40],[-3,-20],[4,-16]])tri(ctx,[x-2,y],[x,y-4],[x+2,y],'#e0e0e0',1);ctx.restore()}
+      facet(ctx,o([[8,56],[24,54],[28,72],[26,84],[10,86],[6,72]]),tone(P.main,-8),{lw:2.2,k:18});
+      for(let i=0;i<3;i++){const x=sd<0?10+i*5:90-i*5;tri(ctx,[x-2,85],[x+2,85],[x+sd*-0.5,90],'#efe3c4',1)}
+      for(let i=0;i<3;i++){const x=sd<0?18+i*5:82-i*5,y=31-i*1.5;tri(ctx,[x-3,y+3],[x+sd*-1,y-5-i],[x+3,y+3],tone(P.dark,-6),1.4)}}
+    earsK(ctx,P,t,F,50,30,22,true);hornsK(ctx,P,t,F,50,26,24,true);
+    const hp=facet(ctx,[[39,30],[42,22],[50,20],[58,22],[61,30],[62,40],[57,46],[43,46],[38,40]],P.main,{c:[48,30]});pattern(ctx,hp,P,36,18,28,30);
+    facet(ctx,[[38,36],[62,36],[64,46],[56,50],[44,50],[36,46]],tone(P.dark,4),{lw:1.8,k:14});
+    line(ctx,[[42,42],[58,42]],OUT,1.4);for(let i=0;i<4;i++)tri(ctx,[44+i*4,42],[45.5+i*4,44.6],[47+i*4,42],'#f6efe0',.6);
+    for(const sd of[-1,1])facet(ctx,[[50+sd*7,44],[50+sd*9,33],[50+sd*10.5,44]],'#efe3c4',{lw:1.2,k:20});
+    facet(ctx,[[40,27],[60,27],[58,31],[42,31]],tone(P.dark,-4),{lw:1.2,k:10});
+    eyeK(ctx,45,31.5,2.4,P,t,1,1);eyeK(ctx,55,31.5,2.4,P,t,-1,1);
+    topK(ctx,P,t,F,50,21,18);ctx.restore();
+  },
+  // Baumriese: Stamm als Körper, Wurzelfüße, Astarme, Gesicht in der Rinde, Krone oder Pilzhut
+  tree(ctx,P,t,F){
+    const sw=Math.sin(t/900)*1.2;shadow(ctx,50,92,40);
+    const wood=tone(P.main,-4);
+    for(const[x0,x1,x2]of[[40,30,20],[46,42,36],[54,58,64],[60,70,80]])facet(ctx,[[x0-4,78],[x0+4,78],[x1+3,86],[x2+1,91],[x2-3,91],[x1-3,88]],tone(wood,-10),{lw:2});
+    const tp=facet(ctx,[[34,30],[42,20],[58,20],[66,30],[68,54],[64,80],[36,80],[32,54]],wood,{c:[48,40]});pattern(ctx,tp,P,30,18,40,64);
+    for(const sd of[-1,1]){const o=pts=>sd<0?pts:mir(pts),a=sd*sw;
+      ribbon(ctx,o([[35,40],[24,46+a],[14,56+a],[10,68+a]]),[5,4,3,1.6],tone(wood,-4),tone(wood,-18),2.2);
+      for(const[dx,dy]of[[-5,4],[0,7],[4,5]])line(ctx,o([[10,68+a],[10+dx,68+dy+a]]),OUT,2.4),line(ctx,o([[10,68+a],[10+dx,68+dy+a]]),tone(wood,-12),1);
+      line(ctx,o([[24,46+a],[20,36+a],[16,30+a]]),OUT,3);line(ctx,o([[24,46+a],[20,36+a],[16,30+a]]),tone(wood,-8),1.4);
+      facet(ctx,o([[16,30+a],[10,24+a],[16,20+a],[22,26+a]]),tone(P.accent,-32,-20),{lw:1.4,k:18})}
+    // Gesicht: hohle Augen, gezacktes Maul
+    for(const sd of[-1,1]){const ex=50+sd*7;facet(ctx,[[ex-5,34],[ex+5,34+sd*-1.5],[ex+3,40],[ex-3,40]].map(([x,y])=>[x,y]),'#140c0a',{lw:1.4,k:4});
+      ctx.save();ctx.shadowColor=P.accent;ctx.shadowBlur=8*SC;ctx.fillStyle=P.accent;if(!sleepy)ctx.fill(poly([[ex-1.6,36],[ex+1.6,36],[ex,38.6]]));ctx.restore();
+      line(ctx,[[ex-6,32.5+sd*-.5*-1],[ex+6,31+sd*1.5]],OUT,2)}
+    facet(ctx,[[42,46],[46,44],[50,47],[54,44],[58,46],[56,52],[50,54],[44,52]],'#140c0a',{lw:1.4,k:4});
+    for(let i=0;i<3;i++)tri(ctx,[45+i*4,46],[46.5+i*4,49],[48+i*4,46],'#d8c9a0',.6);
+    if(F.moss)for(const[x,y]of[[36,62],[62,56],[44,74]])facet(ctx,[[x-5,y],[x-2,y-4],[x+5,y-3],[x+3,y+3],[x-3,y+3]],tone(P.accent,-38,-22),{lw:1.2});
+    glow(ctx,50,64,7,P.accent,.6);gemK(ctx,50,64,2.4,P.accent,1);
+    if(F.shroom){facet(ctx,[[26,24],[34,10],[50,4],[66,10],[74,24],[60,26],[50,24],[40,26]],tone(P.accent,-20,10),{k:20,c:[46,14]});
+      for(const[x,y]of[[38,14],[52,9],[62,17],[46,19]])facet(ctx,[[x-2.4,y],[x,y-2],[x+2.4,y],[x,y+2]],'#f6efe0',{lw:0});
+      for(const[x,y,s]of[[30,56,.7],[66,70,.6]]){facet(ctx,[[x-6*s,y],[x,y-6*s],[x+6*s,y]],tone(P.accent,-20,10),{lw:1.2});line(ctx,[[x,y],[x,y+4*s]],'#efe3c4',2*s)}}
+    else{for(const[x,y,s,c]of[[38,18,9,-34],[62,18,9,-30],[50,10,11,-26],[30,26,7,-38],[70,26,7,-36]])facet(ctx,[[x-s,y+s*.3],[x-s*.6,y-s*.7],[x+s*.2,y-s],[x+s,y-s*.2],[x+s*.6,y+s*.6],[x-s*.2,y+s*.8]],tone(P.accent,c,-18),{lw:1.8,k:20});
+      if(F.branches)for(const sd of[-1,1]){line(ctx,[[50+sd*8,22],[50+sd*16,6]],OUT,3);line(ctx,[[50+sd*8,22],[50+sd*16,6]],tone(wood,-10),1.4)}}
+    topK(ctx,P,t,{...F,branches:0,moss:0},50,F.shroom?6:6,18);
+  },
+  // Kampfmaschine: Kastenrumpf mit Reaktor, Schulterpanzer, Kolbenbeine oder Ketten, Visierkopf
+  mech(ctx,P,t,F){
+    const b=Math.sin(t/500)*.6;shadow(ctx,50,92,40);
+    const steel=P.main,dk=tone(P.dark,-6);
+    if(F.treads){facet(ctx,[[16,78],[84,78],[88,84],[84,91],[16,91],[12,84]],tone(dk,-6),{lw:2.4,k:10});
+      for(let i=0;i<9;i++){const x=18+i*8+(t/80)%8;if(x<84)line(ctx,[[x,79],[x,90]],tone(dk,-20),1.4)}
+      for(const x of[22,40,60,78])facet(ctx,[[x-4,84],[x,80],[x+4,84],[x,88]],tone(steel,-10),{lw:1.2,k:20})}
+    else for(const sd of[-1,1]){const o=pts=>sd<0?pts:mir(pts);
+      facet(ctx,o([[32,64],[44,64],[44,74],[32,74]]),dk,{lw:2,k:16});
+      line(ctx,o([[36,70],[36,82]]),OUT,3.4);line(ctx,o([[36,70],[36,82]]),'#c9ced8',1.6);
+      facet(ctx,o([[28,76],[46,76],[48,90],[26,90]]),steel,{lw:2.2,k:18});facet(ctx,o([[26,86],[48,86],[50,91],[24,91]]),tone(dk,-6),{lw:1.6})}
+    ctx.save();ctx.translate(0,b);
+    facet(ctx,[[36,58],[64,58],[62,68],[38,68]],dk,{lw:2});
+    if(F.pipes!==false)for(const sd of[-1,1]){const o=pts=>sd<0?pts:mir(pts);facet(ctx,o([[28,16],[34,16],[34,30],[28,30]]),tone(dk,-4),{lw:1.6,k:16});
+      const ph=(t/700+(sd>0?.5:0))%1;ctx.globalAlpha=.5*(1-ph);ctx.fillStyle='#8a8494';ctx.beginPath();ctx.arc(sd<0?31:69,14-ph*10,2+ph*4,0,7);ctx.fill();ctx.globalAlpha=1}
+    const tp=facet(ctx,[[24,30],[40,26],[60,26],[76,30],[72,52],[64,62],[36,62],[28,52]],steel,{c:[48,38]});pattern(ctx,tp,P,22,24,56,40);
+    facet(ctx,[[38,32],[62,32],[60,48],[50,54],[40,48]],tone(dk,6),{lw:1.6,k:18});
+    const pulse=.7+Math.sin(t/300)*.3;glow(ctx,50,42,12*pulse,P.accent,.9);
+    facet(ctx,[[50,35],[56,38],[56,45],[50,48],[44,45],[44,38]],tone(P.accent,0),{lw:1.4,k:30});
+    for(const sd of[-1,1]){const o=pts=>sd<0?pts:mir(pts);
+      facet(ctx,o([[14,38],[24,36],[24,50],[16,52]]),dk,{lw:2});
+      facet(ctx,o([[16,50],[24,50],[23,54],[17,54]]),'#c9ced8',{lw:1.2});
+      if(F.cannon&&sd>0){facet(ctx,[[74,52],[96,48],[98,58],[76,64]],tone(dk,-4),{lw:2,k:22});for(let i=0;i<3;i++)line(ctx,[[80+i*5,51-i],[80+i*5,61-i]],tone(dk,-25),1);glow(ctx,97,53,6*pulse,P.accent,.9)}
+      else{facet(ctx,o([[10,54],[26,54],[26,70],[10,70]]),steel,{lw:2.2,k:18});facet(ctx,o([[10,70],[26,70],[24,78],[12,78]]),dk,{lw:2});
+        for(let i=0;i<3;i++)facet(ctx,o([[12+i*4.4,78],[15.6+i*4.4,78],[15+i*4.4,82],[12.6+i*4.4,82]]),tone(dk,-8),{lw:1})}
+      facet(ctx,o([[8,30],[30,22],[36,30],[32,44],[10,44]]),steel,{lw:2.4,k:22,c:o([[22,34]])[0]});
+      for(let i=0;i<3;i++){ctx.save();ctx.clip(poly(o([[8,30],[30,22],[36,30],[32,44],[10,44]])));line(ctx,o([[10+i*6,44],[18+i*6,30]]),tone(P.accent,-10,0,.8),1.8);ctx.restore()}}
+    facet(ctx,[[42,26],[58,26],[57,31],[43,31]],dk,{lw:1.6});
+    const hp=facet(ctx,[[40,16],[44,10],[56,10],[60,16],[60,26],[40,26]],steel,{c:[48,16]});
+    facet(ctx,[[41,16],[59,16],[58,21],[42,21]],'#0c0a12',{lw:1.2,k:4});
+    ctx.save();ctx.shadowColor=P.accent;ctx.shadowBlur=8*SC;ctx.fillStyle=P.accent;const sx=44+((Math.sin(t/700)+1)/2)*9;ctx.fillRect(sx,17.4,3.6,2.2);ctx.restore();
+    for(let i=0;i<3;i++)line(ctx,[[45+i*5,23.5],[45+i*5,25]],tone(dk,-25),1);
+    topK(ctx,P,t,F,50,10,18);ctx.restore();
+  }},
+quad:{
+  // Wuchtiges Tier: Schulterbuckel, tiefer Kopf mit Hauern, kurze dicke Beine
+  heavy(ctx,P,t,F){
+    const b=Math.sin(t/800)*.8;ctx.save();ctx.translate(-4,0);shadow(ctx,50,92,40);
+    for(const p of[[[24,66],[34,66],[36,80],[34,90],[22,90],[24,80]],[[56,64],[68,64],[68,80],[70,90],[58,90],[58,80]]])facet(ctx,p,tone(P.main,-16),{lw:2.2});
+    tailK(ctx,P,t,{...F,tail:F.tail||'spike'},20,56,.9);
+    const body=[[18,58],[24,42],[40,32],[58,26+b*.5],[72,32],[78,46],[76,64],[64,74],[30,74],[18,68]];
+    const bp=facet(ctx,body,P.main,{c:[48,52]});pattern(ctx,bp,P,16,24,64,52);
+    facet(ctx,[[30,68],[64,66],[62,74],[32,74]],P.light,{lw:0,k:8});
+    if(F.rocks)for(const[x,y,s]of[[40,34,6],[54,28,7],[66,32,5],[30,40,5]])facet(ctx,[[x-s,y+3],[x-s*.6,y-s],[x+s*.3,y-s*1.3],[x+s,y],[x+s*.2,y+s*.5]],tone(P.main,-8),{lw:1.6,k:24});
+    if(F.mane==='flame')for(let i=0;i<4;i++)flameK(ctx,40+i*8,34-i*2+b,1.1,P.accent,t,i);
+    else if(F.mane==='leaf')for(let i=0;i<5;i++){const x=34+i*8,y=36-i*2;facet(ctx,[[x-4,y+3],[x-3,y-6],[x+5,y-8],[x+5,y+2]],tone(P.accent,-28,-12),{lw:1.4,k:18})}
+    if(F.moss)facet(ctx,[[36,36],[50,30],[48,40],[36,42]],tone(P.accent,-35,-20),{lw:1.2});
+    for(const p of[[[28,62],[42,60],[44,78],[42,90],[28,90],[30,78]],[[62,58],[76,58],[76,78],[80,90],[66,90],[64,78]]]){facet(ctx,p,P.main,{lw:2.2});claws(ctx,p[3][0]-12,90,4)}
+    ctx.save();ctx.translate(0,b);
+    earsK(ctx,P,t,F,82,36,28,false);hornsK(ctx,P,t,F,84,36,30,false);
+    const hp=facet(ctx,[[68,42],[72,32],[84,30],[94,36],[99,46],[96,56],[86,60],[74,58]],P.main,{c:[82,44]});pattern(ctx,hp,P,66,28,34,34);
+    facet(ctx,[[82,50],[98,48],[96,56],[86,58]],P.light,{lw:0,k:8});
+    facet(ctx,[[74,36],[90,34],[88,38],[76,40]],tone(P.dark,-4),{lw:1,k:8});
+    eyeK(ctx,84,41,3.2,P,t,1,1);
+    line(ctx,[[86,53],[98,51]],OUT,1.6);for(const x of[88,93])tri(ctx,[x,53],[x+1.4,46],[x+3,52.6],'#efe3c4',1);
+    tri(ctx,[96,44],[98.4,45],[96.6,46.4],OUT,0);
+    topK(ctx,P,t,F,84,32,22);ctx.restore();ctx.restore();
+  }}};
+const BUILD_HEAD={beast:[50,24],tree:[50,10],mech:[50,12],heavy:[80,34]};
+
 // ---------- 35 Monster-Familien mit je drei Stufen ----------
 // [Schlüssel, Name, Symbol, Element, Farbton, Sättigung, Helligkeit, Akzent, Teilchen, [Baby, Jung, Erwachsen], [Bauplan je Stufe]]
 const FAMILY_LIST=[
-  ['feuer','Feuer','🔥','feuer',12,78,52,'#ffcf3b','flame',['Flämmchen','Glutling','Feuerdrache'],['imp ears:cat top:flame tail:flame muzzle','quad ears:cat tail:flame spikes','drake horns:curved wings:bat tail:flame spikes']],
+  ['feuer','Feuer','🔥','feuer',12,78,52,'#ffcf3b','flame',['Flämmchen','Glutling','Feuerdrache'],['imp ears:cat top:flame tail:flame snout','quad ears:cat tail:flame spikes','drake horns:curved wings:bat tail:flame spikes']],
   ['wasser','Wasser','💧','wasser',205,70,55,'#7ff0ff','bubble',['Wassertropfi','Aquali','Meereskrake'],['imp ears:fin top:drop tail:fin','serpent fins','kraken']],
-  ['pflanze','Pflanze','🌿','natur',105,58,46,'#d6ff6a','leaf',['Blattling','Sprossling','Waldwächter'],['imp top:sprout ears:leaf tail:leaf','rex top:sprout tail:leaf spikes:leaf','quad horns:antler tail:leaf mane:leaf']],
-  ['elektro','Elektro','⚡','blitz',48,88,55,'#fff36b','spark',['Funke','Blitzling','Donnerfurie'],['imp ears:long tail:bolt muzzle','quad ears:long tail:bolt mane','quad ears:long tail:bolt mane spikes wings:feather']],
+  ['pflanze','Pflanze','🌿','natur',105,58,46,'#d6ff6a','leaf',['Blattling','Sprossling','Waldwächter'],['imp top:sprout ears:leaf tail:leaf','rex top:sprout tail:leaf spikes:leaf','quad build:heavy horns:antler tail:leaf mane:leaf']],
+  ['elektro','Elektro','⚡','blitz',48,88,55,'#fff36b','spark',['Funke','Blitzling','Donnerfurie'],['imp ears:long tail:bolt muzzle','quad ears:long tail:bolt mane','drake ears:long wings:feather tail:bolt mane:feather spikes']],
   ['eis','Eis','❄️','wasser',196,62,72,'#c8f6ff','ice',['Frosti','Eiswolf','Eisgolem'],['imp ears:long top:crystal tail:crystal','quad ears:cat mane:crystal tail:crystal spikes:crystal','brute crystals']],
   ['dunkelheit','Dunkelheit','🌑','dunkel',270,40,30,'#c27bff','smoke',['Schatten','Nachtling','Dämonenklinge'],['imp ears:bat wings:bat tail:spike','quad ears:bat spikes tail:spike','biped head:helm horns:curved wings:bat weapon:sword cape']],
   ['licht','Licht','☀️','licht',45,60,80,'#ffd75e','star',['Lichtfunke','Sonnenling','Sonnenpaladin'],['imp ears:cat top:halo tail:fluff muzzle','quad ears:cat mane top:halo tail:fluff','biped head:helm wings:feather weapon:spear halo']],
-  ['drache','Drache','🐲','feuer',282,58,50,'#5fd4ff','star',['Drachling','Drakone','Himmelsdrache'],['imp horns:small wings:bat tail:spike','drake horns:small wings:bat tail:spike spikes','drake horns:curved wings:bat tail:spike spikes mane']],
-  ['boden','Boden','🪨','erde',30,38,45,'#ffb85c','dust',['Wühlchen','Gesteinling','Erdtitan'],['imp ears:small muzzle','brute rocks','brute rocks horns:small']],
+  ['drache','Drache','🐲','feuer',282,58,50,'#5fd4ff','star',['Drachling','Drakone','Himmelsdrache'],['imp horns:small wings:bat tail:spike snout','drake horns:small wings:bat tail:spike spikes','drake horns:curved wings:bat tail:spike spikes mane']],
+  ['boden','Boden','🪨','erde',30,38,45,'#ffb85c','dust',['Wühlchen','Gesteinling','Erdtitan'],['quad build:heavy ears:small','quad build:heavy rocks horns:small','brute rocks horns:small']],
   ['wind','Wind','🌪️','blitz',152,55,58,'#e9fff6','wind',['Windhauch','Luftling','Sturmdrache'],['imp ears:feather tail:feather float','flyer crest','drake wings:feather tail:feather horns:small mane:feather']],
-  ['kaefer','Käfer','🪲','natur',78,55,40,'#ffe14d','none',['Krabbel','Panzerling','Käferkönig'],['imp antenna helm','bug','bug horn crown']],
+  ['kaefer','Käfer','🪲','natur',78,55,40,'#ffe14d','none',['Krabbel','Panzerling','Käferkönig'],['imp antenna snout','bug','bug horn crown']],
   ['gift','Gift','☠️','natur',290,55,48,'#9dff4d','poison',['Schleimi','Schlürfer','Giftschrecke'],['blob','quad ears:fin spikes tail:stinger','crab tail:stinger']],
   ['geist','Geist','👻','wasser',245,30,78,'#8fffe8','wisp',['Irrlicht','Spukling','Geisterdrache'],['imp float top:flame ears:small','imp float ears:long horns:small','drake float wings:bat horns:curved']],
-  ['metall','Metall','⚙️','erde',215,12,60,'#5fe3ff','gear',['Mechling','Robotor','Stahlkoloss'],['imp helm antenna','biped head:helm','brute helm plates']],
-  ['wald','Wald','🌳','natur',36,40,40,'#c6ff7a','leaf',['Baumgeist','Holzling','Waldgolem'],['imp top:sprout ears:leaf float','biped head:mask top:sprout ears:leaf','brute branches moss']],
-  ['fels','Fels','⛰️','erde',25,14,52,'#ffcf6b','dust',['Steinchen','Felsling','Gesteinsriese'],['blob rock','brute','brute rocks crystals']],
+  ['metall','Metall','⚙️','erde',215,12,60,'#5fe3ff','gear',['Mechling','Robotor','Stahlkoloss'],['imp helm antenna','biped head:helm','brute build:mech']],
+  ['wald','Wald','🌳','natur',36,40,40,'#c6ff7a','leaf',['Baumgeist','Holzling','Waldgolem'],['imp top:sprout ears:leaf float','biped head:mask top:sprout ears:leaf','brute build:tree branches moss']],
+  ['fels','Fels','⛰️','erde',25,14,52,'#ffcf6b','dust',['Steinchen','Felsling','Gesteinsriese'],['blob rock','brute build:beast rocks','brute rocks crystals']],
   ['himmel','Himmel','☁️','blitz',205,70,82,'#ffe27a','star',['Wolkenling','Himmelsvogel','Seraph'],['imp float ears:feather top:halo','flyer crest','biped head:mask wings:feather halo weapon:staff']],
   ['magie','Magie','🔮','blitz',265,60,50,'#ff7bf0','rune',['Zauberling','Magierling','Magierkönig'],['imp top:hat tail:spike','biped head:mask hat weapon:staff cape','biped head:mask horns:small crown weapon:staff cape']],
-  ['vulkan','Vulkan','🌋','feuer',16,40,30,'#ff8a2a','ember',['Lavaglüh','Feuerzahn','Vulkanlord'],['imp horns:small top:flame tail:flame','quad horns:small spikes tail:flame mane:flame','brute rocks flames horns:curved']],
-  ['nacht','Nacht','🌙','wasser',232,45,34,'#d6e4ff','star',['Mondling','Schattenwolf','Albtraum'],['imp ears:cat top:moon muzzle','quad ears:cat mane tail:fluff','quad horns:curved mane:flame wings:bat tail:flame']],
-  ['dino','Dinosaurier','🦖','feuer',28,62,50,'#ffe066','none',['Raptino','Raptorling','T-Rexmon'],['imp horns:small tail:spike muzzle','rex spikes','rex spikes horns:small']],
+  ['vulkan','Vulkan','🌋','feuer',16,40,30,'#ff8a2a','ember',['Lavaglüh','Feuerzahn','Vulkanlord'],['imp horns:small top:flame tail:flame snout','quad build:heavy horns:small tail:flame mane:flame','brute rocks flames horns:curved']],
+  ['nacht','Nacht','🌙','wasser',232,45,34,'#d6e4ff','star',['Mondling','Schattenwolf','Albtraum'],['imp ears:cat top:moon tail:fluff muzzle','quad ears:cat mane tail:fluff','quad horns:curved mane:flame wings:bat tail:flame']],
+  ['dino','Dinosaurier','🦖','feuer',28,62,50,'#ffe066','none',['Raptino','Raptorling','T-Rexmon'],['imp horns:small tail:spike snout','rex spikes','rex spikes horns:small']],
   ['meer','Meer','🌊','wasser',186,65,45,'#7dffd4','bubble',['Seepferdchen','Seadrache','Ozeanlord'],['imp ears:fin top:fin tail:fin','serpent fins','serpent fins horns:curved crown']],
   ['psycho','Psycho','🧠','blitz',312,55,62,'#ff9cf6','rune',['Gedankling','Psion','Mentalis'],['imp float top:gem ears:long','biped head:mask float gem cape','biped head:mask float gem cape crown']],
-  ['unhold','Unhold','👹','natur',115,28,42,'#ffd23f','none',['Räuberling','Trollling','Ogerkönig'],['imp ears:long horns:small','brute ears:long horns:small','brute horns:curved crown weapon:club']],
+  ['unhold','Unhold','👹','natur',115,28,42,'#ffd23f','none',['Räuberling','Trollling','Ogerkönig'],['imp ears:long horns:small','brute build:beast ears:long horns:small','brute build:beast horns:curved crown weapon:club']],
   ['roboter','Roboter','🤖','erde',188,25,50,'#3dffb0','data',['Datenling','Killing','Cyberlord'],['imp helm antenna','biped head:helm weapon:sword','biped head:helm wings:mech weapon:sword cape']],
   ['insekt','Insekt','🦋','natur',165,60,48,'#b4ff4d','none',['Libelle','Libellenling','Insektenkönig'],['flyer insect','flyer insect','biped head:insect wings:insect crown']],
-  ['sumpf','Sumpf','🐸','wasser',95,35,36,'#d4ff5a','bubble',['Schlammchen','Sumpfling','Sumpfkönig'],['blob moss','quad ears:fin moss tail:fin','brute moss crown']],
+  ['sumpf','Sumpf','🐸','wasser',95,35,36,'#d4ff5a','bubble',['Schlammchen','Sumpfling','Sumpfkönig'],['blob moss','quad ears:fin moss tail:fin','brute build:beast moss crown']],
   ['lava','Lava','🌋','feuer',4,75,40,'#ffb02e','ember',['Feuerwurm','Glutdrache','Lavarion'],['serpent','drake wings:bat tail:flame','quad mane:flame horns:curved tail:flame spikes']],
-  ['erdgeist','Erdgeist','🍄','erde',42,32,36,'#9bff7a','dust',['Moorling','Erdfresser','Erdgolem'],['imp top:sprout ears:small moss','quad ears:small spikes moss','brute moss branches']],
+  ['erdgeist','Erdgeist','🍄','erde',42,32,36,'#9bff7a','dust',['Moorling','Erdfresser','Erdgolem'],['imp top:sprout ears:small moss','quad ears:small spikes moss','brute build:tree moss shroom']],
   ['luft','Luft','💨','blitz',180,45,76,'#ffffff','wind',['Wolkenbaby','Himmelsdrachen','Sturmkönig'],['imp float ears:feather tail:feather','drake wings:feather tail:feather','flyer crest crown']],
   ['kristall','Kristall','💎','erde',290,58,66,'#ffffff','crystal',['Kristallling','Kristallkrabbe','Kristallkönig'],['imp top:crystal ears:crystal','crab crystals','brute crystals crown']],
-  ['daemon','Dämon','😈','feuer',352,65,40,'#ffcf3b','ember',['Imp','Dämonling','Höllenfürst'],['imp horns:small wings:bat tail:spike','biped head:beast horns:small wings:bat tail:spike','biped head:beast horns:curved wings:bat tail:spike weapon:trident crown']],
-  ['maschine','Maschine','🛠️','erde',30,22,46,'#ffae3b','gear',['Kleindroide','Droidling','Mechazord'],['imp helm antenna','brute helm','brute helm plates cannon']],
-  ['arktis','Arktis','🦊','wasser',200,25,88,'#7fd8ff','snow',['Eisfuchs','Frostling','Eisfürst'],['imp ears:long tail:fluff muzzle','quad ears:long tail:fluff mane','quad ears:long tail:fluff mane:crystal horns:crystal crown']],
+  ['daemon','Dämon','😈','feuer',352,65,40,'#ffcf3b','ember',['Imp','Dämonling','Höllenfürst'],['imp horns:small wings:bat tail:spike snout','biped head:beast horns:small wings:bat tail:spike','biped head:beast horns:curved wings:bat tail:spike weapon:trident crown']],
+  ['maschine','Maschine','🛠️','erde',30,22,46,'#ffae3b','gear',['Kleindroide','Droidling','Mechazord'],['imp helm antenna','brute build:mech pipes:false','brute build:mech cannon treads']],
+  ['arktis','Arktis','🦊','wasser',200,25,88,'#7fd8ff','snow',['Eisfuchs','Frostling','Eisfürst'],['imp ears:long tail:fluff muzzle','quad ears:long tail:fluff mane','quad build:heavy ears:long tail:fluff horns:crystal crown']],
   ['kosmos','Kosmos','🌌','blitz',240,55,30,'#ffe9a0','star',['Sternchen','Galaxling','Sternenlord'],['imp float top:star','biped head:mask float gem cape','drake wings:bat horns:curved tail:spike']]
 ];
-function parseFeat(s){const o={};for(const w of s.split(' ').slice(1)){const[k,v]=w.split(':');o[k]=v??true}return o}
+function parseFeat(s){const o={};for(const w of s.split(' ').slice(1)){const[k,v]=w.split(':');o[k]=v==='false'?false:v??true}return o}
 const FAMILIES={};
+const FAM_DET={feuer:'scales',wasser:'veins',pflanze:'veins',elektro:'marks',eis:'cracks',dunkelheit:'fur',licht:'feathers',drache:'scales',boden:'stone',wind:'feathers',
+  kaefer:'shell',gift:'slime',geist:'runes',metall:'plates',wald:'bark',fels:'stone',himmel:'feathers',magie:'runes',vulkan:'cracks',nacht:'fur',dino:'scales',meer:'scales',
+  psycho:'runes',unhold:'fur',roboter:'plates',insekt:'shell',sumpf:'slime',lava:'cracks',erdgeist:'bark',luft:'feathers',kristall:'cracks',daemon:'marks',maschine:'plates',arktis:'fur',kosmos:'stars'};
 for(const[key,name,icon,el,h,s,l,acc,fx,names,plans]of FAMILY_LIST)
-  FAMILIES[key]={key,name,icon,element:el,h,s,l,accent:acc,names,plans:plans.map(p=>({arch:p.split(' ')[0],F:{fx,...parseFeat(p)}}))};
-const STAGE_SCALE={1:{imp:.84,serpent:.6,flyer:.66,blob:.76},2:{imp:1,_:.9},3:{_:1}};
+  FAMILIES[key]={key,name,icon,element:el,h,s,l,accent:acc,names,plans:plans.map(p=>({arch:p.split(' ')[0],F:{fx,det:FAM_DET[key],...parseFeat(p)}}))};
+const STAGE_SCALE={1:{imp:.84,serpent:.6,flyer:.66,blob:.76,quad:.72,drake:.7,rex:.68,bug:.72,_:.8},2:{imp:1,_:.9},3:{_:1}};
 function famScale(st,arch){const t=STAGE_SCALE[st];return t[arch]??t._??1}
 
 // Kopfhöhe (für Accessoires) und Wippen je Bauplan
@@ -982,14 +1131,16 @@ const ART={
 const HEAD={schleim:[50,36]},BOBF={schleim:()=>0},NOACC={};
 function drawFam(ctx,P,t,f,st){
   const pl=f.plans[st-1],s=famScale(st,pl.arch);
-  ctx.save();ctx.translate(50,91);ctx.scale(s,s);ctx.translate(-50,-91);ARCH[pl.arch].draw(ctx,P,t,pl.F);fxK(ctx,P,t,pl.F);ctx.restore();
+  RIM=P.main!==P.dark;CUR_F=pl.F;
+  ctx.save();ctx.translate(50,91);ctx.scale(s,s);ctx.translate(-50,-91);(BUILDS[pl.arch]?.[pl.F.build]||ARCH[pl.arch].draw)(ctx,P,t,pl.F);fxK(ctx,P,t,pl.F);ctx.restore();
+  CUR_F={};RIM=true;
 }
 const FAM_KEYS=Object.keys(FAMILIES),EL_FAM={feuer:'feuer',wasser:'wasser',erde:'boden',blitz:'elektro',natur:'pflanze',licht:'licht',dunkel:'dunkelheit'};
 for(const f of Object.values(FAMILIES))for(let st=1;st<=3;st++){
   const key=f.key+st,pl=f.plans[st-1],sc=famScale(st,pl.arch),A=ARCH[pl.arch],rare=f.element==='licht'||f.element==='dunkel'?1.1:1;
   SPECIES[key]={name:f.names[st-1],stage:st,family:f.key,mod:st===1?[1,1,1]:st===2?[1.1,1.1,1.1]:ARCH_MOD[pl.arch].map(v=>Math.round(v*rare*100)/100),sp:st===3?EL_SPECIAL[f.element]:'rempler'};
   ART[key]=(ctx,P,t)=>drawFam(ctx,P,t,f,st);
-  const hd=pl.arch==='flyer'&&pl.F.insect?[73,31]:A.head;
+  const hd=pl.arch==='flyer'&&pl.F.insect?[73,31]:BUILD_HEAD[pl.F.build]||A.head;
   HEAD[key]=[50+(hd[0]-50)*sc,91+(hd[1]-91)*sc];BOBF[key]=t=>ARCH_BOB[pl.arch](t,pl.F)*sc;
   if(pl.F.crown||pl.F.hat||pl.F.top==='hat')NOACC[key]=1;
 }
