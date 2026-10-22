@@ -1,6 +1,6 @@
 {
- "version": "0.9.0",
- "sha256": "4d895f5972c1e732668e1ec2d93bc04c9d098205231fa3b0edfe0751d6efb8dd",
- "notes": "Freilassen, neue Monster, Updates",
+ "version": "0.9.1",
+ "sha256": "c2e715d0262dbfcce952e9f7d51928c6265c7d94bca83c279a7421e6181c206b",
+ "notes": "Namen eingeben funktioniert wieder",
  "download": "https://github.com/Enchio86/Pixelmonster/releases/latest"
 }

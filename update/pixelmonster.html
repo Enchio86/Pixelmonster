@@ -73,6 +73,9 @@ body.mini .actions{grid-template-columns:repeat(6,1fr);gap:3px}
 body.mini .device button{padding:4px 0;font-size:15px;border-radius:7px}
 body.mini .device .minitop button{-webkit-app-region:no-drag;width:22px;height:22px;padding:0;display:flex;align-items:center;justify-content:center;flex:none;line-height:0;border-radius:6px}
 body.mini .device .minitop button svg{width:12px;height:12px;display:block}
+.askOv{position:fixed;inset:0;background:#0009;z-index:100;display:flex;align-items:center;justify-content:center;padding:12px}
+.askBox{background:#241d30;border:1px solid #b8945a;border-radius:14px;padding:16px;max-width:420px;box-shadow:0 10px 30px #000a}.askBox p{margin:0 0 14px;line-height:1.45}
+body.mini .askBox{padding:10px;font-size:12px}body.mini .askBox button{font-size:12px;padding:5px 8px}
 #updBar{display:none;position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:60;align-items:center;gap:10px;background:#2a2236;border:1px solid #d9b46a;color:#f0d9a4;padding:8px 12px;border-radius:12px;box-shadow:0 6px 20px #0008;font-size:14px;max-width:92vw}
 body.mini #updBar{top:4px;font-size:11px;padding:5px 7px;gap:6px}body.mini #updBar button{font-size:11px;padding:3px 6px}
 body.mini #toast{bottom:6px;font-size:12px;padding:6px 10px}
@@ -1413,7 +1416,7 @@ async function goOnline(){
   if(!d){S.net=null;save();renderOnline();return}
   S.net={url,id:d.id,secret:d.secret,code:d.code,sent:''};log(`🌐 ${S.owner} ist jetzt online. Freundescode: ${d.code}`);save();netSync();
 }
-function goOffline(){if(!confirm('Wirklich offline gehen? Dein Freundescode und deine Freundesliste gehen verloren.'))return;S.net=null;NET=null;save();renderOnline()}
+async function goOffline(){if(!await ask('Wirklich offline gehen? Dein Freundescode und deine Freundesliste gehen verloren.'))return;S.net=null;NET=null;save();renderOnline()}
 async function netSync(){
   if(!S||!S.net?.id||netBusy)return;netBusy=true;
   try{
@@ -1437,7 +1440,7 @@ function addFriend(){
   const code=$('#friendCodeIn').value.trim();if(!code)return;
   netDo(()=>api('/friend',{code}),d=>`${d.name} ist jetzt dein Freund!`).then(d=>{if(d){log(`🤝 ${d.name} ist jetzt dein Freund.`);netSync()}});
 }
-function removeOnlineFriend(id,name){if(confirm(`${name} wirklich aus der Freundesliste entfernen?`))netDo(()=>api('/unfriend',{id}))}
+async function removeOnlineFriend(id,name){if(await ask(`${name} wirklich aus der Freundesliste entfernen?`))netDo(()=>api('/unfriend',{id}))}
 function sendVisit(id,name){
   if(S.stage===0){toast('Ein Ei kann noch nicht verreisen.');return}
   netSync().then(()=>netDo(()=>api('/visit',{to:id}),`${S.name} ist auf dem Weg zu ${name}!`)).then(d=>{if(d)log(`🏠 ${S.name} besucht ${name}. ${name} kann es auf eine Quest schicken.`)});
@@ -1615,12 +1618,12 @@ function legacyEgg(){
   S.nest.push({id:rid(),element:S.element,family:S.family,hue:hueOf(S),trait:S.trait,bonus:{atk:Math.round(S.atk*.3),def:Math.round(S.def*.3),spd:Math.round(S.spd*.3)},bond:60,
     parents:[`${S.name} (Erbe)`],kind:'erbe',created:Date.now()});
 }
-function hatchEgg(id){
+async function hatchEgg(id){
   const egg=S.nest.find(e=>e.id===id);if(!egg)return;
   if(S.quest){toast(`${S.name} ist gerade auf Quest.`);return}
   const name=($('#eggName-'+id)?.value||'').trim();
   if(!name){toast('Gib dem Baby zuerst einen Namen.');return}
-  if(!confirm(`${S.name} zieht dann in die Ruhmeshalle, und aus dem Ei schlüpft ${name}. Fortfahren?`))return;
+  if(!await ask(`${S.name} zieht dann in die Ruhmeshalle, und aus dem Ei schlüpft ${name}. Fortfahren?`))return;
   const keep={owner:S.owner,coins:S.coins,items:S.items,friends:S.friends,claimed:S.claimed,log:S.log,net:S.net,netGuests:S.netGuests,speed:S.speed,
     dex:S.dex,ach:S.ach,cnt:S.cnt,trophies:S.trophies,week:S.week,lastTour:S.lastTour,nest:S.nest.filter(e=>e.id!==id),hall:[...S.hall,{...snapshot(),retired:Date.now()}].slice(-20)};
   const fam=egg.family||EL_FAM[egg.element];
@@ -1796,14 +1799,25 @@ function useStern(){if(!S.items.stern){toast('Du hast keinen Sternenstaub. Den g
 
 // ---------- Laden ----------
 function buy(k){const it=ITEMS[k];if(S.coins<it.price){toast('Nicht genug Münzen.');return}S.coins-=it.price;S.items[k]=(S.items[k]||0)+1;toast(`${it.icon} ${it.name} gekauft.`);save();renderStatus();renderLists()}
+// Eigene Nachfrage statt confirm(): in der Desktop-App blockiert confirm() danach die Tastatur in Eingabefeldern
+function ask(text,yes='Ja',no='Abbrechen'){
+  return new Promise(res=>{
+    const d=document.createElement('div');d.className='askOv';
+    d.innerHTML=`<div class="askBox"><p>${esc(text)}</p><div class="row" style="justify-content:flex-end"><button class="askNo">${no}</button><button class="primary askYes">${yes}</button></div></div>`;
+    const done=v=>{d.remove();document.removeEventListener('keydown',key,true);res(v)};
+    const key=e=>{if(e.key==='Escape'){e.stopPropagation();done(false)}else if(e.key==='Enter'){e.preventDefault();e.stopPropagation();done(true)}};
+    d.querySelector('.askNo').onclick=()=>done(false);d.querySelector('.askYes').onclick=()=>done(true);
+    document.addEventListener('keydown',key,true);document.body.appendChild(d);d.querySelector('.askYes').focus();
+  });
+}
 // Freilassen: das Monster kehrt in die Wildnis zurück, über den Fragebogen gibt es ein neues Ei
 function keepData(extra={}){
   return{owner:S.owner,coins:S.coins,items:S.items,friends:S.friends,claimed:S.claimed,log:S.log,net:S.net,netGuests:S.netGuests,speed:S.speed,
     dex:S.dex,ach:S.ach,cnt:S.cnt,trophies:S.trophies,week:S.week,lastTour:S.lastTour,nest:S.nest,hall:[...S.hall,{...snapshot(),retired:Date.now()}].slice(-20),...extra};
 }
-function releaseMonster(){
+async function releaseMonster(){
   if(S.quest){toast(`${S.name} ist gerade auf Quest.`);return}
-  if(!confirm(`${S.name} wird freigelassen und zieht in die Ruhmeshalle. Du beantwortest den Fragebogen neu und bekommst ein neues Ei. Münzen, Gegenstände, Freunde, Lexikon und Erfolge bleiben. Fortfahren?`))return;
+  if(!await ask(`${S.name} wird freigelassen und zieht in die Ruhmeshalle. Du beantwortest den Fragebogen neu und bekommst ein neues Ei. Münzen, Gegenstände, Freunde, Lexikon und Erfolge bleiben. Fortfahren?`))return;
   Q={step:0,owner:S.owner,name:'',el:{},trait:null,hue:null,pending:null,keep:keepData(),from:S.name};
   $('#startOv').classList.add('on');renderQuiz();
 }
@@ -1954,7 +1968,7 @@ if(window.pxm?.onUpdate){
   window.pxm.version().then(v=>{const e=$('#verInfo');if(e)e.textContent='Spielversion '+v+' · Updates kommen automatisch.'});
 }
 if(new URLSearchParams(location.search).has('mini'))document.body.classList.add('mini');
-function resetGame(){if(confirm('Wirklich neu anfangen? Dein jetziges Monster geht verloren.')){localStorage.removeItem(SAVE_KEY);location.reload()}}
+async function resetGame(){if(await ask('Wirklich neu anfangen? Dein jetziges Monster geht verloren.')){localStorage.removeItem(SAVE_KEY);location.reload()}}
 let booted=false;
 function boot(){
   if(booted)return;booted=true;
