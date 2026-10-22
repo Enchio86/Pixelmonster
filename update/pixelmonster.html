@@ -1599,7 +1599,10 @@ async function netSync(){
   try{
     let monster=null;
     if(S.stage>0){const snap=snapshot(),key=JSON.stringify({...snap,at:0});if(key!==S.net.sent){monster=snap;S.net.sent=key}}
-    NET=await api('/sync',{name:S.owner,monster});netErr='';netLast=Date.now();
+    const remote=NET?.remotes||pairInfo?remoteStatus():undefined;
+    NET=await api('/sync',{name:S.owner,monster,remote});netErr='';netLast=Date.now();
+    if(remote?.sprite)remoteSprite=remote.key;
+    if(NET.cmds?.length){runRemote(NET.cmds);setTimeout(netSync,1500)}
     for(const r of NET.returns){
       if(S.claimed.includes(r.id))continue;
       const d=await api('/claim',{id:r.id}).catch(()=>null);if(!d)continue;
@@ -1612,6 +1615,41 @@ async function netSync(){
     save();renderStatus();
   }catch(e){netErr=e.message;if(/angemeldet/.test(e.message))S.net.sent=''}
   finally{netBusy=false;renderOnline()}
+}
+// ---------- Handy-Fernbedienung ----------
+// Das Handy schickt Befehle an den Server, die PC-App holt sie bei jedem Abgleich ab und meldet den Zustand zurück
+let pairInfo=null,remoteSprite='';
+const REMOTE_LBL={feed:'🍙 Füttern',snack:'🍓 Beere',play:'⚽ Spielen',clean:'🧽 Putzen',sleep:'💤 Schlafen/Wecken',med:'💊 Medizin'};
+function remoteStatus(){
+  const key=S.species+S.stage+(S.ult?'u':'')+(S.shiny?'s':'')+(S.gear?.acc||'')+JSON.stringify(S.look);let sprite;
+  if(key!==remoteSprite){const c=document.createElement('canvas');c.width=c.height=220;drawSprite(c.getContext('2d'),S,6,6,208,false,1000);sprite=c.toDataURL()}
+  return{key,sprite,status:{name:S.name,species:speciesLabel(S),level:S.level,stage:S.stage,hunger:Math.round(S.hunger),mood:Math.round(S.mood),energy:Math.round(S.energy),clean:Math.round(S.clean),health:Math.round(S.health),
+    poop:S.poop||0,sick:!!S.sick,sleeping:!!S.sleeping,pension:!!S.pension,quest:!!S.quest,beere:S.items.beere||0,log:S.log.slice(0,6).map(l=>({t:l.t,m:String(l.m).slice(0,160)}))}};
+}
+function runRemote(cmds){
+  for(const c of cmds){
+    if(!REMOTE_LBL[c.cmd])continue;
+    if(Date.now()-c.created>6*3600e3){log(`📱 Ein alter Handy-Befehl (${REMOTE_LBL[c.cmd]}) ist verfallen.`);continue}
+    const msgs=[],orig=toast;toast=m=>{msgs.push(m);orig(m)};
+    try{act(c.cmd)}finally{toast=orig}
+    log(`📱 Vom Handy: ${REMOTE_LBL[c.cmd]}${msgs.length?' – '+msgs.join(' '):''}`);
+  }
+  save();renderStatus();
+}
+async function pairPhone(){
+  const d=await netDo(()=>api('/pair/new',{}));
+  if(d){pairInfo={...d,n:NET?.remotes||0};renderOnline();netSync()}
+}
+async function unpairPhones(){if(await ask('Alle gekoppelten Handys entkoppeln?'))netDo(()=>api('/pair/reset',{}),'Handys entkoppelt.')}
+function phoneHtml(N){
+  if(pairInfo&&(N.remotes||0)>pairInfo.n){pairInfo=null;toast('📱 Handy gekoppelt!');log('📱 Ein Handy ist jetzt als Fernbedienung gekoppelt.')}
+  const url=serverUrl()+'/handy',live=pairInfo&&pairInfo.expires>Date.now();if(!live)pairInfo=null;
+  return`<h3 style="margin-top:14px">📱 Handy-Fernbedienung</h3>
+    <p class="muted">Füttere, spiele und putze vom Handy aus. Die Befehle kommen an, solange diese App läuft und online ist.</p>
+    ${live?`<div class="item"><div style="font-size:30px">📲</div><div class="grow"><div class="muted">Öffne auf dem Handy</div><div class="t" style="word-break:break-all">${esc(url)}</div>
+      <div class="muted" style="margin-top:6px">und gib diesen Code ein (10 Minuten gültig):</div><div class="t" style="font-size:26px;letter-spacing:4px">${esc(pairInfo.code)}</div></div><button onclick="copyText('${esc(url)}')">📋</button></div>`:''}
+    <div class="row"><button class="primary" onclick="pairPhone()">📱 Handy koppeln</button>${N.remotes?`<button onclick="unpairPhones()">Entkoppeln</button>`:''}</div>
+    <div class="muted" style="margin-top:6px">${N.remotes?`${N.remotes} ${N.remotes===1?'Handy ist':'Handys sind'} gekoppelt.`:'Noch kein Handy gekoppelt.'}</div>`;
 }
 function addFriend(){
   const code=$('#friendCodeIn').value.trim();if(!code)return;
@@ -1671,6 +1709,7 @@ function renderOnline(){
   box.innerHTML=`<div class="item"><div style="font-size:30px">🔑</div><div class="grow"><div class="muted">Dein Freundescode</div><div class="t" style="font-size:24px;letter-spacing:3px">${S.net.code}</div></div><button onclick="copyText('${S.net.code}')">📋 Kopieren</button></div>
     <div class="row"><input type="text" id="friendCodeIn" maxlength="7" placeholder="Freundescode, z. B. K7M-Q2P" style="flex:1;width:auto;text-transform:uppercase"><button class="primary" onclick="addFriend()">➕ Hinzufügen</button></div>
     <div class="muted" style="margin:8px 0">${status} · <a href="#" onclick="netSync();return false" style="color:var(--accent)">aktualisieren</a></div>
+    ${phoneHtml(N)}
     <h3 style="margin-top:14px">Freunde</h3>${friends}
     <h3 style="margin-top:14px">Gäste bei dir</h3>${guests}
     <details style="margin-top:12px"><summary class="muted" style="cursor:pointer">Verbindung</summary><div class="muted" style="margin:6px 0">Server: ${esc(serverUrl())}</div><button onclick="goOffline()">Offline gehen</button></details>`;
@@ -2418,7 +2457,7 @@ function boot(){
   if(booted)return;booted=true;
   $('#speedSel').value=String(S.speed);
   tick();renderLog();renderLists();renderOnline();setInterval(tick,1000);
-  netSync().then(()=>{loadBoss();loadRaid()});setInterval(netSync,20000);setInterval(()=>{loadBoss();loadRaid()},120000);
+  netSync().then(()=>{loadBoss();loadRaid()});setInterval(()=>{if(NET?.remotes||pairInfo||Date.now()-netLast>19000)netSync()},8000);setInterval(()=>{loadBoss();loadRaid()},120000);
 }
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
