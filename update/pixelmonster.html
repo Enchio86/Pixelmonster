@@ -1,0 +1,1975 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixelmonster</title>
+<style>
+:root{--bg:#120e18;--panel:#1f1a28;--panel2:#2c2538;--text:#f3ecdf;--muted:#a99fb8;--accent:#e2b65c;--gold:#b8945a;--good:#5fd38a;--bad:#ff6b6b;--warn:#ffb347}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,"Segoe UI",sans-serif;background:radial-gradient(ellipse at top,#2e2240,#0d0a12 70%) fixed;color:var(--text);min-height:100vh}
+.wrap{max-width:1000px;margin:0 auto;padding:16px}
+.top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+h1{font-size:26px;margin:0;letter-spacing:2px;font-family:Georgia,'Times New Roman',serif;color:#f0d9a4;text-shadow:0 0 12px #e2b65c55}
+h3{margin:0 0 10px;font-size:17px;font-family:Georgia,'Times New Roman',serif;color:#f0d9a4;letter-spacing:.5px}
+.muted{color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:330px 1fr;gap:16px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.card{background:linear-gradient(180deg,#231d2e,#1a1522);border:1px solid #b8945a33;border-radius:14px;padding:14px;box-shadow:0 6px 20px #0005;margin-bottom:14px}
+.device{background:linear-gradient(160deg,#3a3048,#17121e);border:2px solid var(--gold);border-radius:22px;padding:18px 16px 20px;text-align:center;box-shadow:0 10px 30px #000a,inset 0 0 30px #0008,0 0 0 4px #00000055;margin-bottom:14px}
+.screen{background:#000;border:3px solid var(--gold);border-radius:12px;box-shadow:0 0 18px #e2b65c33;width:100%;max-width:300px;aspect-ratio:1;display:block;margin:0 auto}
+.devname{margin:12px 0;font-weight:700;color:#f0d9a4;font-size:16px;font-family:Georgia,serif}
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+button{font:inherit;border:0;border-radius:10px;padding:8px 10px;background:var(--panel2);color:var(--text);cursor:pointer;transition:transform .05s,filter .15s}
+button:hover{filter:brightness(1.2)}button:active{transform:scale(.96)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.device button{background:linear-gradient(180deg,#3d3350,#2a2236);color:#f0d9a4;border:1px solid #b8945a66;font-weight:600;font-size:13px;box-shadow:0 3px 0 #0006}
+.primary{background:linear-gradient(180deg,#f0cf85,#c9963f);color:#21170c;font-weight:700}
+.bar{margin:6px 0}.bar label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px}
+.track{height:10px;background:#1b1929;border-radius:6px;overflow:hidden}
+.fill{height:100%;border-radius:6px;transition:width .4s}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tabs button.on{background:var(--accent);color:#2b2233;font-weight:700}
+.panel{display:none}.panel.on{display:block}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
+.stat{background:var(--panel2);border-radius:10px;padding:8px;text-align:center}
+.stat b{display:block;font-size:20px}
+.item{display:flex;gap:10px;align-items:center;background:var(--panel2);border-radius:12px;padding:10px;margin-bottom:8px}
+.item img{width:56px;height:56px;background:radial-gradient(circle,#3a3050,#15111c);border:1px solid #b8945a55;border-radius:10px}
+.item .grow{flex:1;min-width:0}
+.item .t{font-weight:700}
+textarea,input[type=text]{width:100%;background:#1b1929;color:var(--text);border:1px solid #4a4566;border-radius:10px;padding:8px;font:12px/1.4 ui-monospace,monospace}
+input[type=text]{font:inherit}
+textarea{height:70px;resize:vertical}
+#log{list-style:none;padding:0;margin:0;max-height:220px;overflow:auto;font-size:13px}
+#log li{padding:4px 0;border-bottom:1px solid #ffffff10}
+#log time{color:var(--muted);margin-right:6px;font-size:11px}
+.tgame{margin-top:12px;display:none}
+.ttrack{position:relative;height:34px;background:#1b1929;border-radius:10px;overflow:hidden}
+.zone{position:absolute;top:0;bottom:0;background:#5fd38a88;border-left:2px solid var(--good);border-right:2px solid var(--good)}
+.marker{position:absolute;top:-2px;bottom:-2px;width:6px;margin-left:-3px;background:var(--accent);border-radius:3px;box-shadow:0 0 8px var(--accent)}
+.overlay{position:fixed;inset:0;background:#0b0a12cc;display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
+.overlay.on{display:flex}
+.modal{background:linear-gradient(180deg,#261f32,#18131f);border:1px solid #b8945a66;border-radius:18px;padding:18px;width:100%;max-width:640px;max-height:95vh;overflow:auto}
+.arena{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center}
+.arena canvas{width:100%;max-width:240px;border:2px solid var(--gold);border-radius:12px}
+.hp{height:12px}
+#blog{font-size:13px;background:#1b1929;border-radius:10px;padding:8px;height:120px;overflow:auto;margin:10px 0}
+/* Mini-Ansicht: nur Monster, Statusbalken und Pflege-Buttons */
+.minitop,#miniBars{display:none}
+body.mini{background:transparent;min-height:0;overflow:hidden}
+body.mini .wrap{padding:0;max-width:none}
+body.mini .top,body.mini .grid>div:last-child,body.mini #bars,body.mini .devname,body.mini .lbl{display:none}
+body.mini .grid{display:block}
+body.mini .device{margin:0;padding:6px 8px 8px;border-radius:16px;height:100vh;box-sizing:border-box}
+body.mini .minitop{display:flex;align-items:center;gap:4px;-webkit-app-region:drag;cursor:move;margin-bottom:5px;font:600 12px Georgia,serif;color:#f0d9a4}
+body.mini .minitop span{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+body.mini .screen{max-width:none;width:100%;border-width:2px;border-radius:10px;-webkit-app-region:drag}
+body.mini #miniBars{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin:6px 0}
+#miniBars>div{height:5px;background:#0c0a10;border-radius:3px;overflow:hidden}#miniBars .fill{height:100%}
+body.mini .actions{grid-template-columns:repeat(6,1fr);gap:3px}
+body.mini .device button{padding:4px 0;font-size:15px;border-radius:7px}
+body.mini .device .minitop button{-webkit-app-region:no-drag;width:22px;height:22px;padding:0;display:flex;align-items:center;justify-content:center;flex:none;line-height:0;border-radius:6px}
+body.mini .device .minitop button svg{width:12px;height:12px;display:block}
+#updBar{display:none;position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:60;align-items:center;gap:10px;background:#2a2236;border:1px solid #d9b46a;color:#f0d9a4;padding:8px 12px;border-radius:12px;box-shadow:0 6px 20px #0008;font-size:14px;max-width:92vw}
+body.mini #updBar{top:4px;font-size:11px;padding:5px 7px;gap:6px}body.mini #updBar button{font-size:11px;padding:3px 6px}
+body.mini #toast{bottom:6px;font-size:12px;padding:6px 10px}
+.dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.dexcard{background:var(--panel2);border-radius:10px;padding:8px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px}
+.dexcard img{width:72px;height:72px}.dexcard span{color:var(--muted);font-size:11px}.dexcard.unknown b{color:var(--muted)}
+.dexgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}.dexfam{background:var(--panel2);border-radius:10px;padding:8px 10px}.dexhead{font-weight:700;margin-bottom:4px}
+.dexrow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.dexslot{display:flex;flex-direction:column;align-items:center;text-align:center;font-size:12px}
+.dexslot img{width:64px;height:64px}.dexslot i{font-style:normal;color:var(--muted);font-size:10px}.dexslot.unknown span{color:var(--muted)}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#000c;padding:10px 16px;border-radius:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:20;max-width:90vw;text-align:center}
+#toast.on{opacity:1}
+.pill{display:inline-block;background:var(--panel2);border-radius:999px;padding:4px 10px;font-size:13px;margin:2px}
+.prog{height:8px;margin-top:6px}
+.quiz .ans{display:block;width:100%;text-align:left;margin:6px 0;padding:11px 14px}
+.quiz .colors{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.quiz .colors button{height:54px;color:#fff;font-weight:700;text-shadow:0 1px 2px #0008}
+.quiz canvas{display:block;margin:10px auto;border:2px solid var(--gold);border-radius:14px;width:220px}
+.dots{display:flex;gap:4px;margin-bottom:12px}.dots i{flex:1;height:4px;border-radius:2px;background:#4a4566}.dots i.on{background:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>👾 Pixelmonster</h1>
+    <div class="row"><div id="topinfo"></div><button onclick="toggleMini(true)" title="Nur das Monster in einem kleinen Fenster zeigen">🗕 Mini-Ansicht</button></div>
+  </div>
+  <div class="grid">
+    <div>
+      <div class="device">
+        <div class="minitop"><span id="miniName"></span><button onclick="toggleMini(false)" title="Große Ansicht"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M7 1h4v4M11 1 7 5M5 11H1V7M1 11l4-4'/></svg></button><button onclick="window.close()" title="Schließen"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M2 2l8 8M10 2 2 10'/></svg></button></div>
+        <canvas id="screen" class="screen" width="288" height="288"></canvas>
+        <div class="devname" id="devName"></div>
+        <div class="actions">
+          <button onclick="act('feed')" title="Füttern">🍙<span class="lbl"> Füttern</span></button>
+          <button onclick="act('snack')" title="Superbeere">🍓<span class="lbl"> Beere</span></button>
+          <button onclick="act('play')" title="Spielen">⚽<span class="lbl"> Spielen</span></button>
+          <button onclick="act('clean')" title="Putzen">🧽<span class="lbl"> Putzen</span></button>
+          <button onclick="act('sleep')" id="sleepBtn" title="Schlafen">💤<span class="lbl"> Schlafen</span></button>
+          <button onclick="act('med')" title="Medizin">💊<span class="lbl"> Medizin</span></button>
+        </div>
+        <div id="miniBars"></div>
+      </div>
+      <div class="card" id="bars"></div>
+    </div>
+
+    <div>
+      <div class="tabs" id="tabs">
+        <button data-tab="training" class="on">💪 Training</button>
+        <button data-tab="kampf">⚔️ Kampf</button>
+        <button data-tab="quests">🗺️ Quests</button>
+        <button data-tab="zucht">🥚 Zucht</button>
+        <button data-tab="online">🌐 Online</button>
+        <button data-tab="tausch">📨 Datei-Tausch</button>
+        <button data-tab="laden">🛒 Laden</button>
+        <button data-tab="lexikon">📚 Lexikon</button>
+        <button data-tab="info">❓ Info</button>
+      </div>
+
+      <div class="card panel on" data-panel="training">
+        <h3>Training</h3>
+        <div class="muted">Drück im richtigen Moment, wenn der Balken im grünen Bereich ist. Was du am meisten trainierst, wird später sein Titel und bekommt einen Bonus.</div>
+        <div class="stats" id="statBox"></div>
+        <div class="row">
+          <button onclick="startTrain('atk')">💪 Kraft</button>
+          <button onclick="startTrain('def')">🛡️ Abwehr</button>
+          <button onclick="startTrain('spd')">⚡ Tempo</button>
+        </div>
+        <div class="tgame" id="tgame">
+          <div class="ttrack"><div class="zone" id="tzone"></div><div class="marker" id="tmark"></div></div>
+          <div class="row" style="margin-top:8px"><button class="primary" onclick="trainHit()">Jetzt! (Leertaste)</button><span class="muted" id="tlabel"></span></div>
+        </div>
+        <p class="muted" id="evoHint"></p>
+        <h3 style="margin-top:14px">🎮 Minispiel</h3>
+        <div class="row"><button onclick="startMinigame()">🍓 Beerenregen spielen</button><span class="muted">Fange Beeren mit Maus oder Pfeiltasten. Macht glücklich und bringt Münzen.</span></div>
+      </div>
+
+      <div class="card panel" data-panel="kampf">
+        <h3>Kampf</h3>
+        <div class="muted">Ein Kampf kostet Energie. Siege bringen Erfahrung und Münzen. Monster von Freunden importierst du im Tab „Austausch".</div>
+        <div class="muted">Element-Vorteile: 🔥 Feuer schlägt 🌿 Natur, Natur schlägt 🪨 Erde, Erde schlägt ⚡ Blitz, Blitz schlägt 💧 Wasser, Wasser schlägt Feuer. ☀️ Licht und 🌑 Dunkelheit sind gegen alle etwas stärker und gegeneinander sehr stark.</div>
+        <div class="row" style="margin:10px 0"><button class="primary" onclick="wildBattle()">🌿 Wildes Monster suchen</button><button onclick="startTournament()">🏆 Freundesturnier (1× pro Tag)</button></div>
+        <div id="bossBox"></div>
+        <div id="fightOnline"></div>
+        <div id="fightList"></div>
+      </div>
+
+      <div class="card panel" data-panel="quests">
+        <h3>Quests</h3>
+        <div class="muted">Schick dein Monster auf eine Expedition. Je stärker es ist, desto höher die Erfolgschance. Unterwegs braucht es keine Pflege.</div>
+        <div id="questNow" style="margin:10px 0"></div>
+        <div id="questList"></div>
+      </div>
+
+      <div class="card panel" data-panel="online">
+        <h3>Online mit Freunden spielen</h3>
+        <div id="onlineBox"></div>
+      </div>
+
+      <div class="card panel" data-panel="tausch">
+        <h3>Dein Monster verschicken</h3>
+        <div class="muted">Erzeuge eine Monster-Datei (oder einen Code zum Kopieren) und schick sie einem Freund. Dein Monster bleibt trotzdem bei dir. Dein Freund kann dann gegen es kämpfen oder es auf eine Gast-Quest mitnehmen.</div>
+        <div class="row" style="margin:10px 0"><button class="primary" onclick="exportMonster()">📤 Monster exportieren</button></div>
+        <textarea id="exportCode" readonly placeholder="Hier erscheint der Code deines Monsters…"></textarea>
+        <h3 style="margin-top:16px">Monster oder Rückkehr empfangen</h3>
+        <div class="muted">Füge einen Code ein oder lade eine .pxm-Datei. Das kann ein fremdes Monster sein oder ein Rückkehr-Code, mit dem dein eigenes Monster die Belohnung einer Gast-Quest bekommt.</div>
+        <textarea id="importCode" placeholder="PXM1.…" style="margin-top:8px"></textarea>
+        <div class="row" style="margin-top:8px">
+          <button class="primary" onclick="importCode($('#importCode').value)">📥 Code einlösen</button>
+          <label class="pill" style="cursor:pointer">📁 Datei laden<input type="file" accept=".pxm,.txt" hidden onchange="importFile(this)"></label>
+        </div>
+        <h3 style="margin-top:16px">Gast-Monster</h3>
+        <div id="friendList"></div>
+      </div>
+
+      <div class="card panel" data-panel="zucht">
+        <h3>🥚 Zucht und Nest</h3>
+        <div id="nestBox"></div>
+      </div>
+
+      <div class="card panel" data-panel="lexikon">
+        <h3>📚 Monsterlexikon</h3>
+        <div id="dexBox"></div>
+      </div>
+
+      <div class="card panel" data-panel="laden">
+        <h3>Laden</h3>
+        <div id="shop"></div>
+      </div>
+
+      <div class="card panel" data-panel="info">
+        <p class="muted" id="verInfo"></p>
+        <h3>So funktioniert's</h3>
+        <ul class="muted" style="padding-left:18px;line-height:1.6">
+          <li>Das Ei schlüpft nach 3 Stunden. Danach wächst dein Monster: 12 Stunden später wird es jugendlich, nach weiteren 24 Stunden ist es erwachsen.</li>
+          <li>Hunger, Laune, Energie und Sauberkeit sinken mit der Zeit, auch wenn das Spiel geschlossen ist (bis zu 12 Stunden).</li>
+          <li>Lässt du es hungern, verdrecken oder übermüden, zählt das als Pflegefehler. Zu viele Fehler und es wird ein Glibber.</li>
+          <li>Der Fragebogen bestimmt Element und Familie deines Monsters. Es gibt 35 Familien mit je drei Stufen (Baby, Jung, Erwachsen), zum Beispiel Feuer, Vulkan, Kristall, Roboter oder Kosmos.</li><li>Bei der Zucht erbt das Ei die Familie eines Elternteils. Manchmal mutiert es zu einer verwandten Familie mit demselben Element.</li><li>☀️ Licht- und 🌑 Dunkel-Monster gibt es nur durch Zucht, wenn beide Eltern mindestens 85 Zuneigung haben.</li><li>Zuneigung wächst, wenn du dich kümmerst, und macht dein Monster im Kampf stärker. Pflegefehler kosten Zuneigung.</li><li>Ab Level 15 und 60 Zuneigung wird ein erwachsenes Monster ultimativ. Ohne Pflegefehler und mit 80 Zuneigung beim Erwachsenwerden wird es ein Glanz-Monster.</li><li>Nach 7 Tagen als Erwachsener wird es ein Ältester und legt ein Erbe-Ei ins Nest.</li><li>Einmal pro Woche erscheint ein Boss. Kämpfen darf, wer in der Woche 3 Quests geschafft hat.</li><li>Farbe, Muster und Accessoire sind bei jedem Monster anders. Der Charakter verändert, wie es sich verhält.</li><li>Das meisttrainierte Talent wird sein Titel: Krieger (Kraft), Wächter (Abwehr) oder Sprinter (Tempo).</li>
+          <li>Freunde tauschen Monster über Codes oder .pxm-Dateien. Ein Gast-Monster kann einmal auf Quest gehen; danach bekommst du einen Rückkehr-Code, den du seinem Besitzer zurückschickst.</li>
+        </ul>
+        <h3>Einstellungen</h3>
+        <div class="row">
+          <label>Zeitraffer:
+            <select id="speedSel" onchange="S.speed=+this.value;save();toast('Zeitraffer: '+this.value+'×')">
+              <option value="1">1× (normal)</option><option value="10">10×</option><option value="60">60× (Test)</option>
+            </select>
+          </label>
+          <button onclick="releaseMonster()">🕊️ Monster freilassen</button>
+          <button onclick="resetGame()">🗑️ Neues Spiel</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📖 Tagebuch</h3>
+        <ul id="log"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="startOv">
+  <div class="modal quiz" style="max-width:480px" id="quiz"></div>
+</div>
+
+<div class="overlay" id="battleOv">
+  <div class="modal">
+    <h3 id="btitle">Kampf</h3>
+    <div class="arena">
+      <div><canvas id="bMe" width="240" height="240"></canvas><div id="bMeInfo"></div></div>
+      <div><canvas id="bFoe" width="240" height="240"></canvas><div id="bFoeInfo"></div></div>
+    </div>
+    <div id="blog"></div>
+    <div class="row" id="bActs">
+      <button class="primary" onclick="battleAct('atk')">🗡️ Angriff</button>
+      <button onclick="battleAct('spc')" id="bSpc">✨ Spezial</button>
+      <button onclick="battleAct('def')">🛡️ Verteidigen</button>
+      <button onclick="battleAct('item')" id="bItem">🧪 Heiltrank</button>
+    </div>
+    <div class="row" id="bDone" style="display:none"><button class="primary" id="bNext" onclick="nextTour()" style="display:none">➡️ Nächster Gegner</button><button class="primary" onclick="closeBattle()">Zurück</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="gameOv">
+  <div class="modal" style="max-width:380px;text-align:center">
+    <h3>🍓 Beerenregen</h3>
+    <canvas id="mgCv" width="320" height="320" style="width:100%;max-width:320px;border:2px solid var(--gold);border-radius:12px;touch-action:none" onmousemove="mgMove(event)" ontouchmove="mgMove(event)"></canvas>
+    <div class="muted">🍓 +1 · 🌟 +3 · 🪨 −2</div>
+  </div>
+</div>
+
+<div id="updBar"></div>
+<div id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rand=(a,b)=>a+Math.random()*(b-a);
+const rint=(a,b)=>Math.floor(rand(a,b+1));
+const rid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const SAVE_KEY='pixelmonster.v2';
+
+// Accessoires (über dem Kopf) – machen jedes Monster einzigartig
+const ACCESSORIES={
+  keins:{name:'nichts'},
+  antenne:{name:'Antennen'},
+  schleife:{name:'Schleife'},
+  krone:{name:'Krone'},
+  blume:{name:'Blume'},
+  hoerner:{name:'Hörner'},
+  feder:{name:'Feder'}
+};
+const PATTERNS={keine:'ohne Muster',punkte:'gepunktet',streifen:'gestreift',flecken:'gefleckt'};
+const ELEMENTS={
+  feuer:{name:'Feuer',icon:'🔥',adult:'drache',accent:'#ffd23f'},
+  wasser:{name:'Wasser',icon:'💧',adult:'aqua',accent:'#5fd1ff'},
+  erde:{name:'Erde',icon:'🪨',adult:'golem',accent:'#d9a95f'},
+  blitz:{name:'Blitz',icon:'⚡',adult:'fuchs',accent:'#fff04d'},
+  natur:{name:'Natur',icon:'🌿',adult:'blatt',accent:'#7bd36a'},
+  licht:{name:'Licht',icon:'☀️',adult:'seraph',accent:'#ffd75e'},
+  dunkel:{name:'Dunkelheit',icon:'🌑',adult:'umbra',accent:'#b366ff'}
+};
+const TRAITS={
+  aktiv:{name:'Energiebündel',desc:'Tempo-Training bringt mehr, wird aber schneller müde'},
+  verspielt:{name:'Verspielt',desc:'Spielen macht es doppelt glücklich, langweilt sich aber schneller'},
+  schlau:{name:'Schlaukopf',desc:'bekommt 25 % mehr Erfahrung'},
+  feinschmecker:{name:'Feinschmecker',desc:'wird schneller hungrig, aber Essen macht es gesünder'},
+  gemuetlich:{name:'Gemütlich',desc:'wird langsamer müde, Abwehr-Training bringt mehr'}
+};
+const TITLES={atk:'Krieger',def:'Wächter',spd:'Sprinter'};
+// Fragebogen: die ersten Fragen bestimmen das Element, dann Charakter und Lieblingsfarbe
+const QUIZ=[
+  {q:'Wie würden dich deine Freunde beschreiben?',a:[['Mutig und spontan','feuer'],['Ruhig und geduldig','erde'],['Schnell und neugierig','blitz'],['Einfühlsam und verträumt','wasser'],['Fürsorglich und naturverbunden','natur']]},
+  {q:'Wo fühlst du dich am wohlsten?',a:[['Am Lagerfeuer','feuer'],['Am Meer oder See','wasser'],['In den Bergen','erde'],['Im Wald','natur'],['Mitten im Trubel der Stadt','blitz']]},
+  {q:'Was wünschst du dir von deinem Monster?',a:[['Einen treuen Kampfpartner','feuer'],['Einen starken Beschützer','erde'],['Einen flinken Abenteurer','blitz'],['Einen ruhigen Freund zum Kuscheln','wasser'],['Einen fröhlichen Begleiter','natur']]},
+  {q:'Wie gehst du ein Problem an?',a:[['Direkt anpacken','feuer'],['Gründlich durchdenken','erde'],['Einfach ausprobieren','blitz'],['Auf mein Bauchgefühl hören','wasser'],['Gemeinsam mit anderen','natur']]},
+  {q:'Welche Jahreszeit magst du am liebsten?',a:[['Sommer','feuer'],['Frühling','natur'],['Herbst','erde'],['Winter','wasser'],['Egal, Hauptsache es ist was los','blitz']]},
+  {q:'Was fasziniert dich am meisten?',flavor:true,a:[['Wilde Tiere und Natur',0],['Urzeit und rohe Kraft',1],['Technik und Erfindungen',2],['Magie und Geheimnisse',3],['Himmel und Sterne',4],['Gruselgeschichten',5],['Edelsteine und Schätze',6]]},
+  {q:'Was machst du in deiner Freizeit am liebsten?',trait:true,a:[['Sport und Bewegung','aktiv'],['Spielen und Zocken','verspielt'],['Lesen und Neues lernen','schlau'],['Kochen und Essen','feinschmecker'],['Ausruhen und Chillen','gemuetlich']]},
+  {q:'Was ist deine Lieblingsfarbe?',color:true,a:[['Rot',2],['Orange',28],['Gelb',48],['Grün',120],['Türkis',172],['Blau',215],['Lila',270],['Pink',322]]}
+];
+const SPECIES={
+  ei:{name:'Ei',stage:0,colors:['#f4e7c5','#d9b97a'],mod:[1,1,1]},
+  schleim:{name:'Glibber',stage:3,colors:['#67c96b','#b8f0a8'],mod:[1,1.2,0.9],sp:'regen'}
+};
+const SPECIALS={
+  rempler:{name:'Rempler',desc:'kräftiger Stoß, 1,4-facher Schaden'},
+  feuer:{name:'Feueratem',desc:'1,8-facher Schaden, ignoriert halbe Abwehr'},
+  wall:{name:'Steinwall',desc:'doppelte Abwehr für 2 Runden, heilt 15 %'},
+  doppel:{name:'Doppelbiss',desc:'zwei schnelle Treffer'},
+  regen:{name:'Regeneration',desc:'heilt 35 % der Lebenspunkte'},
+  flut:{name:'Flutwelle',desc:'1,5-facher Schaden, kann nicht ausgewichen werden'},
+  ranke:{name:'Dornenranke',desc:'1,2-facher Schaden und heilt 15 %'},
+  lichtstrahl:{name:'Himmelsstrahl',desc:'1,6-facher Schaden, trifft immer, heilt 15 %'},
+  schattenbiss:{name:'Schattenbiss',desc:'1,7-facher Schaden, ignoriert halbe Abwehr, saugt Lebenspunkte ab'}
+};
+const STAGES=['Ei','Baby','Jugendlich','Erwachsen'];
+// Entwicklungszeiten in Spielminuten: Schlüpfen ab Ei-Beginn, danach Alter ab dem Schlüpfen
+const EVO={hatch:180,teen:720,adult:720+1440};
+function fmtLeft(min){min=Math.max(0,Math.ceil(min/(S.speed||1)));const h=Math.floor(min/60),m=min%60;return h?`${h} Std ${m} Min`:`${m} Min`}
+function nextStageText(){
+  const age=S.gameTime-S.born;
+  if(S.stage===0)return`Das Ei schlüpft in ${fmtLeft(EVO.hatch-age)}.`;
+  if(S.stage===1)return`Jugendlich in ${fmtLeft(EVO.teen-age)}.`;
+  if(S.stage===2)return`Erwachsen in ${fmtLeft(EVO.adult-age)}.`;
+  return'';
+}
+const ITEMS={beere:{name:'Superbeere',icon:'🍓',price:5,desc:'+15 Sattheit, +25 Laune'},trank:{name:'Heiltrank',icon:'🧪',price:15,desc:'+50 Gesundheit oder 40 % KP im Kampf'},stern:{name:'Sternenstaub',icon:'✨',price:0,desc:'+15 Zuneigung, nur von Wochen-Bossen'}};
+const QUESTS=[
+  {id:'wald',name:'Beerenwald',icon:'🌳',dur:5,diff:25,xp:20,coins:10,loot:{beere:2}},
+  {id:'see',name:'Nebelsee',icon:'🌊',dur:12,diff:45,xp:45,coins:25,loot:{beere:1,trank:1}},
+  {id:'hoehle',name:'Kristallhöhle',icon:'💎',dur:25,diff:70,xp:90,coins:50,loot:{trank:2}},
+  {id:'gipfel',name:'Drachengipfel',icon:'🌋',dur:45,diff:110,xp:180,coins:100,loot:{trank:2,beere:3}}
+];
+
+// ---------- Individuelles Aussehen ----------
+function hash32(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)}return h>>>0}
+function seeded(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+function makeLook(id,hue,element,family){
+  const r=seeded(hash32(id)),pick=a=>a[Math.floor(r()*a.length)];
+  const F=FAMILIES[family];
+  if(F){// Grundfarbe der Familie, leicht in Richtung Lieblingsfarbe verschoben
+    const d=((hue-F.h+540)%360)-180,h=Math.round(F.h+clamp(d,-25,25)*.8+r()*16-8+360)%360,s=Math.round(clamp(F.s+r()*12-6,5,95)),l=Math.round(F.l+r()*8-4);
+    return{main:`hsl(${h},${s}%,${l}%)`,light:`hsl(${(h+Math.round(r()*20-10)+360)%360},${Math.max(s-10,5)}%,${Math.min(l+22,94)}%)`,dark:`hsl(${h},${s}%,${Math.max(l-18,8)}%)`,
+      accent:F.accent,pattern:pick(Object.keys(PATTERNS)),accessory:pick(Object.keys(ACCESSORIES))};
+  }
+  const h=Math.round(hue+r()*30-15+360)%360,s=Math.round(55+r()*25),l=Math.round(50+r()*10);
+  const extra={pattern:pick(Object.keys(PATTERNS)),accessory:pick(Object.keys(ACCESSORIES))};
+  // Licht- und Dunkel-Monster bekommen helle bzw. dunkle Farben mit leuchtenden Akzenten
+  if(element==='licht')return{main:`hsl(${h},48%,80%)`,light:`hsl(${h},60%,94%)`,dark:`hsl(${h},38%,60%)`,accent:'#ffd75e',...extra};
+  if(element==='dunkel')return{main:`hsl(${h},28%,24%)`,light:`hsl(${h},32%,40%)`,dark:`hsl(${h},40%,13%)`,accent:`hsl(${h},95%,68%)`,...extra};
+  return{main:`hsl(${h},${s}%,${l}%)`,light:`hsl(${(h+Math.round(r()*24-12)+360)%360},${s-10}%,${Math.min(l+26,90)}%)`,dark:`hsl(${h},${s}%,${l-18}%)`,
+    accent:ELEMENTS[element].accent,...extra};
+}
+function lookOf(m){
+  if(m.look)return m.look;
+  const c=SPECIES[m.species]?.colors||['#8a8496','#c9c4d4'];return{main:c[0],light:c[1],dark:c[0],accent:'#ffd23f',pattern:'keine',accessory:'keins'};
+}
+// ---------- Fantasy-Grafik (Vektor, gezeichnet in einem 100×100-Raster) ----------
+const OUT='#120d18';
+let SC=1;
+function parseCol(c){
+  let m=/hsla?\((\d+),(\d+)%,(\d+)%/.exec(c);if(m)return[+m[1],+m[2],+m[3]];
+  m=/#(..)(..)(..)/.exec(c);if(!m)return[0,0,50];
+  const[r,g,b]=[1,2,3].map(i=>parseInt(m[i],16)/255),mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2;let h=0,s=0;
+  if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);h=(mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4)*60}
+  return[Math.round(h),Math.round(s*100),Math.round(l*100)];
+}
+function tone(c,dl,ds=0,a=1){const[h,s,l]=parseCol(c);return`hsla(${h},${clamp(s+ds,0,100)}%,${clamp(l+dl,0,100)}%,${a})`}
+function palette(m){const L=lookOf(m);return{...L,seed:hash32(JSON.stringify(L))}}
+function shade(ctx,cx,cy,r,c){const g=ctx.createRadialGradient(cx-r*.35,cy-r*.45,r*.05,cx,cy,r*1.25);g.addColorStop(0,tone(c,20));g.addColorStop(.5,c);g.addColorStop(1,tone(c,-30));return g}
+function lin(ctx,x0,y0,x1,y1,a,b){const g=ctx.createLinearGradient(x0,y0,x1,y1);g.addColorStop(0,a);g.addColorStop(1,b);return g}
+function part(ctx,p,fill,lw=3.2){ctx.lineJoin='round';ctx.lineCap='round';ctx.lineWidth=lw;ctx.strokeStyle=OUT;ctx.stroke(p);ctx.fillStyle=fill;ctx.fill(p)}
+function E(x,y,rx,ry,rot=0){const p=new Path2D();p.ellipse(x,y,rx,ry,rot,0,Math.PI*2);return p}
+function poly(pts){const p=new Path2D();pts.forEach(([x,y],i)=>i?p.lineTo(x,y):p.moveTo(x,y));p.closePath();return p}
+function glow(ctx,x,y,r,c,a=1){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,tone(c,25,0,a));g.addColorStop(.4,tone(c,0,0,a*.5));g.addColorStop(1,tone(c,0,0,0));ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill()}
+function line(ctx,pts,c,w,blur=0){ctx.save();ctx.strokeStyle=c;ctx.lineWidth=w;ctx.lineCap='round';ctx.lineJoin='round';if(blur){ctx.shadowColor=c;ctx.shadowBlur=blur*SC}ctx.beginPath();pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.stroke();ctx.restore()}
+function bone(ctx,x0,y0,x1,y1){return lin(ctx,x0,y0,x1,y1,'#f6ecd2','#8a7656')}
+function pattern(ctx,p,P,x0,y0,w,h){
+  if(P.pattern==='keine')return;
+  const r=seeded(P.seed);ctx.save();ctx.clip(p);ctx.fillStyle=tone(P.main,-24,0,.6);
+  if(P.pattern==='punkte'){for(let i=0;i<10;i++){ctx.beginPath();ctx.arc(x0+r()*w,y0+r()*h,1.4+r()*2.4,0,7);ctx.fill()}}
+  else if(P.pattern==='streifen'){for(let i=-1;i<7;i++){const x=x0+i*w/6;ctx.beginPath();ctx.moveTo(x,y0-6);ctx.lineTo(x+4,y0-6);ctx.lineTo(x+w*.2+4,y0+h+6);ctx.lineTo(x+w*.2,y0+h+6);ctx.fill()}}
+  else{for(let i=0;i<5;i++){ctx.beginPath();ctx.ellipse(x0+r()*w,y0+r()*h,3+r()*6,2+r()*4,r()*3,0,7);ctx.fill()}}
+  ctx.restore();
+}
+function eye(ctx,x,y,r,P,t,slit=true){
+  if(sleepy||(t+P.seed%3000)%4300<130){line(ctx,[[x-r,y],[x,y+r*.35],[x+r,y]],OUT,2);return}
+  ctx.fillStyle='#0d0913';ctx.beginPath();ctx.ellipse(x,y,r,r*.92,0,0,7);ctx.fill();
+  ctx.save();ctx.shadowColor=P.accent;ctx.shadowBlur=r*2.2*SC;
+  const g=ctx.createRadialGradient(x+r*.1,y,0,x+r*.1,y,r*.78);g.addColorStop(0,'#fffbe6');g.addColorStop(.35,P.accent);g.addColorStop(1,tone(P.accent,-35));
+  ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(x+r*.1,y,r*.74,r*.72,0,0,7);ctx.fill();ctx.restore();
+  ctx.fillStyle='#07050b';ctx.beginPath();ctx.ellipse(x+r*.15,y,slit?r*.17:r*.34,r*.52,0,0,7);ctx.fill();
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x-r*.28,y-r*.32,r*.22,0,7);ctx.fill();
+}
+function shadow(ctx,x,y,rx){ctx.fillStyle='rgba(0,0,0,.38)';ctx.beginPath();ctx.ellipse(x,y,rx,rx*.17,0,0,7);ctx.fill()}
+
+function accessory(ctx,P,x,y,t){
+  const a=P.accessory;
+  if(a==='krone'){
+    part(ctx,poly([[x-10,y],[x-12,y-10],[x-5,y-5],[x,y-14],[x+5,y-5],[x+12,y-10],[x+10,y]]),lin(ctx,x,y-14,x,y,'#ffe9a3','#b07a1c'),2.4);
+    glow(ctx,x,y-4,5,P.accent);ctx.fillStyle=P.accent;ctx.beginPath();ctx.arc(x,y-4,1.8,0,7);ctx.fill();
+  }else if(a==='antenne'){
+    for(const s of[-1,1]){line(ctx,[[x+s*3,y],[x+s*7,y-8],[x+s*10,y-14]],OUT,2);glow(ctx,x+s*10,y-14,6+Math.sin(t/300)*1.5,P.accent);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x+s*10,y-14,1.6,0,7);ctx.fill()}
+  }else if(a==='schleife'){
+    const c='#e0446a';part(ctx,poly([[x+6,y-3],[x-3,y-9],[x-3,y+3]]),c,2.2);part(ctx,poly([[x+6,y-3],[x+15,y-9],[x+15,y+3]]),c,2.2);part(ctx,E(x+6,y-3,2.6,2.6),tone(c,-10),2);
+  }else if(a==='blume'){
+    for(let i=0;i<5;i++){const an=i*1.2566+t/3000;part(ctx,E(x+6+Math.cos(an)*3.4,y-4+Math.sin(an)*3.4,3,2.2,an),'#ff8fc4',1.6)}
+    glow(ctx,x+6,y-4,6,'#ffd84d');ctx.fillStyle='#ffd84d';ctx.beginPath();ctx.arc(x+6,y-4,2,0,7);ctx.fill();
+  }else if(a==='hoerner'){
+    for(const s of[-1,1]){const p=new Path2D();p.moveTo(x+s*3,y+1);p.quadraticCurveTo(x+s*5,y-8,x+s*12,y-12);p.quadraticCurveTo(x+s*9,y-4,x+s*8,y+1);p.closePath();part(ctx,p,bone(ctx,x,y-12,x,y),2)}
+  }else if(a==='feder'){
+    const p=new Path2D();p.moveTo(x,y);p.quadraticCurveTo(x+2,y-14,x+12,y-20);p.quadraticCurveTo(x+8,y-8,x+3,y);p.closePath();
+    part(ctx,p,lin(ctx,x,y,x+12,y-20,P.accent,tone(P.accent,25)),2);line(ctx,[[x+1,y],[x+8,y-14]],tone(P.accent,-30),1);
+  }
+}
+
+
+function sparkle(ctx,x,y,r,c){ctx.save();ctx.fillStyle=c;ctx.shadowColor=c;ctx.shadowBlur=6*SC;ctx.beginPath();ctx.moveTo(x,y-r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.quadraticCurveTo(x,y,x,y+r);ctx.quadraticCurveTo(x,y,x-r,y);ctx.quadraticCurveTo(x,y,x,y-r);ctx.fill();ctx.restore()}
+// ---------- Kantige Monster: Low-Poly-Facetten ----------
+const LDIR=[-.5,-.86];
+// Füllt ein Polygon als geschliffene Facetten: jede Kante bekommt ein Dreieck zur Mitte, hell zum Licht hin, dunkel davon weg
+function facet(ctx,pts,c,o={}){
+  const lw=o.lw??2.4;ctx.save();ctx.lineJoin='miter';ctx.miterLimit=5;
+  const p=poly(pts);if(lw){ctx.lineWidth=lw;ctx.strokeStyle=OUT;ctx.stroke(p)}
+  let cx=0,cy=0;for(const[x,y]of pts){cx+=x;cy+=y}cx/=pts.length;cy/=pts.length;
+  if(o.c){cx=o.c[0];cy=o.c[1]}
+  const k=o.k??15;
+  for(let i=0;i<pts.length;i++){
+    const a=pts[i],b=pts[(i+1)%pts.length];let nx=b[1]-a[1],ny=a[0]-b[0];const L=Math.hypot(nx,ny)||1;nx/=L;ny/=L;
+    if(nx*((a[0]+b[0])/2-cx)+ny*((a[1]+b[1])/2-cy)<0){nx=-nx;ny=-ny}
+    const col=tone(c,(nx*LDIR[0]+ny*LDIR[1])*k);
+    ctx.fillStyle=ctx.strokeStyle=col;ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.closePath();ctx.fill();ctx.stroke();
+  }
+  ctx.restore();return p;
+}
+const mir=(pts,cx=50)=>pts.map(([x,y])=>[2*cx-x,y]);
+const mv=(pts,dx,dy)=>pts.map(([x,y])=>[x+dx,y+dy]);
+// Band entlang einer Mittellinie (Schwanz, Hals, Tentakel); die beiden Hälften werden unterschiedlich schattiert
+function ribbon(ctx,sp,ws,c,c2,lw=2.4){
+  const L=[],R=[];
+  for(let i=0;i<sp.length;i++){
+    const a=sp[Math.max(0,i-1)],b=sp[Math.min(sp.length-1,i+1)];let dx=b[0]-a[0],dy=b[1]-a[1];const d=Math.hypot(dx,dy)||1;dx/=d;dy/=d;
+    L.push([sp[i][0]-dy*ws[i],sp[i][1]+dx*ws[i]]);R.push([sp[i][0]+dy*ws[i],sp[i][1]-dx*ws[i]]);
+  }
+  const outline=[...L,...R.reverse()];R.reverse();
+  ctx.save();ctx.lineJoin='miter';ctx.miterLimit=5;if(lw){ctx.lineWidth=lw;ctx.strokeStyle=OUT;ctx.stroke(poly(outline))}
+  for(let i=0;i<sp.length-1;i++)for(const[side,col]of[[R,c],[L,c2||tone(c,-14)]]){
+    const q=[sp[i],sp[i+1],side[i+1],side[i]];
+    const nx=(side[i][0]+side[i+1][0])/2-(sp[i][0]+sp[i+1][0])/2,ny=(side[i][1]+side[i+1][1])/2-(sp[i][1]+sp[i+1][1])/2,n=Math.hypot(nx,ny)||1;
+    const f=tone(col,((nx/n)*LDIR[0]+(ny/n)*LDIR[1])*9+(i%2?-2:2));
+    ctx.fillStyle=ctx.strokeStyle=f;ctx.lineWidth=.7;const p=poly(q);ctx.fill(p);ctx.stroke(p);
+  }
+  ctx.restore();return outline;
+}
+function tri(ctx,a,b,c,col,lw=2){return facet(ctx,[a,b,c],col,{lw})}
+// Kantiges Auge; dir zeigt zur Nase (Innenwinkel), f = wie grimmig
+function eyeK(ctx,x,y,r,P,t,dir=1,f=.6){
+  if(sleepy||(t+P.seed%3000)%4300<130){line(ctx,[[x-r,y-r*.1*dir],[x+r,y+r*.1*dir]],OUT,1.8);return}
+  const s=dir,pts=[[x-r*s,y-r*.15],[x-r*.25*s,y-r*(.95-f*.15)],[x+r*s,y-r*(.45-f*.55)],[x+r*.35*s,y+r*.72],[x-r*.55*s,y+r*.55]];
+  ctx.fillStyle='#0b0812';ctx.strokeStyle=OUT;ctx.lineWidth=1.3;ctx.lineJoin='miter';const p=poly(pts);ctx.stroke(p);ctx.fill(p);
+  ctx.save();ctx.clip(p);ctx.shadowColor=P.accent;ctx.shadowBlur=r*2.4*SC;
+  const ix=x+r*.08*s,g=ctx.createLinearGradient(ix,y-r,ix,y+r);g.addColorStop(0,'#fffbe6');g.addColorStop(.45,P.accent);g.addColorStop(1,tone(P.accent,-35));
+  ctx.fillStyle=g;ctx.fill(poly([[ix,y-r*.8],[ix+r*.6,y],[ix,y+r*.75],[ix-r*.6,y]]));ctx.restore();
+  ctx.fillStyle='#07050b';ctx.fill(poly([[ix+r*.06*s,y-r*.6],[ix+r*.22*s,y],[ix+r*.06*s,y+r*.6],[ix-r*.1*s,y]]));
+  ctx.fillStyle='#fff';ctx.fill(poly([[x-r*.42*s,y-r*.5],[x-r*.12*s,y-r*.62],[x-r*.3*s,y-r*.22]]));
+}
+function flameK(ctx,x,y,s,c,t,ph=0,ang=0){
+  const f=Math.sin(t/110+ph)*1.6,g=Math.cos(t/140+ph)*1.2;
+  ctx.save();ctx.translate(x,y);ctx.rotate(ang);ctx.scale(s,s);ctx.shadowColor=c;ctx.shadowBlur=9*SC*s;
+  ctx.fillStyle=tone(c,-6);ctx.fill(poly([[-5,0],[-7,-7+g],[-3,-5],[-2,-14-f],[1,-7],[4,-12+g],[4,-5],[7,-8],[5,0]]));
+  ctx.shadowBlur=0;ctx.fillStyle=tone(c,22);ctx.fill(poly([[-3,0],[-3,-5],[-1,-3.5],[0,-9-f*.6],[2,-4],[3,-6],[3,0]]));
+  ctx.fillStyle='rgba(255,255,240,.85)';ctx.fill(poly([[-1.4,0],[0,-4.5],[1.4,0]]));
+  ctx.restore();
+}
+function boltK(ctx,x,y,s,c,ang=0){
+  ctx.save();ctx.translate(x,y);ctx.rotate(ang);ctx.scale(s,s);ctx.shadowColor=c;ctx.shadowBlur=8*SC*s;
+  facet(ctx,[[0,0],[-6,-7],[-1,-8],[-5,-17],[6,-6],[1,-5],[5,2]],c,{lw:1.6});ctx.restore();
+}
+function gemK(ctx,x,y,s,c,lw=1.6){facet(ctx,[[x,y-s*1.4],[x+s,y-s*.3],[x+s*.6,y+s],[x-s*.6,y+s],[x-s,y-s*.3]],c,{lw,k:30})}
+function crystalK(ctx,x,y,h,w,ang,c){
+  ctx.save();ctx.translate(x,y);ctx.rotate(ang);facet(ctx,[[-w,0],[-w*.8,-h*.7],[0,-h],[w*.8,-h*.7],[w,0]],c,{lw:1.6,k:28,c:[-w*.2,-h*.55]});ctx.restore();
+}
+function featherK(ctx,len,w,c,c2){facet(ctx,[[0,0],[-len*.35,-w],[-len,-w*.15],[-len*.55,w*.7]],c,{lw:1.5,k:12});line(ctx,[[0,0],[-len*.92,-w*.12]],tone(c2||c,-25,0,.7),.7)}
+
+// ---------- Flügel ----------
+function wingK(ctx,P,t,F,x,y,s,side,far){
+  const kind=F.wings,flap=Math.sin(t/(kind==='insect'?90:320))*(kind==='insect'?.12:.1);
+  ctx.save();ctx.translate(x,y);ctx.scale(side*s,s);ctx.rotate(-flap);
+  const c=far?tone(P.main,-14):P.main,m=far?tone(P.dark,-10):P.dark;
+  if(kind==='bat'||kind==='mech'){
+    const el=[-12,-24],tips=[[-40,-30],[-46,-10],[-38,8],[-24,14]];
+    const pts=[[0,0],el,...tips.flatMap((p,i)=>i<tips.length-1?[p,[(p[0]+tips[i+1][0])/2+5,(p[1]+tips[i+1][1])/2+3]]:[p]),[-6,10]];
+    if(kind==='mech')facet(ctx,[[0,0],el,[-44,-26],[-40,-14],[-30,-2],[-36,6],[-14,10]],tone(P.dark,-4),{k:22});
+    else{ctx.save();ctx.lineJoin='miter';ctx.lineWidth=2.2;ctx.strokeStyle=OUT;ctx.stroke(poly(pts));ctx.restore();
+      for(let i=0;i<tips.length-1;i++)facet(ctx,[el,tips[i],[(tips[i][0]+tips[i+1][0])/2+5,(tips[i][1]+tips[i+1][1])/2+3],tips[i+1]],tone(m,i%2?-4:4),{lw:0,k:10,c:[el[0]-4,el[1]+10]});
+      facet(ctx,[[0,0],el,[-24,14],[-6,10]],tone(m,-6),{lw:0,k:8});}
+    line(ctx,[[0,0],el],OUT,3.4);line(ctx,[[0,0],el],tone(c,10),1.8);
+    for(const p of tips){line(ctx,[el,p],OUT,2.2);line(ctx,[el,p],tone(c,6),1)}
+    tri(ctx,[el[0]-2,el[1]+1],[el[0]+3,el[1]-7],[el[0]+3,el[1]+1],'#efe3c4',1.2);
+    if(kind==='mech')for(let i=0;i<3;i++){const ph=(t/900+i/3)%1;glow(ctx,-14-i*9,-18+i*8,3,P.accent,.6+Math.sin(ph*6)*.3)}
+  }else if(kind==='feather'){
+    for(let i=0;i<7;i++){ctx.save();ctx.rotate(-.55+i*.2);featherK(ctx,30+i*2.2-(i>4?(i-4)*4:0),5,far?tone(P.light,-18):tone(P.light,i%2?-4:4),P.accent);ctx.restore()}
+    facet(ctx,[[2,2],[-6,-12],[-18,-10],[-14,2]],far?tone(P.main,-10):P.main,{lw:1.8});
+  }else if(kind==='insect'){
+    ctx.globalAlpha=.78;
+    for(const[a,l,w]of[[-.6,34,7],[-.15,28,6]]){ctx.save();ctx.rotate(a);const q=[[0,0],[-l*.4,-w],[-l,-w*.2],[-l*.55,w*.6]];
+      ctx.fillStyle=tone(P.accent,10,0,.35);ctx.strokeStyle=tone(P.accent,-10,0,.95);ctx.lineWidth=1.2;ctx.fill(poly(q));ctx.stroke(poly(q));
+      line(ctx,[[0,0],[-l*.9,-w*.15]],tone(P.accent,-20,0,.6),.6);line(ctx,[[-l*.3,-w*.4],[-l*.6,w*.3]],tone(P.accent,-20,0,.4),.5);ctx.restore()}
+    ctx.globalAlpha=1;
+  }
+  ctx.restore();
+}
+// ---------- Schwänze ----------
+function tailK(ctx,P,t,F,x,y,s,dir=-1){
+  const kind=F.tail;if(!kind||kind==='none')return;
+  const sw=Math.sin(t/650)*3,sp=kind==='fluff'?[[x,y],[x+dir*10*s,y-2*s+sw*.3],[x+dir*18*s,y-12*s+sw*.6],[x+dir*16*s,y-24*s+sw]]
+    :kind==='feather'||kind==='fin'?[[x,y],[x+dir*12*s,y+1*s+sw*.3],[x+dir*22*s,y-4*s+sw*.7]]
+    :[[x,y],[x+dir*11*s,y+2*s+sw*.3],[x+dir*20*s,y-6*s+sw*.6],[x+dir*25*s,y-17*s+sw]];
+  const n=sp.length,end=sp[n-1],pre=sp[n-2],ang=Math.atan2(end[1]-pre[1],end[0]-pre[0]);
+  const w=kind==='fluff'?[4*s,7*s,8*s,2*s]:kind==='stinger'?[4*s,3.5*s,3*s,2.5*s]:Array.from({length:n},(_,i)=>(5-4.2*i/(n-1))*s);
+  ribbon(ctx,sp,w,kind==='fluff'?P.light:P.main,kind==='fluff'?tone(P.light,-12):P.dark,2.2*Math.min(1,s+.2));
+  ctx.save();
+  if(kind==='flame')flameK(ctx,end[0],end[1]+2*s,s*1.25,P.accent,t,0,ang+Math.PI/2);
+  else if(kind==='bolt')boltK(ctx,end[0],end[1]+2,s*1.3,P.accent,ang+Math.PI/2);
+  else if(kind==='leaf'){ctx.translate(...end);ctx.rotate(ang);facet(ctx,[[0,0],[7*s,-5*s],[16*s,0],[7*s,5*s]],tone(P.accent,-25,-10),{lw:1.6,k:18});line(ctx,[[1,0],[14*s,0]],tone(P.accent,-45),.8)}
+  else if(kind==='spike'){ctx.translate(...end);ctx.rotate(ang);facet(ctx,[[-2*s,-4*s],[10*s,0],[-2*s,4*s],[1*s,0]],tone(P.dark,-6),{lw:1.6,k:20})}
+  else if(kind==='stinger'){ctx.translate(...end);ctx.rotate(ang);facet(ctx,[[-3*s,-5*s],[6*s,-4*s],[12*s,4*s],[4*s,1*s],[-3*s,5*s]],tone(P.accent,-15),{lw:1.6,k:20});glow(ctx,10*s,3*s,4*s,P.accent,.7)}
+  else if(kind==='crystal'){crystalK(ctx,end[0],end[1],10*s,3.5*s,ang+Math.PI/2,P.light)}
+  else if(kind==='fin'||kind==='feather'){ctx.translate(...end);ctx.rotate(ang);facet(ctx,[[0,0],[9*s,-9*s],[6*s,0],[9*s,9*s]],kind==='fin'?tone(P.accent,-20,-15):P.light,{lw:1.6,k:14})}
+  ctx.restore();
+}
+// ---------- Kopfschmuck: Ohren, Hörner, Aufsätze ----------
+// front: Kopf von vorn (Ohren links und rechts); side: Kopf im Profil, Blick nach rechts
+function earsK(ctx,P,t,F,x,y,w,front,far){
+  const k=F.ears;if(!k||k==='none')return;
+  const one=(ex,ey,sd,dark)=>{
+    const c=dark?tone(P.main,-14):P.main,inner=dark?tone(P.accent,-30,-20):tone(P.accent,-18,-20);
+    const S2=w/30,o=(pts)=>pts.map(([a,b])=>[ex+a*sd*S2,ey+b*S2]);
+    if(k==='cat'){facet(ctx,o([[-6,4],[-2,-12],[8,2]]),c,{lw:2});facet(ctx,o([[-3,2],[-1,-7],[4,1]]),inner,{lw:0})}
+    else if(k==='long'){facet(ctx,o([[-5,4],[2,-20],[9,-14],[6,3]]),c,{lw:2});facet(ctx,o([[-1,1],[3,-14],[5,-11],[3,1]]),inner,{lw:0})}
+    else if(k==='bat'){facet(ctx,o([[-6,4],[4,-16],[6,-6],[10,-8],[8,4]]),c,{lw:2});facet(ctx,o([[-2,2],[4,-10],[5,1]]),inner,{lw:0})}
+    else if(k==='fin'){facet(ctx,o([[0,-4],[16,-10],[12,-2],[16,4],[0,4]]),tone(P.accent,-25,-15),{lw:2,k:20})}
+    else if(k==='feather'){ctx.save();ctx.translate(ex,ey);ctx.scale(sd*S2,S2);ctx.rotate(-2.2);featherK(ctx,18,4,P.light,P.accent);ctx.rotate(.4);featherK(ctx,13,3,tone(P.light,-8),P.accent);ctx.restore()}
+    else if(k==='leaf'){facet(ctx,o([[0,2],[6,-6],[16,-8],[10,2]]),tone(P.accent,-25,-10),{lw:1.8,k:18})}
+    else if(k==='small'){facet(ctx,o([[-4,3],[0,-5],[6,1]]),c,{lw:1.8})}
+    else if(k==='crystal'){crystalK(ctx,ex,ey+2,14*S2,3.5*S2,sd*.35,P.light)}
+  };
+  if(front){one(x-w*.38,y+w*.12,-1,false);one(x+w*.38,y+w*.12,1,false)}
+  else{one(x+w*.1,y+w*.02,-1,true);one(x-w*.08,y+w*.06,-1,false)}
+}
+function hornsK(ctx,P,t,F,x,y,w,front){
+  const k=F.horns;if(!k)return;const S2=w/30,bc='#e9dcb8';
+  const one=(hx,hy,sd,dark)=>{const o=pts=>pts.map(([a,b])=>[hx+a*sd*S2,hy+b*S2]),c=dark?tone(bc,-20):bc;
+    if(k==='small')facet(ctx,o([[-3,2],[1,-9],[4,2]]),c,{lw:1.8,k:20});
+    else if(k==='curved')facet(ctx,o([[-3,3],[-2,-8],[6,-18],[16,-20],[6,-12],[4,3]]),c,{lw:2,k:20});
+    else if(k==='antler'){const a=tone(P.dark,-5);line(ctx,o([[0,2],[2,-10],[10,-20]]),OUT,4);line(ctx,o([[2,-10],[-6,-18]]),OUT,3.4);line(ctx,o([[6,-15],[12,-12]]),OUT,3);
+      line(ctx,o([[0,2],[2,-10],[10,-20]]),a,2);line(ctx,o([[2,-10],[-6,-18]]),a,1.8);line(ctx,o([[6,-15],[12,-12]]),a,1.6);
+      for(const p of o([[10,-20],[-6,-18],[12,-12]]))facet(ctx,[[p[0]-2.4,p[1]],[p[0],p[1]-3.6],[p[0]+2.4,p[1]],[p[0],p[1]+2]],tone(P.accent,-20,-10),{lw:1,k:16})}
+    else if(k==='crystal')crystalK(ctx,hx,hy+2,16*S2,3.6*S2,sd*.3,P.light);
+  };
+  if(front){one(x-w*.22,y+w*.05,-1,false);one(x+w*.22,y+w*.05,1,false)}
+  else{one(x+w*.12,y+w*.04,-1,true);one(x-w*.04,y+w*.08,-1,false)}
+}
+function topK(ctx,P,t,F,x,y,w){
+  const k=F.top,S2=w/30;
+  if(k==='flame')flameK(ctx,x,y+3*S2,S2*1.3,P.accent,t,1);
+  else if(k==='sprout'){line(ctx,[[x,y+2],[x+1,y-6*S2]],OUT,3);line(ctx,[[x,y+2],[x+1,y-6*S2]],tone(P.accent,-35),1.5);
+    facet(ctx,[[x+1,y-6*S2],[x-5*S2,y-10*S2],[x-12*S2,y-8*S2],[x-6*S2,y-5*S2]],tone(P.accent,-22,-10),{lw:1.6,k:18});
+    facet(ctx,[[x+1,y-6*S2],[x+6*S2,y-12*S2],[x+13*S2,y-11*S2],[x+7*S2,y-6*S2]],tone(P.accent,-12,-10),{lw:1.6,k:18})}
+  else if(k==='halo'){const yy=y-6*S2+Math.sin(t/500);ctx.save();ctx.shadowColor=P.accent;ctx.shadowBlur=10*SC;ctx.strokeStyle=tone(P.accent,15);ctx.lineWidth=2.2;
+    ctx.stroke(poly([[x-10*S2,yy],[x-5*S2,yy-3*S2],[x+5*S2,yy-3*S2],[x+10*S2,yy],[x+5*S2,yy+3*S2],[x-5*S2,yy+3*S2]]));ctx.restore()}
+  else if(k==='crystal'){crystalK(ctx,x,y+3,14*S2,4*S2,0,P.light);crystalK(ctx,x-6*S2,y+4,9*S2,3*S2,-.4,tone(P.light,-8));crystalK(ctx,x+6*S2,y+4,9*S2,3*S2,.4,tone(P.light,-8))}
+  else if(k==='hat'){facet(ctx,[[x-15*S2,y+2*S2],[x+15*S2,y+2*S2],[x+9*S2,y-2*S2],[x-9*S2,y-2*S2]],tone(P.dark,-15),{lw:2});
+    facet(ctx,[[x-8*S2,y-1*S2],[x-2*S2,y-20*S2],[x+10*S2,y-28*S2+Math.sin(t/600)],[x+4*S2,y-16*S2],[x+8*S2,y-1*S2]],tone(P.dark,-10),{lw:2,k:18});
+    for(const[a,b]of[[-2,-8],[3,-13]])sparkle(ctx,x+a*S2,y+b*S2,2*S2,P.accent)}
+  else if(k==='moon'){ctx.save();ctx.shadowColor=P.accent;ctx.shadowBlur=8*SC;ctx.fillStyle=tone(P.accent,10);ctx.fill(poly([[x-4*S2,y+7*S2],[x,y+1*S2],[x+4*S2,y+3*S2],[x+1*S2,y+4*S2],[x,y+8*S2]]));ctx.restore()}
+  else if(k==='gem'){glow(ctx,x,y+7*S2,7*S2,P.accent,.7);gemK(ctx,x,y+7*S2,2.6*S2,P.accent)}
+  else if(k==='star'){ctx.save();ctx.translate(x,y-4*S2);ctx.rotate(t/1500);glow(ctx,0,0,8*S2,P.accent,.7);facet(ctx,[0,1,2,3,4,5,6,7,8,9].map(i=>{const r=i%2?2.6*S2:7*S2,a=i*Math.PI/5;return[Math.sin(a)*r,-Math.cos(a)*r]}),P.accent,{lw:1.4,k:25});ctx.restore()}
+  else if(k==='fin')facet(ctx,[[x-6*S2,y+3*S2],[x-2*S2,y-9*S2],[x+4*S2,y-12*S2],[x+2*S2,y-4*S2],[x+7*S2,y+3*S2]],tone(P.accent,-25,-15),{lw:1.8,k:20});
+  else if(k==='drop')facet(ctx,[[x-4*S2,y+3*S2],[x,y-10*S2],[x+4*S2,y+3*S2]],tone(P.accent,-10),{lw:1.6,k:22});
+  if(F.antenna)for(const sd of[-1,1]){line(ctx,[[x+sd*3*S2,y+3],[x+sd*7*S2,y-7*S2],[x+sd*12*S2,y-11*S2]],OUT,2.4);line(ctx,[[x+sd*3*S2,y+3],[x+sd*7*S2,y-7*S2],[x+sd*12*S2,y-11*S2]],tone(P.dark,-5),1);
+    glow(ctx,x+sd*12*S2,y-11*S2,4*S2,P.accent,.8+Math.sin(t/300+sd)*.2);gemK(ctx,x+sd*12*S2,y-11*S2,1.6*S2,P.accent,1)}
+  if(F.crown){const c='#ffd45c',cy=y-1*S2;facet(ctx,[[x-9*S2,cy+3*S2],[x-11*S2,cy-7*S2],[x-5*S2,cy-2*S2],[x,cy-11*S2],[x+5*S2,cy-2*S2],[x+11*S2,cy-7*S2],[x+9*S2,cy+3*S2]],c,{lw:1.8,k:22});gemK(ctx,x,cy,1.8*S2,P.accent,1)}
+}
+// ---------- Element-Teilchen ----------
+function fxK(ctx,P,t,F){
+  const k=F.fx;if(!k||k==='none')return;
+  for(let i=0;i<6;i++){
+    const ph=(t/(k==='wind'?1600:3000)+i/6)%1,x=14+((i*37)%72),a=Math.sin(ph*Math.PI);ctx.globalAlpha=a*.85;
+    if(k==='flame'||k==='ember'){const y=88-ph*70;ctx.fillStyle=tone(P.accent,10);ctx.fill(poly([[x,y-2.4],[x+1.6,y],[x,y+2.4],[x-1.6,y]]))}
+    else if(k==='bubble'){const y=88-ph*76;ctx.strokeStyle=tone(P.accent,10,0,.9);ctx.lineWidth=1;ctx.stroke(poly([[x-2,y-1],[x,y-2.6],[x+2,y-1],[x+2,y+1],[x,y+2.6],[x-2,y+1]]))}
+    else if(k==='leaf'){const y=12+ph*76;ctx.save();ctx.translate(x+Math.sin(ph*9)*5,y);ctx.rotate(ph*8);ctx.fillStyle=tone(P.accent,-15);ctx.fill(poly([[-3,0],[0,-1.8],[3,0],[0,1.8]]));ctx.restore()}
+    else if(k==='spark'){if(Math.sin(t/90+i*7)>.6){const y=20+((i*53)%60);line(ctx,[[x,y],[x+3,y+3],[x+1,y+4],[x+4,y+8]],tone(P.accent,15),1.4,4)}}
+    else if(k==='ice'||k==='snow'||k==='crystal'){const y=k==='snow'?10+ph*80:30+Math.sin(ph*6+i)*8+i*6;ctx.fillStyle=k==='crystal'?tone(P.accent,0,0,.9):'rgba(225,248,255,.95)';ctx.fill(poly([[x,y-3],[x+1.5,y],[x,y+3],[x-1.5,y]]))}
+    else if(k==='smoke'||k==='wisp'){const y=88-ph*60;ctx.fillStyle=k==='wisp'?tone(P.accent,0,0,.5):'rgba(40,20,60,.5)';ctx.fill(poly([[x-4,y],[x-1,y-4],[x+4,y-1],[x+1,y+3]]))}
+    else if(k==='star'||k==='rune'){const y=16+((i*29)%50)+Math.sin(ph*6)*3;ctx.globalAlpha=Math.max(0,Math.sin(t/400+i*2))*.9;sparkle(ctx,x,y,1.6+a,tone(P.accent,15))}
+    else if(k==='dust'){const y=86-ph*10;ctx.fillStyle=tone(P.main,10,0,.7);ctx.fillRect(x+ph*8,y,1.8,1.8)}
+    else if(k==='poison'){const y=60+ph*30;ctx.fillStyle=tone(P.accent,-5,0,.9);ctx.fill(poly([[x,y-3],[x+1.8,y+1],[x,y+2.5],[x-1.8,y+1]]))}
+    else if(k==='wind'){const y=20+((i*23)%60);line(ctx,[[x-10+ph*30,y],[x-2+ph*30,y-1],[x+4+ph*30,y+1]],tone(P.accent,0,0,.6),1)}
+    else if(k==='gear'||k==='data'){if(Math.sin(t/200+i*3)>.4){const y=18+((i*31)%60);ctx.fillStyle=tone(P.accent,10);ctx.fillRect(x,y,2,2);ctx.fillRect(x+3,y+3,1.4,1.4)}}
+    ctx.globalAlpha=1;
+  }
+}
+// Kantiges Maul im Profil mit Reißzahn
+function jawK(ctx,x,y,len,P,open=0){
+  line(ctx,[[x,y],[x+len*.5,y+.6+open],[x+len,y-.4]],OUT,1.6);
+  tri(ctx,[x+len*.55,y+.2+open],[x+len*.66,y+3.2+open],[x+len*.75,y],'#f6efe0',1);
+}
+// ---------- Körperbaupläne ----------
+// Alle zeichnen im 100×100-Raster, Boden bei y≈90, Blick nach rechts (bzw. nach vorn)
+const ARCH={
+  imp:{head:[50,22],draw(ctx,P,t,F){
+    const b=Math.sin(t/600)*1.2,fl=F.float,fy=fl?-5+Math.sin(t/500)*2.5:0;
+    shadow(ctx,50,91,fl?15:22);ctx.save();ctx.translate(0,fy);
+    if(F.wings)for(const sd of[-1,1])wingK(ctx,P,t,F,50+sd*10,64,.42,sd,true);
+    tailK(ctx,P,t,F,38,80,.7);
+    if(fl){facet(ctx,[[38,72],[62,72],[58,82],[52,94],[46,84]],tone(P.main,-6));glow(ctx,52,92,6,P.accent,.4)}
+    else for(const sd of[-1,1])facet(ctx,sd<0?[[37,78],[47,78],[47,90],[34,90]]:[[53,78],[63,78],[66,90],[53,90]],tone(P.main,-8),{lw:2.2});
+    const body=[[36,64],[50,59+b],[64,64],[66,78],[58,86],[42,86],[34,78]];
+    const bp=facet(ctx,body,P.main);pattern(ctx,bp,P,30,58,40,30);
+    facet(ctx,[[44,68],[56,68],[54,81],[46,81]],P.light,{lw:0,k:10});
+    if(F.moss)facet(ctx,[[36,70],[42,66],[44,74],[38,78]],tone(P.accent,-35,-20),{lw:1.2});
+    for(const sd of[-1,1])facet(ctx,sd<0?[[37,66],[27,77],[33,79],[39,74]]:[[63,66],[73,77],[67,79],[61,74]],tone(P.main,-4),{lw:2});
+    ctx.translate(0,b);
+    const hy=F.helm?1:0;
+    earsK(ctx,P,t,F,50,22,40,true);hornsK(ctx,P,t,F,50,22,40,true);
+    const head=F.helm?[[30,30],[36,22],[64,22],[70,30],[70,48],[62,58],[38,58],[30,48]]:[[29,40],[34,27],[50,21],[66,27],[71,40],[66,54],[50,60],[34,54]];
+    const hp=facet(ctx,head,F.helm?tone(P.main,4):P.main,{c:[47,36]});pattern(ctx,hp,P,28,20,44,40);
+    if(F.helm){facet(ctx,[[34,36],[66,36],[63,48],[37,48]],'#14111c',{lw:1.6,k:6});
+      ctx.save();ctx.shadowColor=P.accent;ctx.shadowBlur=8*SC;ctx.fillStyle=P.accent;
+      if(!sleepy&&(t+P.seed%3000)%4300>=130){ctx.fill(poly([[39,40],[46,39],[46,44],[40,44]]));ctx.fill(poly([[54,39],[61,40],[60,44],[54,44]]))}else{ctx.fillRect(39,42,7,1.2);ctx.fillRect(54,42,7,1.2)}
+      ctx.restore();line(ctx,[[44,53],[56,53]],OUT,1.6);
+    }else{
+      if(F.muzzle)facet(ctx,[[40,49],[50,46],[60,49],[57,57],[50,60],[43,57]],P.light,{lw:0,k:8});
+      eyeK(ctx,41.5,42,5.6,P,t,1,.15);eyeK(ctx,58.5,42,5.6,P,t,-1,.15);
+      if(F.muzzle)tri(ctx,[48,49],[52,49],[50,51.5],OUT,0);
+      line(ctx,[[46.5,53],[50,55.5],[53.5,53]],OUT,1.5);
+      if(F.horns||F.tail==='spike')tri(ctx,[51,54.4],[52.6,54.4],[51.8,57],'#fff',.8);
+      ctx.fillStyle=tone(P.accent,0,0,.45);ctx.fill(poly([[32,48],[37,47],[35,50]]));ctx.fill(poly([[68,48],[63,47],[65,50]]));
+    }
+    topK(ctx,P,t,F,50,22,40);
+    ctx.restore();
+  }},
+  quad:{head:[80,20],draw(ctx,P,t,F){
+    const b=Math.sin(t/650)*1;shadow(ctx,50,91,36);
+    if(F.wings)wingK(ctx,P,t,F,58,48,.85,1,true);
+    for(const p of[[[28,62],[36,62],[38,78],[35,90],[27,90],[29,78]],[[60,62],[68,62],[67,78],[70,90],[62,90],[61,78]]])facet(ctx,p,tone(P.main,-16),{lw:2.2});
+    tailK(ctx,P,t,F,27,56,1.05);
+    const body=[[23,56],[31,46],[50,44+b*.5],[64,44+b*.5],[74,51],[72,65],[62,72],[34,72],[24,66]];
+    const bp=facet(ctx,body,P.main,{c:[46,54]});pattern(ctx,bp,P,22,42,54,32);
+    facet(ctx,[[34,67],[62,66],[60,72],[36,72]],P.light,{lw:0,k:8});
+    if(F.moss)facet(ctx,[[34,46],[46,44],[42,52],[32,52]],tone(P.accent,-35,-20),{lw:1.2});
+    if(F.spikes)for(let i=0;i<4;i++){const x=32+i*8,y=46-(i?1:0)+b*.5;F.spikes==='crystal'?crystalK(ctx,x+2,y+2,9-i*.6,2.8,-.35,P.light):F.spikes==='leaf'?facet(ctx,[[x-3,y+1],[x-2,y-7],[x+5,y-9],[x+4,y+1]],tone(P.accent,-25,-10),{lw:1.6,k:18}):tri(ctx,[x-3,y+1],[x-3,y-8+i*.5],[x+4,y+1],tone(P.dark,-4),1.8)}
+    for(const p of[[[30,62],[42,61],[44,76],[41,90],[30,90],[33,78]],[[62,60],[72,59],[72,76],[77,90],[66,90],[64,77]]]){facet(ctx,p,P.main,{lw:2.2});
+      const fx=p[3][0],fy=90;for(let i=0;i<3;i++)tri(ctx,[fx+i*2.6-1.4,fy-2.6],[fx+i*2.6+2.6,fy],[fx+i*2.6-.6,fy],'#efe3c4',.9)}
+    ctx.save();ctx.translate(0,b);
+    facet(ctx,[[60,48],[70,34],[80,34],[78,50],[68,58]],P.main,{c:[70,46]});
+    if(F.mane){const mk=F.mane;for(let i=0;i<5;i++){const x=60+i*3.6,y=48-i*3;
+      if(mk==='crystal')crystalK(ctx,x,y+3,10,2.6,-.9,P.light);else if(mk==='flame')flameK(ctx,x,y+2,.9,P.accent,t,i,-.9);else if(mk==='leaf')facet(ctx,[[x+2,y+2],[x-8,y-4],[x-12,y-1],[x,y+5]],tone(P.accent,-25,-10),{lw:1.4,k:16});else if(mk==='feather'){ctx.save();ctx.translate(x+2,y+2);ctx.rotate(.35);featherK(ctx,14,3.6,P.light,P.accent);ctx.restore()}
+      else tri(ctx,[x+3,y+3],[x-9,y-3+i*.4],[x+1,y-3],tone(F.mane===true?P.accent:P.dark,F.mane===true?-25:-4),1.6)}}
+    earsK(ctx,P,t,F,79,22,30,false);hornsK(ctx,P,t,F,79,22,30,false);
+    const head=[[69,32],[74,23],[84,21],[91,28],[98,34],[97,40],[88,45],[76,46],[70,40]];
+    const hp=facet(ctx,head,P.main,{c:[80,32]});pattern(ctx,hp,P,68,20,30,26);
+    facet(ctx,[[78,42],[96,40],[90,46],[80,47]],P.light,{lw:0,k:8});
+    eyeK(ctx,82,31,3.8,P,t,1,.8);jawK(ctx,85,41,12,P);tri(ctx,[95,34],[97,35],[95.5,36],OUT,0);
+    topK(ctx,P,t,F,80,22,24);ctx.restore();
+  }},
+  drake:{head:[82,10],draw(ctx,P,t,F){
+    const b=Math.sin(t/650)*1.2,fl=F.float,fy=fl?-4+Math.sin(t/550)*2:0;shadow(ctx,50,92,fl?24:34);
+    ctx.save();ctx.translate(0,fy);
+    if(F.wings)wingK(ctx,P,t,F,52,46,1,1,true);
+    if(fl){ribbon(ctx,[[44,74],[36,84],[24,88],[12,84]],[10,7,4,.5],tone(P.main,-4),P.dark);glow(ctx,30,88,10,P.accent,.35)}
+    else{tailK(ctx,P,t,{...F,tail:F.tail||'spike'},36,76,1.2);
+      facet(ctx,[[46,72],[56,72],[56,82],[60,90],[48,90],[48,82]],tone(P.main,-16),{lw:2.2});}
+    const body=[[35,66],[42,50],[54,40+b],[66,44+b],[69,58],[63,76],[45,80]];
+    const bp=facet(ctx,body,P.main,{c:[50,56]});pattern(ctx,bp,P,34,40,36,40);
+    for(let i=0;i<4;i++)facet(ctx,[[54+i*1.5,46+i*7+b*.5],[66-i*.6,48+i*7+b*.5],[64-i*.8,54+i*7],[52+i*1.4,53+i*7]],tone(P.light,-i*2),{lw:1.2,k:10});
+    if(F.spikes)for(let i=0;i<4;i++){const x=44+i*5.5,y=52-i*4+b;tri(ctx,[x-1,y+2],[x-9,y-4],[x+2,y-4],tone(P.dark,-4),1.6)}
+    if(!fl){facet(ctx,[[34,66],[48,62],[54,76],[51,90],[37,90],[40,80]],P.main,{lw:2.2});for(let i=0;i<3;i++)tri(ctx,[50+i*2.6-1.4,87.4],[50+i*2.6+2.6,90],[50+i*2.6-.6,90],'#efe3c4',.9)}
+    else facet(ctx,[[36,66],[48,62],[52,72],[44,80]],P.main,{lw:2.2});
+    ctx.save();ctx.translate(0,b);
+    facet(ctx,[[62,56],[72,60],[74,68],[68,66],[63,62]],P.main,{lw:2});tri(ctx,[70,66],[75,70],[74,66],'#efe3c4',1);
+    ribbon(ctx,[[60,46],[64,36],[70,26]],[8,6.5,5.5],P.main,P.dark,2.2);
+    if(F.mane)for(let i=0;i<3;i++){const x=59+i*3.8,y=44-i*8;F.mane==='feather'?(ctx.save(),ctx.translate(x,y),ctx.rotate(.5),featherK(ctx,12,3,P.light,P.accent),ctx.restore()):tri(ctx,[x+1,y+3],[x-8,y-1],[x+1,y-4],tone(P.accent,-25),1.5)}
+    earsK(ctx,P,t,F,78,13,26,false);hornsK(ctx,P,t,F,78,13,28,false);
+    const head=[[67,22],[71,13],[80,10],[89,15],[98,20],[97,26],[87,30],[74,30]];
+    const hp=facet(ctx,head,P.main,{c:[80,20]});pattern(ctx,hp,P,66,8,32,24);
+    facet(ctx,[[77,27],[96,25],[90,30],[79,31]],P.light,{lw:0,k:8});
+    eyeK(ctx,80,19,3.6,P,t,1,.85);jawK(ctx,84,26,13,P,.4);tri(ctx,[95,20],[97,21],[95.4,22],OUT,0);
+    if(F.tail==='flame'||F.fx==='flame'){const ph=(t%2600)/2600;if(ph<.25){ctx.globalAlpha=Math.sin(ph/.25*Math.PI);flameK(ctx,99,25,.8,P.accent,t,2,Math.PI/2);ctx.globalAlpha=1}}
+    topK(ctx,P,t,F,80,12,22);ctx.restore();
+    if(F.wings)wingK(ctx,P,t,F,58,46,1.05,1,false);
+    ctx.restore();
+  }},
+  biped:{head:[50,8],draw(ctx,P,t,F){
+    const b=Math.sin(t/700)*1,fl=F.float,fy=fl?-4+Math.sin(t/520)*2:0;shadow(ctx,50,92,fl?18:26);
+    ctx.save();ctx.translate(0,fy);
+    if(F.cape)facet(ctx,[[38,34],[62,34],[72,86+Math.sin(t/500)],[50,82],[28,86-Math.sin(t/500)]],tone(P.accent,-38,-10),{k:10});
+    if(F.wings)for(const sd of[-1,1]){ctx.save();ctx.translate(50+sd*8,38);ctx.rotate(sd*.3);wingK(ctx,P,t,F,0,0,F.wings==='insect'?1.6:1.15,sd,true);ctx.restore()}
+    tailK(ctx,P,t,F,42,64,1,-1);
+    if(fl){facet(ctx,[[38,62],[62,62],[58,76],[50,92],[42,76]],tone(P.main,-6));glow(ctx,50,90,8,P.accent,.4)}
+    else for(const sd of[-1,1]){const L=[[38,62],[48,62],[47,76],[45,90],[33,90],[38,76]];facet(ctx,sd<0?L:mir(L),tone(P.main,-6),{lw:2.2});facet(ctx,sd<0?[[33,90],[37,82],[46,82],[45,90]]:mir([[33,90],[37,82],[46,82],[45,90]]),tone(P.dark,-10),{lw:1.6})}
+    facet(ctx,[[37,58],[63,58],[61,66],[39,66]],tone(P.dark,-12),{lw:2});
+    ctx.translate(0,b);
+    const tp=facet(ctx,[[33,34],[50,30],[67,34],[63,52],[56,62],[44,62],[37,52]],P.main,{c:[48,42]});pattern(ctx,tp,P,32,28,36,36);
+    facet(ctx,[[42,38],[58,38],[55,52],[50,57],[45,52]],P.light,{lw:1.2,k:14});
+    glow(ctx,50,46,7,P.accent,.7);gemK(ctx,50,46,2.4,P.accent,1);
+    for(const sd of[-1,1]){const A=[[30,42],[38,42],[38,56],[31,58]],G=[[29,56],[39,56],[40,67],[34,70],[29,67]],PD=[[26,38],[36,31],[42,38],[38,46],[29,47]];
+      facet(ctx,sd<0?A:mir(A),tone(P.main,-6),{lw:2});facet(ctx,sd<0?G:mir(G),tone(P.dark,-4),{lw:2});
+      for(let i=0;i<3;i++){const x=sd<0?30+i*3.4:70-i*3.4;tri(ctx,[x-1.2,68],[x+1.2,68],[x,71.5],'#efe3c4',.8)}
+      facet(ctx,sd<0?PD:mir(PD),F.helm||F.head==='helm'?tone(P.dark,-6):tone(P.main,6),{lw:2,k:20});}
+    if(F.weapon){const w=F.weapon;ctx.save();
+      if(w==='staff'){line(ctx,[[72,86],[72,22]],OUT,3.6);line(ctx,[[72,86],[72,22]],'#8a6038',2);glow(ctx,72,18,9,P.accent,.8);gemK(ctx,72,18,3.4,P.accent);facet(ctx,[[68,24],[72,26],[76,24],[74,28],[70,28]],'#ffd45c',{lw:1.2})}
+      else if(w==='sword'){facet(ctx,[[69,62],[75,62],[76,24],[72,14],[68,24]],'#dfe6f2',{lw:1.8,k:24,c:[71,30]});line(ctx,[[72,58],[72,22]],tone(P.accent,10,0,.8),.9,4);facet(ctx,[[64,62],[80,62],[78,66],[66,66]],'#c99a3b',{lw:1.4});facet(ctx,[[70,66],[74,66],[74,72],[70,72]],'#3a2a20',{lw:1.2})}
+      else if(w==='spear'||w==='trident'){line(ctx,[[71,88],[71,20]],OUT,3.4);line(ctx,[[71,88],[71,20]],'#c99a3b',1.8);
+        facet(ctx,[[68,22],[71,6],[74,22],[71,25]],'#e9eef6',{lw:1.6,k:22});if(w==='trident'){facet(ctx,[[64,24],[64,12],[67,22]],'#e9eef6',{lw:1.4});facet(ctx,[[78,24],[78,12],[75,22]],'#e9eef6',{lw:1.4});line(ctx,[[64,24],[78,24]],OUT,2)}}
+      ctx.restore();}
+    facet(ctx,[[45,28],[55,28],[54,33],[46,33]],tone(P.main,-10),{lw:1.6});
+    const hk=F.head||'mask';ctx.save();
+    earsK(ctx,P,t,F,50,10,22,true);hornsK(ctx,P,t,F,50,9,24,true);
+    if(hk==='helm'){facet(ctx,[[40,18],[43,8],[50,5],[57,8],[60,18],[58,28],[50,32],[42,28]],tone(P.dark,2),{k:22,c:[48,14]});
+      facet(ctx,[[42,17],[58,17],[56,22],[50,24],[44,22]],'#100c16',{lw:1.2,k:4});ctx.shadowColor=P.accent;ctx.shadowBlur=8*SC;ctx.fillStyle=P.accent;
+      if(!sleepy&&(t+P.seed%3000)%4300>=130){ctx.fill(poly([[43.5,18.5],[48.5,19.5],[48,21],[44,20.5]]));ctx.fill(poly([[56.5,18.5],[51.5,19.5],[52,21],[56,20.5]]))}
+      ctx.shadowBlur=0;line(ctx,[[50,6],[50,16]],tone(P.accent,0,0,.7),1)}
+    else if(hk==='insect'){facet(ctx,[[38,16],[44,8],[56,8],[62,16],[58,26],[50,30],[42,26]],P.main,{c:[48,14]});
+      for(const sd of[-1,1]){const ex=50+sd*7;glow(ctx,ex,16,6,P.accent,.5);facet(ctx,[[ex-4,13],[ex,10],[ex+4,13],[ex+3,20],[ex-3,20]].map(([x,y])=>[x,y]),tone(P.accent,-10),{lw:1.2,k:30})}
+      for(const sd of[-1,1])facet(ctx,sd<0?[[44,26],[46,34],[49,29]]:[[56,26],[54,34],[51,29]],'#efe3c4',{lw:1.2})}
+    else{const hp=facet(ctx,hk==='beast'?[[40,18],[43,9],[50,6],[57,9],[60,18],[58,26],[54,32],[46,32],[42,26]]:[[41,17],[44,8],[50,6],[56,8],[59,17],[57,26],[50,31],[43,26]],P.main,{c:[48,15]});pattern(ctx,hp,P,38,4,24,30);
+      if(hk==='beast')facet(ctx,[[44,24],[56,24],[54,32],[46,32]],P.light,{lw:0,k:8});
+      eyeK(ctx,45.5,17,3,P,t,1,.75);eyeK(ctx,54.5,17,3,P,t,-1,.75);
+      line(ctx,[[47,26],[50,27.5],[53,26]],OUT,1.3);if(hk==='beast'){tri(ctx,[47,26.4],[48.4,26.8],[47.6,29],'#fff',.7);tri(ctx,[53,26.4],[51.6,26.8],[52.4,29],'#fff',.7)}}
+    ctx.restore();
+    topK(ctx,P,t,{...F,crown:F.crown&&!F.hat,top:F.hat?'hat':F.halo?'halo':F.gem?'gem':F.top},50,F.hat?5:6,20);
+    ctx.restore();
+  }},
+  brute:{head:[50,12],draw(ctx,P,t,F){
+    const b=Math.sin(t/900)*.8;shadow(ctx,50,92,38);
+    for(const sd of[-1,1]){const L=[[29,70],[46,70],[46,90],[25,90]];facet(ctx,sd<0?L:mir(L),tone(P.main,-10),{lw:2.4})}
+    ctx.translate(0,b);
+    const tp=facet(ctx,[[21,36],[35,27],[65,27],[79,36],[77,62],[64,75],[36,75],[23,62]],P.main,{c:[46,44]});pattern(ctx,tp,P,20,26,60,50);
+    facet(ctx,[[38,36],[62,36],[58,56],[50,62],[42,56]],F.plates||F.helm?tone(P.dark,4):tone(P.main,-8),{lw:1.6,k:18});
+    for(let i=0;i<2;i++)line(ctx,[[34+i*4,62+i*4],[66-i*4,62+i*4]],tone(P.dark,-20,0,.8),1.2);
+    glow(ctx,50,47,9,P.accent,.75);gemK(ctx,50,47,3,P.accent,1.2);
+    if(F.moss)for(const[x,y]of[[30,40],[66,58],[38,68]])facet(ctx,[[x-5,y],[x-2,y-4],[x+5,y-3],[x+3,y+3],[x-3,y+3]],tone(P.accent,-38,-22),{lw:1.2});
+    for(const sd of[-1,1]){
+      const U=[[11,44],[26,42],[26,62],[14,64]],H=[[7,62],[28,60],[30,76],[24,82],[12,82],[7,76]],S0=[[10,35],[23,25],[36,31],[32,46],[14,48]];
+      facet(ctx,sd<0?U:mir(U),tone(P.main,-6),{lw:2.2});
+      if(F.weapon==='club'&&sd>0){ctx.save();ctx.translate(82,66);ctx.rotate(-.5);facet(ctx,[[-3,0],[3,0],[6,-30],[0,-36],[-6,-30]],'#7a5634',{lw:2,k:16});for(const[x,y]of[[-5,-26],[5,-24],[0,-34]])tri(ctx,[x-2,y],[x,y-4],[x+2,y],'#e0e0e0',1);ctx.restore()}
+      if(F.cannon&&sd>0){facet(ctx,[[74,62],[94,58],[96,66],[76,72]],tone(P.dark,-8),{lw:2,k:22});glow(ctx,95,62,5,P.accent,.8)}
+      else facet(ctx,sd<0?H:mir(H),F.helm?tone(P.dark,-2):tone(P.main,-2),{lw:2.2,k:18});
+      facet(ctx,sd<0?S0:mir(S0),F.helm||F.plates?tone(P.dark,6):tone(P.main,6),{lw:2.2,k:20,c:sd<0?[21,36]:[79,36]});
+      const sx=sd<0?22:78;
+      if(F.crystals){crystalK(ctx,sx-sd*2,30,14,3.6,sd*.3,P.light);crystalK(ctx,sx+sd*5,33,10,3,sd*.7,tone(P.light,-6))}
+      if(F.rocks)facet(ctx,[[sx-5,30],[sx-2,24],[sx+4,25],[sx+5,31]],tone(P.main,-15),{lw:1.6});
+      if(F.flames)flameK(ctx,sx,28,1.2,P.accent,t,sd);
+      if(F.branches){line(ctx,[[sx,30],[sx+sd*4,18],[sx+sd*10,12]],OUT,3.6);line(ctx,[[sx,30],[sx+sd*4,18],[sx+sd*10,12]],'#6a4a2c',2);facet(ctx,[[sx+sd*10,12],[sx+sd*16,6],[sx+sd*20,10],[sx+sd*14,16]],tone(P.accent,-25,-10),{lw:1.4,k:16});facet(ctx,[[sx+sd*4,20],[sx-sd*2,12],[sx-sd*4,16],[sx,22]],tone(P.accent,-30,-10),{lw:1.4,k:16})}
+    }
+    earsK(ctx,P,t,F,50,16,22,true);hornsK(ctx,P,t,F,50,15,24,true);
+    const hp=facet(ctx,[[41,24],[44,15],[50,13],[56,15],[59,24],[57,32],[43,32]],F.helm?tone(P.dark,4):P.main,{c:[48,20]});
+    if(F.helm){facet(ctx,[[43,20],[57,20],[56,25],[44,25]],'#100c16',{lw:1,k:4});ctx.save();ctx.shadowColor=P.accent;ctx.shadowBlur=8*SC;ctx.fillStyle=P.accent;ctx.fillRect(44.5,21.5,11*(.6+.4*Math.abs(Math.sin(t/800))),1.8);ctx.restore()}
+    else{eyeK(ctx,46,22,2.6,P,t,1,.95);eyeK(ctx,54,22,2.6,P,t,-1,.95);line(ctx,[[46,28],[50,27],[54,28]],OUT,1.3);
+      if(F.horns)for(const sd of[-1,1])tri(ctx,[50+sd*3,28],[50+sd*4.2,24.5],[50+sd*5,28],'#fff',.8)}
+    topK(ctx,P,t,F,50,14,18);
+  }},
+  serpent:{head:[78,14],draw(ctx,P,t,F){
+    const sw=Math.sin(t/700)*2;shadow(ctx,46,92,34);
+    const sp=[[12,84],[26,89],[44,87],[56,78],[54,64+sw*.3],[50,52+sw*.5],[56,38+sw*.8],[66,30+sw]];
+    if(F.fins)for(let i=3;i<7;i++){const[x,y]=sp[i];facet(ctx,[[x-4,y+3],[x-14-i,y-4],[x-6,y-4]],tone(P.accent,-28,-15),{lw:1.6,k:16})}
+    ribbon(ctx,sp,[2,6,9,10,9.5,9,8,7],P.main,P.light,2.4);
+    for(let i=1;i<7;i++){const[x,y]=sp[i];tri(ctx,[x-2,y-2],[x,y-5],[x+2,y-2],tone(P.dark,-6),1)}
+    ctx.save();ctx.translate(0,sw);
+    if(F.fins||F.ears)facet(ctx,[[64,22],[52,10],[60,12],[56,4],[66,12],[68,20]],tone(P.accent,-25,-15),{lw:1.8,k:18});
+    hornsK(ctx,P,t,F,76,17,26,false);
+    const hp=facet(ctx,[[62,26],[67,18],[78,15],[90,20],[95,26],[88,31],[70,34]],P.main,{c:[76,22]});pattern(ctx,hp,P,60,14,36,22);
+    facet(ctx,[[74,30],[93,27],[88,32],[76,34]],P.light,{lw:0,k:8});
+    eyeK(ctx,78,22,3.6,P,t,1,.7);jawK(ctx,82,29,12,P);
+    for(const sd of[0,1])line(ctx,[[90,28],[96+sd*2,32+sd*3+Math.sin(t/300)],[100,36+sd*4]],tone(P.accent,-10,0,.8),1);
+    topK(ctx,P,t,F,76,15,22);ctx.restore();
+  }},
+  kraken:{head:[50,8],draw(ctx,P,t,F){
+    shadow(ctx,50,92,38);
+    const ten=(x0,y0,dx,ph,c)=>{const s=Math.sin(t/600+ph)*3;ribbon(ctx,[[x0,y0],[x0+dx*.4,y0+12],[x0+dx*.8,y0+22+s*.4],[x0+dx*1.1,y0+26+s],[x0+dx*1.05+s*.6,y0+20+s]],[5,4.4,3.4,2.2,.6],c,tone(P.accent,-30,-25),2)};
+    for(const[x,dx,ph]of[[36,-26,0],[64,26,1],[42,-14,2],[58,14,3]])ten(x,60,dx,ph,tone(P.main,-12));
+    const hp=facet(ctx,[[29,52],[30,34],[40,16],[50,8],[60,16],[70,34],[71,52],[62,66],[38,66]],P.main,{c:[46,32]});pattern(ctx,hp,P,28,6,44,60);
+    for(const[x,y]of[[40,26],[50,18],[60,26]])facet(ctx,[[x-3,y],[x,y-5],[x+3,y],[x,y+4]],tone(P.accent,-25,-10),{lw:1.2,k:20});
+    if(F.crown)topK(ctx,P,t,{crown:1},50,9,20);
+    eyeK(ctx,41,46,5,P,t,1,.75);eyeK(ctx,59,46,5,P,t,-1,.75);
+    facet(ctx,[[46,56],[54,56],[50,62]],tone(P.dark,-20),{lw:1.4});
+    for(const[x,dx,ph]of[[44,-6,4],[56,6,5]])ten(x,62,dx,ph,P.main);
+  }},
+  flyer:{head:[73,24],draw(ctx,P,t,F){
+    const ins=F.insect,b=Math.sin(t/(ins?200:600))*1.5;shadow(ctx,50,92,ins?22:26);
+    ctx.save();if(ins){ctx.translate(50,80);ctx.scale(1.3,1.3);ctx.translate(-50,-80)}ctx.translate(0,ins?-6+b:b*.5);
+    const W={...F,wings:ins?'insect':'feather'};
+    if(ins){wingK(ctx,P,t,W,50,52,1,1,true);
+      ribbon(ctx,[[46,58],[34,62],[22,64],[10,62]],[6,4.5,3.4,1.6],P.main,P.dark,2.2);
+      for(const x of[30,40,48])for(const sd of[0,1])line(ctx,[[x+sd*6,62],[x+sd*6-2,74],[x+sd*6+2,82]],OUT,1.4);
+      facet(ctx,[[42,52],[56,48],[62,56],[56,64],[44,64]],P.main,{c:[50,55]});
+      const hp=facet(ctx,[[58,48],[64,42],[72,44],[74,52],[68,58],[60,56]],P.main,{c:[66,48]});
+      glow(ctx,68,47,5,P.accent,.5);facet(ctx,[[64,44],[70,43],[72,49],[66,51]],tone(P.accent,-10),{lw:1,k:30});
+      line(ctx,[[64,42],[66,32],[72,26]],OUT,1.4);line(ctx,[[68,42],[74,34],[80,30]],OUT,1.4);
+      tri(ctx,[70,54],[76,58],[71,57],'#efe3c4',1);
+      wingK(ctx,P,t,W,52,50,1.05,1,false);
+    }else{
+      wingK(ctx,P,t,W,52,48,1.05,1,true);
+      for(let i=0;i<4;i++){ctx.save();ctx.translate(34,64);ctx.rotate(-.1+i*.18);featherK(ctx,22-i*2,4,tone(P.light,-i*4),P.accent);ctx.restore()}
+      for(const x of[46,54]){line(ctx,[[x,72],[x-2,82],[x,90]],OUT,2.6);line(ctx,[[x,72],[x-2,82],[x,90]],'#e7b04a',1.2);for(let i=0;i<3;i++)tri(ctx,[x-1,89],[x+i*2.4-2,91.5],[x+1,89],'#efe3c4',.8)}
+      const bp=facet(ctx,[[30,62],[38,50],[56,44],[66,52],[64,66],[50,74],[36,70]],P.main,{c:[48,56]});pattern(ctx,bp,P,28,42,40,34);
+      facet(ctx,[[52,56],[64,54],[60,68],[50,72]],P.light,{lw:0,k:10});
+      ctx.save();ctx.translate(0,b*.6);
+      if(F.crest||F.ears)for(let i=0;i<3;i++){ctx.save();ctx.translate(66,30);ctx.rotate(.3-i*.28);featherK(ctx,16-i*2,3.4,i%2?P.light:tone(P.accent,-10),P.accent);ctx.restore()}
+      hornsK(ctx,P,t,F,72,28,22,false);
+      const hp=facet(ctx,[[60,40],[63,31],[72,26],[80,29],[83,36],[77,43],[64,47]],P.main,{c:[70,34]});pattern(ctx,hp,P,58,24,26,24);
+      facet(ctx,[[79,30],[95,35],[80,38]],'#f0b23c',{lw:1.6,k:24});line(ctx,[[80,35],[92,35]],OUT,1);
+      eyeK(ctx,74,33,3.2,P,t,1,.85);topK(ctx,P,t,F,72,26,18);ctx.restore();
+      wingK(ctx,P,t,W,54,50,1.1,1,false);
+    }
+    ctx.restore();
+  }},
+  bug:{head:[80,44],draw(ctx,P,t,F){
+    const b=Math.sin(t/500)*.8;shadow(ctx,48,91,34);
+    const leg=(x,c,ph)=>{const s=Math.sin(t/300+ph)*1.2;line(ctx,[[x,70],[x+4+s,78],[x+1,90]],OUT,3);line(ctx,[[x,70],[x+4+s,78],[x+1,90]],c,1.4)};
+    for(const[x,ph]of[[30,0],[46,1],[62,2]])leg(x+4,tone(P.dark,-14),ph);
+    ctx.save();ctx.translate(0,b);
+    const sh=facet(ctx,[[16,70],[20,54],[34,40],[56,38],[70,46],[74,70]],P.main,{c:[42,52]});pattern(ctx,sh,P,14,36,62,36);
+    facet(ctx,[[44,40],[56,38],[70,46],[74,70],[50,70]],tone(P.main,-6),{lw:0,k:22});line(ctx,[[46,40],[50,70]],OUT,1.6);
+    for(let i=0;i<3;i++)line(ctx,[[22+i*8,64-i*6],[30+i*8,66-i*4]],tone(P.light,0,0,.5),1);
+    facet(ctx,[[16,70],[74,70],[70,74],[20,74]],tone(P.dark,-8),{lw:1.8});
+    const hp=facet(ctx,[[66,50],[78,43],[90,49],[93,64],[80,72],[68,68]],tone(P.dark,4),{c:[78,55]});
+    if(F.horn){facet(ctx,[[80,48],[86,46],[96,22],[92,20],[90,30],[86,26],[88,34]],tone(P.dark,8),{lw:2,k:24});tri(ctx,[86,40],[92,38],[90,30],tone(P.dark,12),1.4)}
+    line(ctx,[[82,48],[86,36],[92,30]],OUT,1.3);
+    glow(ctx,82,56,5,P.accent,.6);facet(ctx,[[79,53],[84,52],[86,57],[81,59]],tone(P.accent,-10),{lw:1,k:30});
+    for(const sd of[0,1])tri(ctx,[86,64+sd*2],[94,62+sd*5],[88,66+sd*2],'#efe3c4',1);
+    topK(ctx,P,t,{...F,antenna:false},80,46,16);ctx.restore();
+    for(const[x,ph]of[[26,3],[42,4],[58,5]])leg(x,tone(P.dark,-4),ph);
+  }},
+  crab:{head:[50,34],draw(ctx,P,t,F){
+    const b=Math.sin(t/600)*.8;shadow(ctx,50,91,38);
+    for(const sd of[-1,1])for(let i=0;i<3;i++){const x=50+sd*(14+i*5),k=Math.sin(t/300+i)*1.2;line(ctx,[[x,68],[x+sd*(10+i*2),70+k],[x+sd*(14+i*2),90]],OUT,3.4);line(ctx,[[x,68],[x+sd*(10+i*2),70+k],[x+sd*(14+i*2),90]],tone(P.dark,-6),1.8)}
+    if(F.tail==='stinger'){const s=Math.sin(t/500)*2;ribbon(ctx,[[50,52],[58,34],[54,18+s],[44,12+s]],[5,4.4,3.6,3],P.main,P.dark,2.2);
+      ctx.save();ctx.translate(44,12+s);ctx.rotate(Math.PI*.9);facet(ctx,[[-3,-4],[6,-3],[11,4],[3,1],[-3,4]],tone(P.accent,-15),{lw:1.6,k:20});ctx.restore();glow(ctx,36,14+s,5,P.accent,.7)}
+    ctx.save();ctx.translate(0,b);
+    const sh=facet(ctx,[[22,64],[28,50],[42,42],[58,42],[72,50],[78,64],[66,74],[34,74]],P.main,{c:[46,52]});pattern(ctx,sh,P,20,40,60,36);
+    facet(ctx,[[36,58],[64,58],[60,70],[40,70]],P.light,{lw:0,k:10});
+    if(F.crystals)for(const[x,h,a]of[[38,14,-.3],[50,18,0],[62,14,.3],[30,9,-.6],[70,9,.6]])crystalK(ctx,x,48,h,3.4,a,P.light);
+    for(const sd of[-1,1]){line(ctx,[[50+sd*6,46],[50+sd*8,36]],OUT,2.6);line(ctx,[[50+sd*6,46],[50+sd*8,36]],P.dark,1.2);eyeK(ctx,50+sd*8,35,3.4,P,t,-sd,.7)}
+    for(const sd of[-1,1]){const o=pts=>sd<0?pts:mir(pts),op=Math.max(0,Math.sin(t/700))*3;
+      facet(ctx,o([[26,60],[18,54],[14,44],[20,42],[26,52],[30,58]]),tone(P.main,-6),{lw:2});
+      facet(ctx,o([[20,46],[8,40],[6,26],[14,18],[22,26],[18,30],[16,36],[24,40]]),tone(P.main,2),{lw:2.2,k:20});
+      facet(ctx,o([[16,36],[22,30-op],[28,24-op],[26,34]]),tone(P.main,-4),{lw:2})}
+    line(ctx,[[46,64],[50,66],[54,64]],OUT,1.4);ctx.restore();
+  }},
+  rex:{head:[78,14],draw(ctx,P,t,F){
+    const b=Math.sin(t/600)*1;shadow(ctx,48,92,36);
+    facet(ctx,[[46,70],[56,70],[56,82],[60,90],[48,90],[48,82]],tone(P.main,-16),{lw:2.2});
+    const sw=Math.sin(t/700)*2;ribbon(ctx,[[36,64],[24,70],[12,74+sw*.5],[2,72+sw]],[9,7,4.4,.6],P.main,P.dark,2.4);
+    if(F.tail==='leaf')tailK(ctx,P,t,{tail:'leaf'},4,72+sw,.5);
+    const bp=facet(ctx,[[30,60],[42,46],[60,42+b*.5],[70,50],[66,68],[46,74],[34,70]],P.main,{c:[48,54]});pattern(ctx,bp,P,28,40,44,36);
+    facet(ctx,[[52,64],[66,58],[64,68],[50,72]],P.light,{lw:0,k:8});
+    if(F.spikes)for(let i=0;i<5;i++){const x=26+i*8,y=(i<2?62-i*8:46-(i-2)*1.5)+b*.5;F.spikes==='leaf'?facet(ctx,[[x-3,y+1],[x-2,y-7],[x+5,y-9],[x+4,y+1]],tone(P.accent,-25,-10),{lw:1.6,k:18}):tri(ctx,[x-3,y+2],[x-1,y-7],[x+4,y+2],tone(P.accent,-30,-10),1.6)}
+    facet(ctx,[[38,62],[52,58],[56,74],[52,90],[38,90],[42,78]],P.main,{lw:2.2});for(let i=0;i<3;i++)tri(ctx,[50+i*2.6-1.4,87.4],[50+i*2.6+2.6,90],[50+i*2.6-.6,90],'#efe3c4',.9);
+    ctx.save();ctx.translate(0,b);
+    facet(ctx,[[64,58],[70,60],[72,64],[66,64]],P.main,{lw:1.6});
+    hornsK(ctx,P,t,F,76,16,26,false);earsK(ctx,P,t,F,76,16,26,false);
+    const hp=facet(ctx,[[60,44],[62,26],[74,16],[90,18],[99,26],[98,33],[88,36],[96,40],[92,48],[74,52]],P.main,{c:[76,32]});pattern(ctx,hp,P,58,14,42,38);
+    facet(ctx,[[72,44],[92,42],[90,48],[74,51]],P.light,{lw:0,k:8});
+    facet(ctx,[[78,34],[97,33],[88,36],[95,39],[80,40]],'#3a1216',{lw:1.2,k:4});
+    for(let i=0;i<4;i++){tri(ctx,[81+i*4,34],[82.5+i*4,37.5],[84+i*4,34],'#fff',.7);tri(ctx,[82+i*3.6,40],[83.4+i*3.6,37],[85+i*3.6,40],'#fff',.7)}
+    eyeK(ctx,78,25,3.6,P,t,1,.9);tri(ctx,[95,25],[97,26],[95.4,27],OUT,0);
+    topK(ctx,P,t,F,76,17,22);ctx.restore();
+  }},
+  blob:{head:[50,30],draw(ctx,P,t,F){
+    const w=Math.sin(t/400)*1.5;shadow(ctx,50,91,30);
+    const pts=F.rock?[[22,90],[20,72],[28,56],[42,46],[58,46],[72,56],[80,72],[78,90]]:[[20,90],[22,74+w*.3],[30,60],[40,50-w*.4],[50,36-w],[58,48-w*.4],[70,58],[78,72+w*.3],[80,90],[68,86],[60,92],[50,86],[40,92],[30,86]];
+    const bp=facet(ctx,pts,P.main,{c:[44,64]});pattern(ctx,bp,P,18,34,64,58);
+    facet(ctx,[[38,72],[62,72],[58,84],[42,84]],P.light,{lw:0,k:10});
+    if(F.moss)for(const[x,y]of[[30,66],[64,60]])facet(ctx,[[x-6,y],[x-2,y-5],[x+6,y-3],[x+3,y+3],[x-3,y+3]],tone(P.accent,-38,-22),{lw:1.2});
+    if(F.rock)for(const[x,y]of[[30,62],[66,66],[44,52]])line(ctx,[[x,y],[x+4,y+3],[x+2,y+7]],tone(P.dark,-15),1.2);
+    else if(!F.moss)for(let i=0;i<3;i++){const ph=(t/1800+i/3)%1;ctx.globalAlpha=1-ph;ctx.fillStyle=tone(P.light,10);ctx.fill(poly([[32+i*16,90+ph*2],[34+i*16,86+ph*4],[36+i*16,90+ph*2]]));ctx.globalAlpha=1}
+    eyeK(ctx,42,64,5.2,P,t,1,.3);eyeK(ctx,58,64,5.2,P,t,-1,.3);
+    line(ctx,[[45,75],[48,77],[50,75],[52,77],[55,75]],OUT,1.6);
+    topK(ctx,P,t,F,50,F.rock?46:40,30);
+  }}
+};
+
+// ---------- 35 Monster-Familien mit je drei Stufen ----------
+// [Schlüssel, Name, Symbol, Element, Farbton, Sättigung, Helligkeit, Akzent, Teilchen, [Baby, Jung, Erwachsen], [Bauplan je Stufe]]
+const FAMILY_LIST=[
+  ['feuer','Feuer','🔥','feuer',12,78,52,'#ffcf3b','flame',['Flämmchen','Glutling','Feuerdrache'],['imp ears:cat top:flame tail:flame muzzle','quad ears:cat tail:flame spikes','drake horns:curved wings:bat tail:flame spikes']],
+  ['wasser','Wasser','💧','wasser',205,70,55,'#7ff0ff','bubble',['Wassertropfi','Aquali','Meereskrake'],['imp ears:fin top:drop tail:fin','serpent fins','kraken']],
+  ['pflanze','Pflanze','🌿','natur',105,58,46,'#d6ff6a','leaf',['Blattling','Sprossling','Waldwächter'],['imp top:sprout ears:leaf tail:leaf','rex top:sprout tail:leaf spikes:leaf','quad horns:antler tail:leaf mane:leaf']],
+  ['elektro','Elektro','⚡','blitz',48,88,55,'#fff36b','spark',['Funke','Blitzling','Donnerfurie'],['imp ears:long tail:bolt muzzle','quad ears:long tail:bolt mane','quad ears:long tail:bolt mane spikes wings:feather']],
+  ['eis','Eis','❄️','wasser',196,62,72,'#c8f6ff','ice',['Frosti','Eiswolf','Eisgolem'],['imp ears:long top:crystal tail:crystal','quad ears:cat mane:crystal tail:crystal spikes:crystal','brute crystals']],
+  ['dunkelheit','Dunkelheit','🌑','dunkel',270,40,30,'#c27bff','smoke',['Schatten','Nachtling','Dämonenklinge'],['imp ears:bat wings:bat tail:spike','quad ears:bat spikes tail:spike','biped head:helm horns:curved wings:bat weapon:sword cape']],
+  ['licht','Licht','☀️','licht',45,60,80,'#ffd75e','star',['Lichtfunke','Sonnenling','Sonnenpaladin'],['imp ears:cat top:halo tail:fluff muzzle','quad ears:cat mane top:halo tail:fluff','biped head:helm wings:feather weapon:spear halo']],
+  ['drache','Drache','🐲','feuer',282,58,50,'#5fd4ff','star',['Drachling','Drakone','Himmelsdrache'],['imp horns:small wings:bat tail:spike','drake horns:small wings:bat tail:spike spikes','drake horns:curved wings:bat tail:spike spikes mane']],
+  ['boden','Boden','🪨','erde',30,38,45,'#ffb85c','dust',['Wühlchen','Gesteinling','Erdtitan'],['imp ears:small muzzle','brute rocks','brute rocks horns:small']],
+  ['wind','Wind','🌪️','blitz',152,55,58,'#e9fff6','wind',['Windhauch','Luftling','Sturmdrache'],['imp ears:feather tail:feather float','flyer crest','drake wings:feather tail:feather horns:small mane:feather']],
+  ['kaefer','Käfer','🪲','natur',78,55,40,'#ffe14d','none',['Krabbel','Panzerling','Käferkönig'],['imp antenna helm','bug','bug horn crown']],
+  ['gift','Gift','☠️','natur',290,55,48,'#9dff4d','poison',['Schleimi','Schlürfer','Giftschrecke'],['blob','quad ears:fin spikes tail:stinger','crab tail:stinger']],
+  ['geist','Geist','👻','wasser',245,30,78,'#8fffe8','wisp',['Irrlicht','Spukling','Geisterdrache'],['imp float top:flame ears:small','imp float ears:long horns:small','drake float wings:bat horns:curved']],
+  ['metall','Metall','⚙️','erde',215,12,60,'#5fe3ff','gear',['Mechling','Robotor','Stahlkoloss'],['imp helm antenna','biped head:helm','brute helm plates']],
+  ['wald','Wald','🌳','natur',36,40,40,'#c6ff7a','leaf',['Baumgeist','Holzling','Waldgolem'],['imp top:sprout ears:leaf float','biped head:mask top:sprout ears:leaf','brute branches moss']],
+  ['fels','Fels','⛰️','erde',25,14,52,'#ffcf6b','dust',['Steinchen','Felsling','Gesteinsriese'],['blob rock','brute','brute rocks crystals']],
+  ['himmel','Himmel','☁️','blitz',205,70,82,'#ffe27a','star',['Wolkenling','Himmelsvogel','Seraph'],['imp float ears:feather top:halo','flyer crest','biped head:mask wings:feather halo weapon:staff']],
+  ['magie','Magie','🔮','blitz',265,60,50,'#ff7bf0','rune',['Zauberling','Magierling','Magierkönig'],['imp top:hat tail:spike','biped head:mask hat weapon:staff cape','biped head:mask horns:small crown weapon:staff cape']],
+  ['vulkan','Vulkan','🌋','feuer',16,40,30,'#ff8a2a','ember',['Lavaglüh','Feuerzahn','Vulkanlord'],['imp horns:small top:flame tail:flame','quad horns:small spikes tail:flame mane:flame','brute rocks flames horns:curved']],
+  ['nacht','Nacht','🌙','wasser',232,45,34,'#d6e4ff','star',['Mondling','Schattenwolf','Albtraum'],['imp ears:cat top:moon muzzle','quad ears:cat mane tail:fluff','quad horns:curved mane:flame wings:bat tail:flame']],
+  ['dino','Dinosaurier','🦖','feuer',28,62,50,'#ffe066','none',['Raptino','Raptorling','T-Rexmon'],['imp horns:small tail:spike muzzle','rex spikes','rex spikes horns:small']],
+  ['meer','Meer','🌊','wasser',186,65,45,'#7dffd4','bubble',['Seepferdchen','Seadrache','Ozeanlord'],['imp ears:fin top:fin tail:fin','serpent fins','serpent fins horns:curved crown']],
+  ['psycho','Psycho','🧠','blitz',312,55,62,'#ff9cf6','rune',['Gedankling','Psion','Mentalis'],['imp float top:gem ears:long','biped head:mask float gem cape','biped head:mask float gem cape crown']],
+  ['unhold','Unhold','👹','natur',115,28,42,'#ffd23f','none',['Räuberling','Trollling','Ogerkönig'],['imp ears:long horns:small','brute ears:long horns:small','brute horns:curved crown weapon:club']],
+  ['roboter','Roboter','🤖','erde',188,25,50,'#3dffb0','data',['Datenling','Killing','Cyberlord'],['imp helm antenna','biped head:helm weapon:sword','biped head:helm wings:mech weapon:sword cape']],
+  ['insekt','Insekt','🦋','natur',165,60,48,'#b4ff4d','none',['Libelle','Libellenling','Insektenkönig'],['flyer insect','flyer insect','biped head:insect wings:insect crown']],
+  ['sumpf','Sumpf','🐸','wasser',95,35,36,'#d4ff5a','bubble',['Schlammchen','Sumpfling','Sumpfkönig'],['blob moss','quad ears:fin moss tail:fin','brute moss crown']],
+  ['lava','Lava','🌋','feuer',4,75,40,'#ffb02e','ember',['Feuerwurm','Glutdrache','Lavarion'],['serpent','drake wings:bat tail:flame','quad mane:flame horns:curved tail:flame spikes']],
+  ['erdgeist','Erdgeist','🍄','erde',42,32,36,'#9bff7a','dust',['Moorling','Erdfresser','Erdgolem'],['imp top:sprout ears:small moss','quad ears:small spikes moss','brute moss branches']],
+  ['luft','Luft','💨','blitz',180,45,76,'#ffffff','wind',['Wolkenbaby','Himmelsdrachen','Sturmkönig'],['imp float ears:feather tail:feather','drake wings:feather tail:feather','flyer crest crown']],
+  ['kristall','Kristall','💎','erde',290,58,66,'#ffffff','crystal',['Kristallling','Kristallkrabbe','Kristallkönig'],['imp top:crystal ears:crystal','crab crystals','brute crystals crown']],
+  ['daemon','Dämon','😈','feuer',352,65,40,'#ffcf3b','ember',['Imp','Dämonling','Höllenfürst'],['imp horns:small wings:bat tail:spike','biped head:beast horns:small wings:bat tail:spike','biped head:beast horns:curved wings:bat tail:spike weapon:trident crown']],
+  ['maschine','Maschine','🛠️','erde',30,22,46,'#ffae3b','gear',['Kleindroide','Droidling','Mechazord'],['imp helm antenna','brute helm','brute helm plates cannon']],
+  ['arktis','Arktis','🦊','wasser',200,25,88,'#7fd8ff','snow',['Eisfuchs','Frostling','Eisfürst'],['imp ears:long tail:fluff muzzle','quad ears:long tail:fluff mane','quad ears:long tail:fluff mane:crystal horns:crystal crown']],
+  ['kosmos','Kosmos','🌌','blitz',240,55,30,'#ffe9a0','star',['Sternchen','Galaxling','Sternenlord'],['imp float top:star','biped head:mask float gem cape','drake wings:bat horns:curved tail:spike']]
+];
+function parseFeat(s){const o={};for(const w of s.split(' ').slice(1)){const[k,v]=w.split(':');o[k]=v??true}return o}
+const FAMILIES={};
+for(const[key,name,icon,el,h,s,l,acc,fx,names,plans]of FAMILY_LIST)
+  FAMILIES[key]={key,name,icon,element:el,h,s,l,accent:acc,names,plans:plans.map(p=>({arch:p.split(' ')[0],F:{fx,...parseFeat(p)}}))};
+const STAGE_SCALE={1:{imp:.84,serpent:.6,flyer:.66,blob:.76},2:{imp:1,_:.9},3:{_:1}};
+function famScale(st,arch){const t=STAGE_SCALE[st];return t[arch]??t._??1}
+
+// Kopfhöhe (für Accessoires) und Wippen je Bauplan
+const ARCH_BOB={imp:(t,F)=>Math.sin(t/600)*1.2+(F.float?-5+Math.sin(t/500)*2.5:0),quad:t=>Math.sin(t/650),drake:(t,F)=>Math.sin(t/650)*1.2+(F.float?-4+Math.sin(t/550)*2:0),
+  biped:(t,F)=>Math.sin(t/700)+(F.float?-4+Math.sin(t/520)*2:0),brute:t=>Math.sin(t/900)*.8,serpent:t=>Math.sin(t/700)*2,kraken:()=>0,
+  flyer:(t,F)=>F.insect?Math.sin(t/200)*2:Math.sin(t/600)*.9,bug:t=>Math.sin(t/500)*.8,crab:t=>Math.sin(t/600)*.8,rex:t=>Math.sin(t/600),blob:()=>0};
+const ARCH_MOD={imp:[1.1,1.1,1.1],quad:[1.2,1.1,1.35],drake:[1.4,1.1,1.15],biped:[1.3,1.2,1.2],brute:[1.15,1.5,.85],serpent:[1.25,1.2,1.2],kraken:[1.2,1.35,1.1],
+  flyer:[1.15,1,1.5],bug:[1.1,1.45,1.05],crab:[1.2,1.45,.95],rex:[1.5,1.15,1.05],blob:[1,1.2,.9]};
+const EL_SPECIAL={feuer:'feuer',wasser:'flut',erde:'wall',blitz:'doppel',natur:'ranke',licht:'lichtstrahl',dunkel:'schattenbiss'};
+const ART={
+  ei(ctx,P,t,m){
+    shadow(ctx,50,92,22);
+    const wob=m&&m.stage===0&&S&&m===S&&S.gameTime-S.born>EVO.hatch-10?Math.sin(t/70)*.06:0;
+    ctx.save();ctx.translate(50,90);ctx.rotate(wob);ctx.translate(-50,-90);
+    const p=facet(ctx,[[50,29],[60,33],[68,45],[72,60],[70,74],[62,85],[50,89],[38,85],[30,74],[28,60],[32,45],[40,33]],tone(P.main,-6),{c:[45,50],k:18});
+    ctx.save();ctx.clip(p);
+    for(const y of[56,72])line(ctx,[[26,y],[34,y-6],[42,y+2],[50,y-6],[58,y+2],[66,y-6],[74,y]],tone(P.dark,-12,0,.8),1.6);
+    ctx.restore();
+    const pulse=.55+Math.sin(t/500)*.35;
+    for(const[x,y]of[[42,46],[58,62],[46,78],[56,40]]){glow(ctx,x,y,7,P.accent,pulse);ctx.globalAlpha=.5+pulse*.5;gemK(ctx,x,y,2.2,P.accent,1);ctx.globalAlpha=1}
+    ctx.fillStyle='rgba(255,255,255,.3)';ctx.fill(poly([[38,40],[44,35],[40,50]]));
+    ctx.restore();
+  },
+  schleim(ctx,P,t){ARCH.blob.draw(ctx,P,t,{});fxK(ctx,P,t,{fx:'poison'})}
+};
+const HEAD={schleim:[50,36]},BOBF={schleim:()=>0},NOACC={};
+function drawFam(ctx,P,t,f,st){
+  const pl=f.plans[st-1],s=famScale(st,pl.arch);
+  ctx.save();ctx.translate(50,91);ctx.scale(s,s);ctx.translate(-50,-91);ARCH[pl.arch].draw(ctx,P,t,pl.F);fxK(ctx,P,t,pl.F);ctx.restore();
+}
+const FAM_KEYS=Object.keys(FAMILIES),EL_FAM={feuer:'feuer',wasser:'wasser',erde:'boden',blitz:'elektro',natur:'pflanze',licht:'licht',dunkel:'dunkelheit'};
+for(const f of Object.values(FAMILIES))for(let st=1;st<=3;st++){
+  const key=f.key+st,pl=f.plans[st-1],sc=famScale(st,pl.arch),A=ARCH[pl.arch],rare=f.element==='licht'||f.element==='dunkel'?1.1:1;
+  SPECIES[key]={name:f.names[st-1],stage:st,family:f.key,mod:st===1?[1,1,1]:st===2?[1.1,1.1,1.1]:ARCH_MOD[pl.arch].map(v=>Math.round(v*rare*100)/100),sp:st===3?EL_SPECIAL[f.element]:'rempler'};
+  ART[key]=(ctx,P,t)=>drawFam(ctx,P,t,f,st);
+  const hd=pl.arch==='flyer'&&pl.F.insect?[73,31]:A.head;
+  HEAD[key]=[50+(hd[0]-50)*sc,91+(hd[1]-91)*sc];BOBF[key]=t=>ARCH_BOB[pl.arch](t,pl.F)*sc;
+  if(pl.F.crown||pl.F.hat||pl.F.top==='hat')NOACC[key]=1;
+}
+// Alte Arten (bis Version 0.7) auf die neuen Familien abbilden
+const OLD_SP={drache:'feuer3',golem:'boden3',fuchs:'elektro3',aqua:'wasser3',blatt:'pflanze3',seraph:'licht3',umbra:'dunkelheit3'};
+function normMon(m){
+  if(!m||SPECIES[m.species])return m;
+  const fam=m.family||EL_FAM[m.element]||'feuer';
+  if(m.species==='baby')m.species=fam+'1';else if(m.species==='kind')m.species=fam+'2';else if(OLD_SP[m.species])m.species=OLD_SP[m.species];
+  m.family=SPECIES[m.species]?.family||fam;return m;
+}
+function famOf(m){normMon(m);return SPECIES[m.species]?.family||m.family||EL_FAM[m.element]||'feuer'}
+// Aura für ultimative, glänzende und Boss-Monster
+function auraBack(ctx,m,P,t){
+  if(m.boss){glow(ctx,50,58,50,'#ff3b3b',.4)}
+  if(m.ult){glow(ctx,50,56,50,P.accent,.5);ctx.save();ctx.translate(50,60);ctx.rotate(t/3000);ctx.strokeStyle=tone(P.accent,15,0,.55);ctx.lineWidth=1.4;ctx.setLineDash([4,5]);ctx.beginPath();ctx.ellipse(0,0,44,44,0,0,7);ctx.stroke();ctx.restore()}
+  else if(m.element==='licht'||m.element==='dunkel')glow(ctx,50,60,40,P.accent,.25);
+}
+function auraFront(ctx,m,P,t){
+  if(m.shiny)for(let i=0;i<6;i++){const ph=(t/1800+i/6)%1,a=i*1.05+t/4000;ctx.globalAlpha=Math.sin(ph*Math.PI);sparkle(ctx,50+Math.cos(a)*38,55+Math.sin(a)*32,2+ph*2,'#ffe58a');ctx.globalAlpha=1}
+  if(m.ult)for(let i=0;i<4;i++){const ph=(t/2000+i/4)%1;ctx.globalAlpha=1-ph;sparkle(ctx,30+i*14,90-ph*60,1.8,tone(P.accent,25));ctx.globalAlpha=1}
+}
+
+
+// Zeichnet ein Monster in ein Quadrat der Größe size
+function drawSprite(ctx,m,x,y,size,flip,t=performance.now()){
+  normMon(m);const P=palette(m),sp=m.species;
+  ctx.save();ctx.translate(x,y);if(flip){ctx.translate(size,0);ctx.scale(-1,1)}
+  ctx.scale(size/100,size/100);SC=size/100;
+  auraBack(ctx,m,P,t);ART[sp](ctx,P,t,m);auraFront(ctx,m,P,t);
+  if(sp!=='ei'&&P.accessory!=='keins'&&HEAD[sp]&&!NOACC[sp]){
+    const[hx,hy]=HEAD[sp];
+    ctx.save();ctx.translate(0,BOBF[sp](t));accessory(ctx,P,hx,hy,t);ctx.restore();
+  }
+  ctx.restore();
+}
+
+// ---------- Umgebungen je Element ----------
+const SCENES={
+  feuer:['#2a0d14','#5b1a1a','#3a1410',[255,140,60]],
+  wasser:['#04142e','#0d3a5c','#0a2a40',[120,220,255]],
+  erde:['#140f0b','#3a2c22','#241a12',[255,200,120]],
+  blitz:['#0b0e24','#26305e','#151a33',[255,245,120]],
+  natur:['#07170e','#1d3f24','#122a16',[220,255,140]],
+  licht:['#3a2a10','#8a6a2e','#4a3a1a',[255,240,180]],
+  dunkel:['#07040d','#21122e','#120a1a',[190,120,255]]
+};
+function drawScene(ctx,el,W,H,t){
+  const[top,mid,ground,pc]=SCENES[el]||SCENES.erde;
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,top);g.addColorStop(.7,mid);g.addColorStop(1,ground);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(0,0,0,.35)';
+  if(el==='feuer'){ctx.beginPath();ctx.moveTo(0,H*.72);ctx.lineTo(W*.25,H*.45);ctx.lineTo(W*.4,H*.6);ctx.lineTo(W*.62,H*.4);ctx.lineTo(W,H*.68);ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill();
+    const lg=ctx.createRadialGradient(W*.62,H*.42,0,W*.62,H*.42,W*.2);lg.addColorStop(0,'rgba(255,120,40,.5)');lg.addColorStop(1,'rgba(255,120,40,0)');ctx.fillStyle=lg;ctx.fillRect(0,0,W,H)}
+  else if(el==='wasser'){for(let i=0;i<4;i++){const x=W*(.15+i*.25)+Math.sin(t/3000+i)*10;const rg=ctx.createLinearGradient(x,0,x+30,H);rg.addColorStop(0,'rgba(160,230,255,.14)');rg.addColorStop(1,'rgba(160,230,255,0)');ctx.fillStyle=rg;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+18,0);ctx.lineTo(x+60,H);ctx.lineTo(x+20,H);ctx.fill()}}
+  else if(el==='erde'){ctx.beginPath();ctx.moveTo(0,0);for(let x=0;x<=W;x+=W/8)ctx.lineTo(x+W/16,H*(.12+((x*7)%5)/40));ctx.lineTo(W,0);ctx.fill();
+    for(const[x,h]of[[.1,.18],[.85,.22],[.92,.12]]){ctx.fillStyle='rgba(255,190,110,.35)';ctx.beginPath();ctx.moveTo(W*x,H*.8);ctx.lineTo(W*x+6,H*(.8-h));ctx.lineTo(W*x+12,H*.8);ctx.fill()}}
+  else if(el==='blitz'){if((t%5200)<120){ctx.fillStyle='rgba(255,255,220,.25)';ctx.fillRect(0,0,W,H)}
+    ctx.fillStyle='rgba(10,12,30,.6)';for(let i=0;i<5;i++){ctx.beginPath();ctx.ellipse(((i*W*.27+t/80)%(W+80))-40,H*.12+(i%2)*14,48,16,0,0,7);ctx.fill()}}
+  else if(el==='natur'){ctx.fillStyle='rgba(0,0,0,.4)';for(const x of[.06,.2,.82,.95]){ctx.fillRect(W*x-6,0,12,H*.85);ctx.beginPath();ctx.arc(W*x,H*.1,W*.12,0,7);ctx.fill()}}
+  ctx.fillStyle=ground;ctx.beginPath();ctx.ellipse(W/2,H*.98,W*.75,H*.2,0,0,7);ctx.fill();
+  for(let i=0;i<7;i++){const ph=(t/6000+i*.143)%1,x=W*((i*.37+.1)%1)+Math.sin(ph*9+i)*8,y=el==='wasser'||el==='feuer'?H*(1-ph):H*(.3+.5*((i*.53)%1))+Math.sin(ph*6)*8;
+    const a=Math.sin(ph*Math.PI)*.8;ctx.fillStyle=`rgba(${pc[0]},${pc[1]},${pc[2]},${a})`;ctx.beginPath();ctx.arc(x,y,1.6,0,7);ctx.fill()}
+}
+
+const spriteCache={};
+function spriteURL(m){
+  const key=m.species+(m.ult?'u':'')+(m.shiny?'s':'')+(m.boss?'b':'')+JSON.stringify(lookOf(m));
+  if(!spriteCache[key]){const c=document.createElement('canvas');c.width=c.height=112;drawSprite(c.getContext('2d'),m,4,4,104,false,1000);spriteCache[key]=c.toDataURL()}
+  return spriteCache[key];
+}
+function speciesLabel(m){normMon(m);return(m.shiny?'Strahlender ':'')+(m.ult&&ULT_NAMES[m.species]?ULT_NAMES[m.species]:SPECIES[m.species].name)+(m.title&&m.stage===3?` (${m.title}${m.elder?', Ältester':''})`:'')}
+
+// ---------- Spielstand ----------
+let S=null;
+function newState(owner,name,element,trait,hue,family){
+  const id=rid(),r=seeded(hash32(id+'stats'));family=family||EL_FAM[element];
+  return{v:2,id,owner,name,element,family,trait,look:makeLook(id,hue,element,family),title:'',species:'ei',stage:0,born:0,gameTime:0,lastTick:Date.now(),speed:1,
+    hunger:80,mood:80,energy:100,clean:100,health:100,sleeping:false,sick:false,poop:0,poopTimer:0,
+    level:1,xp:0,atk:4+Math.floor(r()*3),def:4+Math.floor(r()*3),spd:4+Math.floor(r()*3),train:{atk:0,def:0,spd:0},mistakes:0,flags:{},
+    wins:0,losses:0,coins:20,items:{beere:2,trank:1},quest:null,friends:[],claimed:[],log:[],bond:50};
+}
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{return JSON.parse(localStorage.getItem(SAVE_KEY))}catch(e){return null}}
+function log(m){S.log.unshift({t:Date.now(),m});S.log.length=Math.min(S.log.length,60);renderLog()}
+let toastT;
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2600)}
+let fx=null;
+function effect(icon){fx={icon,until:performance.now()+1500}}
+
+// ---------- Zeit & Bedürfnisse ----------
+function mistake(k,isBad,isOk,msg){
+  if(isBad&&!S.flags[k]){S.flags[k]=1;S.mistakes++;bondUp(-8);log(`⚠️ ${S.name} ${msg} (Pflegefehler ${S.mistakes})`)}
+  else if(isOk)S.flags[k]=0;
+}
+function simulate(m){
+  S.gameTime+=m;
+  const age=S.gameTime-S.born;
+  if(S.stage===0){if(age>=EVO.hatch)evolve(S.family+'1');return}
+  if(S.quest)return;
+  if(S.sleeping){
+    S.energy+=1.5*m;S.hunger-=0.12*m;S.mood+=(isNight()?0.15:-0.03)*m;
+    if(S.energy>=100){S.sleeping=false;log(`${S.name} ist ausgeschlafen aufgewacht.`)}
+  }else{
+    // Bedürfnisse sinken langsam: voll satt bis hungrig dauert etwa 5 Stunden, nachts wird es schneller müde
+    const T=S.trait;S.hunger-=0.33*m*(T==='feinschmecker'?1.3:1);S.mood-=0.25*m*(T==='verspielt'?1.3:1);S.energy-=0.15*m*(T==='aktiv'?1.4:T==='gemuetlich'?0.6:1)*(isNight()?1.6:1);S.clean-=0.12*m+S.poop*0.2*m;
+    S.poopTimer+=m;
+    if(S.poopTimer>=45&&S.poop<4){S.poop++;S.poopTimer=0;log(`${S.name} hat ein Häufchen gemacht. 💩`)}
+  }
+  const bad=(S.hunger<15)+(S.clean<15)+(S.energy<5)+(S.mood<10);
+  if(bad)S.health-=1.5*bad*m;else if(S.hunger>40&&S.clean>40)S.health+=0.3*m;
+  mistake('hunger',S.hunger<15,S.hunger>40,'hat großen Hunger!');
+  mistake('clean',S.clean<15,S.clean>40,'ist total dreckig!');
+  mistake('energy',S.energy<5,S.energy>30,'ist völlig erschöpft!');
+  mistake('mood',S.mood<10,S.mood>30,'ist traurig und langweilt sich!');
+  if(S.health<30&&!S.sick){S.sick=true;log(`🤒 ${S.name} ist krank geworden! Gib Medizin.`)}
+  clampAll();
+  if(S.stage===1&&age>=EVO.teen)evolve(S.family+'2');
+  if(S.stage===2&&age>=EVO.adult)evolve(adultForm());
+}
+function clampAll(){for(const k of['hunger','mood','energy','clean','health'])S[k]=clamp(S[k],0,100)}
+function adultForm(){
+  const t=S.train,total=t.atk+t.def+t.spd;
+  if(S.mistakes>=4||total<3)return'schleim';
+  return S.family+'3';
+}
+function evolve(sp){
+  const from=S.species;S.species=sp;S.stage=SPECIES[sp].stage;
+  if(from==='ei'){S.born=S.gameTime;log(`🐣 Das Ei ist geschlüpft! Hallo, ${S.name}!`)}
+  else{S.atk+=2;S.def+=2;S.spd+=2;
+    if(SPECIES[sp].stage===3){const t=S.train,best=t.atk>=t.def&&t.atk>=t.spd?'atk':t.spd>=t.def?'spd':'def';S.title=TITLES[best];S[best]+=3;
+      if(S.mistakes===0&&S.bond>=80&&sp!=='schleim'){S.shiny=true;S.atk+=3;S.def+=3;S.spd+=3;log(`🌟 Weil du dich so liebevoll gekümmert hast, ist ${S.name} ein seltenes Glanz-Monster geworden!`)}}
+    log(`✨ ${S.name} hat sich zu ${speciesLabel(S)} entwickelt!`)}
+  seen(S);effect('✨');toast(`${S.name} ist jetzt ${SPECIES[sp].name}!`);renderLists();
+}
+function tick(){
+  const now=Date.now();
+  let m=Math.min((now-S.lastTick)/60000,720)*S.speed;S.lastTick=now;
+  while(m>0){const st=Math.min(0.5,m);simulate(st);m-=st}
+  curWeek();checkGrowth();checkQuests();seen(S);checkAch();save();renderStatus();
+}
+
+// ---------- Pflege ----------
+function canAct(needAwake=true){
+  if(S.stage===0){toast('Das Ei muss erst schlüpfen.');return false}
+  if(S.quest){toast(`${S.name} ist gerade auf Quest.`);return false}
+  if(needAwake&&S.sleeping){toast(`${S.name} schläft gerade. Psst!`);return false}
+  return true;
+}
+function act(a){
+  if(a==='sleep'){
+    if(!canAct(false))return;
+    if(S.sleeping){S.sleeping=false;if(S.energy<60){S.mood-=10;bondUp(-3);log(`${S.name} wurde geweckt und ist grummelig.`)}else log(`${S.name} ist wach.`)}
+    else{S.sleeping=true;log(`💤 ${S.name} schläft.`)}
+  }else{
+    if(!canAct())return;
+    if(a==='feed'){
+      if(S.hunger>95){S.mood-=5;toast(`${S.name} ist schon pappsatt.`);return renderStatus()}
+      bondUp(S.hunger<70?1:0.3);S.hunger+=30;S.health+=S.trait==='feinschmecker'?8:2;effect('🍙');
+    }else if(a==='snack'){
+      if(!S.items.beere){toast('Keine Superbeeren mehr. Im Laden gibt es neue.');return}
+      S.items.beere--;S.hunger+=15;S.mood+=25;bondUp(1);effect('🍓');
+    }else if(a==='play'){
+      if(S.energy<10){toast(`${S.name} ist zu müde zum Spielen.`);return}
+      S.mood+=S.trait==='verspielt'?40:25;S.energy-=10;S.hunger-=5;bondUp(S.trait==='verspielt'?2:1.5);effect('❤️');
+    }else if(a==='clean'){
+      if(S.poop){log(`🧽 ${S.name} ist wieder sauber.`);bondUp(1)}S.poop=0;S.clean=100;effect('🫧');
+    }else if(a==='med'){
+      if(S.health>=100&&!S.sick){toast(`${S.name} ist kerngesund.`);return}
+      if(S.sick)bondUp(2);S.health+=40;S.mood-=10;if(S.health>=30){S.sick=false}effect('💊');log(`💊 ${S.name} hat Medizin genommen. Bäh, bitter!`);
+    }
+  }
+  clampAll();save();renderStatus();
+}
+
+// ---------- Werte & Level ----------
+function eff(m){normMon(m);const md=SPECIES[m.species].mod,u=m.ult?1.15:1;const atk=Math.round(m.atk*md[0]*u),def=Math.round(m.def*md[1]*u),spd=Math.round(m.spd*md[2]*u);return{atk,def,spd,maxHp:30+m.level*6+def*2}}
+const xpNeed=l=>40+l*30;
+function gainXp(n){
+  if(S.trait==='schlau')n=Math.round(n*1.25);S.xp+=n;
+  while(S.xp>=xpNeed(S.level)){S.xp-=xpNeed(S.level);S.level++;S.atk++;S.def++;S.spd++;log(`⭐ ${S.name} ist jetzt Level ${S.level}!`);effect('⭐')}
+}
+function power(m){const e=eff(m);return e.atk+e.def+e.spd+m.level*4}
+function chance(m,q){return clamp(power(m)/(q.diff*1.25)+weatherBonus(m),0.1,0.95)}
+
+// ---------- Training ----------
+let train=null;
+const STATN={atk:'Kraft',def:'Abwehr',spd:'Tempo'};
+function startTrain(stat){
+  if(!canAct())return;
+  if(S.sick){toast(`${S.name} ist krank und kann nicht trainieren.`);return}
+  if(S.energy<12){toast(`${S.name} ist zu müde zum Trainieren.`);return}
+  const w=clamp(20-S.level,10,18);
+  train={stat,pos:0,dir:1,zone:rand(5,95-w),w,run:true,v:1.1+S.level*0.08};
+  $('#tzone').style.left=train.zone+'%';$('#tzone').style.width=train.w+'%';
+  $('#tlabel').textContent=STATN[stat]+'-Training';$('#tgame').style.display='block';
+  requestAnimationFrame(trainLoop);
+}
+function trainLoop(){
+  if(!train||!train.run)return;
+  train.pos+=train.dir*train.v;
+  if(train.pos>=100){train.pos=100;train.dir=-1}if(train.pos<=0){train.pos=0;train.dir=1}
+  $('#tmark').style.left=train.pos+'%';requestAnimationFrame(trainLoop);
+}
+function trainHit(){
+  if(!train||!train.run)return;train.run=false;
+  const p=train.pos,hit=p>=train.zone&&p<=train.zone+train.w,perfect=Math.abs(p-(train.zone+train.w/2))<2.5;
+  const gain=(perfect?3:hit?2:1)+((S.trait==='aktiv'&&train.stat==='spd')||(S.trait==='gemuetlich'&&train.stat==='def')?1:0);
+  S[train.stat]+=gain;S.train[train.stat]++;if(hit)bondUp(.5);S.energy-=12;S.hunger-=6;S.mood+=hit?5:-3;gainXp(hit?8:4);
+  toast(`${perfect?'Perfekt!':hit?'Treffer!':'Daneben…'} ${STATN[train.stat]} +${gain}`);
+  effect(hit?'💪':'💦');clampAll();save();renderStatus();
+  setTimeout(()=>{if(train&&!train.run)$('#tgame').style.display='none'},700);
+}
+
+// ---------- Kampf ----------
+let B=null;
+function fighter(m){normMon(m);seen(m);const st=eff(m);return{name:m.name,species:m.species,element:m.element,look:lookOf(m),ult:m.ult,shiny:m.shiny,boss:m.boss,bond:m.bond??50,level:m.level,owner:m.owner,...st,hp:st.maxHp,cd:0,buff:0,guard:false}}
+function wildMonster(){
+  const fams=FAM_KEYS.filter(k=>!RARE.includes(FAMILIES[k].element)),fam=fams[rint(0,fams.length-1)];
+  const st=S.level<3?rint(1,2):S.level<6?rint(1,3):rint(2,3),sp=Math.random()<.05&&S.level>=3?'schleim':fam+st,lv=Math.max(1,S.level+rint(-1,1));
+  const el=FAMILIES[fam].element;return{name:'Wildes '+SPECIES[sp].name,species:sp,family:fam,stage:SPECIES[sp].stage,look:makeLook(rid(),rint(0,359),el,fam),element:el,level:lv,atk:4+lv*2+rint(0,3),def:4+lv*2+rint(0,3),spd:4+lv*2+rint(0,3)};
+}
+function wildBattle(){startBattle(wildMonster(),'wild')}
+function startBattle(foe,kind,friendId,free){
+  if(!free){
+    if(!canAct())return;
+    if(S.sick){toast(`${S.name} ist krank und kann nicht kämpfen.`);return}
+    if(S.energy<15){toast(`${S.name} hat zu wenig Energie für einen Kampf.`);return}
+    S.energy-=15;S.hunger-=8;clampAll();
+  }
+  B={me:fighter(S),foe:fighter(foe),kind,friendId,over:false,log:[],round:0};
+  // Der Boss hat viele Lebenspunkte, greift aber nur so stark an, wie es zur Stufe des Spielers passt
+  if(kind==='boss'){Object.assign(B.foe,{atk:8+S.level,def:10+Math.round(S.level/2),spd:10+Math.round(S.level/2)});B.foe.maxHp=B.foe.hp=bossLeft();B.startHp=B.foe.hp}
+  $('#btitle').textContent=kind==='boss'?`👹 Wochen-Boss: ${foe.name}`:kind==='tour'?`🏆 Turnier, Kampf ${tour.idx+1} von ${tour.list.length}: ${foe.name} (von ${foe.owner})`:kind!=='wild'?`Freundschaftskampf gegen ${foe.name} (von ${foe.owner})`:`Ein ${foe.name} erscheint!`;
+  const em=elemMult(B.me.element,B.foe.element);
+  if(em>1)bl(`${ELEMENTS[B.me.element].icon} Dein Element ist im Vorteil!`);else if(em<1)bl(`${ELEMENTS[B.foe.element].icon} Vorsicht: Das gegnerische Element ist im Vorteil.`);
+  if(kind==='boss')bl(`Der Boss bleibt höchstens ${BOSS_ROUNDS} Runden. Richte so viel Schaden an wie möglich!`);
+  $('#bActs').style.display='flex';$('#bDone').style.display='none';$('#bNext').style.display='none';
+  $('#battleOv').classList.add('on');renderBattle();
+}
+function bl(s){B.log.push(s)}
+function heal(f,p){const h=Math.min(f.maxHp-f.hp,Math.round(f.maxHp*p));f.hp+=h;return h}
+function hit(f,t,mult,defF=1,sure=false){
+  const dodge=clamp(0.05+(t.spd-f.spd)*0.012,0.03,0.3);
+  if(!sure&&Math.random()<dodge){bl(`💨 ${t.name} weicht aus!`);return}
+  const em=elemMult(f.element,t.element),bond=1+((f.bond??50)-50)/400;
+  let d=f.atk*1.3*mult*bond*rand(.85,1.15)-t.def*0.5*defF*(t.buff>0?2:1);
+  d=Math.max(1,d)*em;const crit=Math.random()<0.08+((f.bond??50)-50)/1000;if(crit)d*=1.5;if(t.guard)d/=2;d=Math.round(d);
+  t.hp=Math.max(0,t.hp-d);bl(`💥 ${f.name} trifft: ${d} Schaden${crit?' (Volltreffer!)':''}${em>1?' Sehr effektiv!':em<1?' Nicht sehr effektiv …':''}`);
+  if(t.hp<=0&&!t.boss&&(t.bond??50)>=80&&!t.endured&&Math.random()<.5){t.hp=1;t.endured=true;bl(`💞 ${t.name} hält aus Zuneigung durch!`)}
+  return d;
+}
+function doAct(f,t,a){
+  if(a==='def'){f.guard=true;const h=heal(f,0.05);bl(`🛡️ ${f.name} geht in Deckung${h?` (+${h} KP)`:''}.`);return}
+  if(a==='item'){S.items.trank--;const h=heal(f,0.4);bl(`🧪 ${f.name} trinkt einen Heiltrank (+${h} KP).`);return}
+  if(a==='spc'){
+    f.cd=3;const sp=SPECIES[f.species].sp;bl(`✨ ${f.name} setzt ${SPECIALS[sp].name} ein!`);
+    if(sp==='rempler')hit(f,t,1.4);
+    else if(sp==='feuer')hit(f,t,1.8,0.5);
+    else if(sp==='wall'){f.buff=3;const h=heal(f,0.15);bl(`🪨 Abwehr verdoppelt, +${h} KP.`)}
+    else if(sp==='doppel'){hit(f,t,0.75);if(t.hp>0)hit(f,t,0.75)}
+    else if(sp==='regen'){const h=heal(f,0.35);bl(`💚 +${h} KP.`)}
+    else if(sp==='flut')hit(f,t,1.5,1,true);
+    else if(sp==='ranke'){hit(f,t,1.2);const h=heal(f,0.15);bl(`🌿 +${h} KP.`)}
+    else if(sp==='lichtstrahl'){hit(f,t,1.6,1,true);const h=heal(f,0.15);bl(`☀️ +${h} KP.`)}
+    else if(sp==='schattenbiss'){const d=hit(f,t,1.7,0.5);if(d){const h=Math.min(f.maxHp-f.hp,Math.round(d*.3));f.hp+=h;bl(`🌑 ${f.name} saugt ${h} KP ab.`)}}
+    return;
+  }
+  hit(f,t,1);
+}
+function aiChoose(){
+  const f=B.foe,sp=SPECIES[f.species].sp,low=f.hp<f.maxHp*0.35;
+  if(f.boss)return Math.random()<.15?'def':'atk';
+  if(f.cd===0&&low&&(sp==='wall'||sp==='regen'||sp==='ranke'||sp==='lichtstrahl'))return'spc';
+  if(f.cd===0&&Math.random()<0.35)return'spc';
+  if(Math.random()<(low?0.25:0.12))return'def';
+  return'atk';
+}
+function battleAct(a){
+  if(!B||B.over)return;
+  if(a==='spc'&&B.me.cd>0)return;
+  if(a==='item'&&!S.items.trank){toast('Du hast keinen Heiltrank.');return}
+  const acts=[{f:B.me,t:B.foe,a},{f:B.foe,t:B.me,a:aiChoose()}];
+  acts.sort((x,y)=>((y.a==='def')-(x.a==='def'))||(y.f.spd-x.f.spd)||(Math.random()-0.5));
+  for(const x of acts){if(x.f.hp<=0||x.t.hp<=0)continue;doAct(x.f,x.t,x.a)}
+  for(const f of[B.me,B.foe]){f.guard=false;if(f.cd>0)f.cd--;if(f.buff>0)f.buff--}
+  B.round++;
+  if(B.kind==='boss'){if(B.foe.hp<=0||B.me.hp<=0||B.round>=BOSS_ROUNDS){if(B.round>=BOSS_ROUNDS&&B.foe.hp>0&&B.me.hp>0)bl('👹 Der Boss zieht sich zurück …');endBoss()}}
+  else if(B.foe.hp<=0||B.me.hp<=0)endBattle(B.foe.hp<=0);
+  renderBattle();
+}
+function endBattle(won){
+  B.over=true;
+  if(won){
+    const xp=20+B.foe.level*6,coins=B.kind!=='wild'?25:10;
+    S.wins++;S.coins+=coins;gainXp(xp);S.mood+=10;bondUp(1);
+    if(B.kind==='friend'){const fr=S.friends.find(x=>x.exportId===B.friendId);if(fr)fr.beaten=(fr.beaten||0)+1}
+    bl(`🏆 Sieg! +${xp} EP, +${coins} Münzen.`);log(`🏆 ${S.name} hat gegen ${B.foe.name} gewonnen.`);
+  }else{
+    S.losses++;gainXp(8);S.mood-=10;
+    bl(`😵 ${S.name} hat verloren. +8 EP fürs Mitmachen.`);log(`😵 ${S.name} hat gegen ${B.foe.name} verloren.`);
+  }
+  if(B.kind==='tour'){
+    if(won)tour.wins++;
+    if(won&&tour.idx<tour.list.length-1)$('#bNext').style.display='';
+    else{
+      const champ=won&&tour.wins===tour.list.length,c=champ?100:tour.wins*15;S.coins+=c;
+      if(champ){S.trophies.push({type:'turnier',date:Date.now()});bl(`🏆 Du hast das Freundesturnier gewonnen! +${c} Münzen und eine Trophäe.`);log(`🏆 ${S.name} hat das Freundesturnier gewonnen!`)}
+      else bl(`Turnier vorbei: ${tour.wins} Siege, +${c} Münzen.`);
+      tour=null;
+    }
+  }
+  clampAll();save();renderStatus();renderLists();
+  $('#bActs').style.display='none';$('#bDone').style.display='flex';
+}
+function closeBattle(){B=null;$('#battleOv').classList.remove('on')}
+function hpBar(f){const p=f.hp/f.maxHp*100,c=p>50?'var(--good)':p>20?'var(--warn)':'var(--bad)';return`<div class="track hp"><div class="fill" style="width:${p}%;background:${c}"></div></div>`}
+function renderBattle(){
+  const info=f=>`<b>${esc(f.name)}</b> <span class="muted">Lv ${f.level}</span>${hpBar(f)}<div class="muted">${f.hp}/${f.maxHp} KP · ⚔️${f.atk} 🛡️${f.def} ⚡${f.spd}${f.buff>0?' · 🪨':''}</div>`;
+  $('#bMeInfo').innerHTML=info(B.me);$('#bFoeInfo').innerHTML=info(B.foe);
+  const sp=SPECIALS[SPECIES[B.me.species].sp];
+  $('#bSpc').textContent=`✨ ${sp.name}${B.me.cd>0?` (${B.me.cd})`:''}`;$('#bSpc').title=sp.desc;$('#bSpc').disabled=B.me.cd>0;
+  $('#bItem').textContent=`🧪 Heiltrank (${S.items.trank||0})`;$('#bItem').disabled=!S.items.trank;
+  $('#blog').innerHTML=B.log.map(esc).join('<br>');$('#blog').scrollTop=1e6;
+}
+
+// ---------- Quests ----------
+function lootText(l){return Object.entries(l).filter(([,n])=>n>0).map(([k,n])=>`${n}× ${ITEMS[k].icon}`).join(' ')}
+function rollQuest(m,q){
+  const ok=Math.random()<chance(m,q);
+  return ok?{ok,xp:q.xp,coins:q.coins,items:{...q.loot}}:{ok,xp:Math.round(q.xp/3),coins:Math.round(q.coins/4),items:{}};
+}
+function applyReward(r){gainXp(r.xp);S.coins+=r.coins;for(const[k,n]of Object.entries(r.items))S.items[k]=(S.items[k]||0)+n}
+function startQuest(qid){
+  if(!canAct())return;
+  if(S.sick){toast(`${S.name} ist krank.`);return}
+  if(S.energy<20){toast(`${S.name} braucht mindestens 20 Energie.`);return}
+  const q=QUESTS.find(x=>x.id===qid);
+  S.energy-=20;S.quest={id:qid,start:S.gameTime,end:S.gameTime+q.dur};
+  log(`${q.icon} ${S.name} bricht zur Quest „${q.name}" auf.`);save();renderStatus();renderLists();
+}
+function guestQuest(exportId,qid){
+  const f=S.friends.find(x=>x.exportId===exportId);if(!f||f.questDone||f.guestQuest)return;
+  const q=QUESTS.find(x=>x.id===qid);
+  f.guestQuest={id:qid,start:S.gameTime,end:S.gameTime+q.dur};
+  log(`${q.icon} Gast ${f.name} (von ${f.owner}) bricht zur Quest „${q.name}" auf.`);save();renderLists();
+}
+function checkQuests(){
+  let changed=false;
+  if(S.quest&&S.gameTime>=S.quest.end){
+    const q=QUESTS.find(x=>x.id===S.quest.id),r=rollQuest(S,q);S.quest=null;applyReward(r);S.mood+=r.ok?15:-5;if(r.ok)bondUp(2);count('quests');curWeek().quests++;clampAll();
+    log(r.ok?`🎉 ${S.name} hat „${q.name}" geschafft! +${r.xp} EP, +${r.coins} Münzen ${lootText(r.items)}`:`😓 ${S.name} kam erschöpft aus „${q.name}" zurück. +${r.xp} EP, +${r.coins} Münzen`);
+    toast(r.ok?`${S.name} ist erfolgreich zurück!`:`${S.name} ist zurück, aber ohne Beute.`);changed=true;
+  }
+  for(const f of S.friends){
+    if(f.guestQuest&&S.gameTime>=f.guestQuest.end){
+      const q=QUESTS.find(x=>x.id===f.guestQuest.id),r=rollQuest(f,q);
+      f.guestQuest=null;f.questDone=true;
+      f.ret=encode({t:'return',v:1,returnId:rid(),monsterId:f.id,monsterName:f.name,host:S.owner,quest:q.name,ok:r.ok,xp:r.xp,coins:r.coins,items:r.items});
+      f.retText=r.ok?`Erfolg! +${r.xp} EP, +${r.coins} Münzen ${lootText(r.items)}`:`Leider gescheitert. +${r.xp} EP, +${r.coins} Münzen`;
+      S.coins+=5;log(`📨 Gast ${f.name} ist von „${q.name}" zurück. Schick ${f.owner} den Rückkehr-Code! (Gastgeber-Bonus: +5 Münzen)`);
+      changed=true;
+    }
+  }
+  netFinishGuests();
+  if(changed)renderLists();
+}
+
+// ---------- Austausch ----------
+const SALT='pixelmonster-v1';
+function fnv(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return h.toString(36)}
+function encode(o){const j=JSON.stringify(o);return'PXM1.'+btoa(unescape(encodeURIComponent(j)))+'.'+fnv(SALT+j)}
+function decode(code){
+  const p=String(code).trim().replace(/\s+/g,'').split('.');
+  if(p.length!==3||p[0]!=='PXM1')throw Error('Das ist kein gültiger Monster-Code.');
+  let j;try{j=decodeURIComponent(escape(atob(p[1])))}catch(e){throw Error('Der Code ist beschädigt.')}
+  if(fnv(SALT+j)!==p[2])throw Error('Der Code wurde verändert oder ist unvollständig.');
+  return JSON.parse(j);
+}
+function download(name,text){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function exportMonster(){
+  if(S.stage===0){toast('Ein Ei kann man noch nicht verschicken.');return}
+  const snap={...snapshot(),exportId:rid()};
+  const code=encode(snap);$('#exportCode').value=code;
+  download(`${S.name.replace(/[^\wäöüÄÖÜß-]/g,'_')}.pxm`,code);
+  toast('Monster-Datei erstellt. Schick sie oder den Code an einen Freund.');
+}
+function importFile(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>importCode(r.result);r.readAsText(f);inp.value=''}
+function importCode(code){
+  let o;try{o=decode(code)}catch(e){toast(e.message);return}
+  if(o.t==='monster'){
+    normMon(o);if(!SPECIES[o.species]||o.stage<1||(o.look&&!ACCESSORIES[o.look.accessory])){toast('Mit diesem Monster stimmt etwas nicht.');return}
+    if(o.id===S.id){toast('Das ist dein eigenes Monster!');return}
+    if(S.friends.some(f=>f.exportId===o.exportId)){toast('Diesen Code hast du schon eingelöst.');return}
+    seen(o);S.friends.unshift({...o,guestQuest:null,questDone:false,ret:null,beaten:0});S.friends.length=Math.min(S.friends.length,20);
+    log(`📬 ${o.name} von ${o.owner} ist zu Besuch!`);toast(`${o.name} ist angekommen!`);
+  }else if(o.t==='return'){
+    if(o.monsterId!==S.id){toast(`Dieser Rückkehr-Code gehört zu ${o.monsterName}, nicht zu ${S.name}.`);return}
+    if(S.claimed.includes(o.returnId)){toast('Dieser Rückkehr-Code wurde schon eingelöst.');return}
+    S.claimed.push(o.returnId);applyReward(o);count('quests');curWeek().quests++;
+    log(`🎒 ${S.name} ist von ${o.host}s Quest „${o.quest}" zurück: ${o.ok?'Erfolg':'gescheitert'}, +${o.xp} EP, +${o.coins} Münzen ${lootText(o.items)}`);
+    toast(`${S.name} bringt Beute von ${o.host} mit!`);effect('🎒');
+  }else{toast('Unbekannter Code.');return}
+  $('#importCode').value='';save();renderStatus();renderLists();
+}
+function removeFriend(id){S.friends=S.friends.filter(f=>f.exportId!==id);save();renderLists()}
+function copyText(t){navigator.clipboard?.writeText(t).then(()=>toast('Kopiert!'),()=>toast('Kopieren nicht möglich, bitte markieren und kopieren.'))}
+
+// ---------- Online ----------
+// Adresse des Online-Treffpunkts (Cloudflare Worker). Kann im Online-Tab geändert werden.
+const DEFAULT_SERVER='https://pixelmonster.sebastiandh88.workers.dev';
+let NET=null,netBusy=false,netErr='',netLast=0;
+const finishing=new Set();
+function serverUrl(){return(S.net?.url||DEFAULT_SERVER||'').trim().replace(/\/+$/,'')}
+function snapshot(){return{t:'monster',v:2,id:S.id,owner:S.owner,name:S.name,species:S.species,family:S.family,element:S.element,trait:S.trait,look:S.look,title:S.title,stage:S.stage,level:S.level,atk:S.atk,def:S.def,spd:S.spd,wins:S.wins,losses:S.losses,bond:Math.round(S.bond),ult:!!S.ult,shiny:!!S.shiny,elder:!!S.elder,at:Date.now()}}
+async function api(path,body){
+  const url=serverUrl();if(!url)throw Error('Es ist noch keine Server-Adresse eingetragen.');
+  let r;
+  try{r=await fetch(url+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',...(S.net?.id?{Authorization:`Bearer ${S.net.id}.${S.net.secret}`}:{})},body:body?JSON.stringify(body):undefined})}
+  catch(e){throw Error('Der Server ist nicht erreichbar. Bist du online?')}
+  const d=await r.json().catch(()=>({error:'Ungültige Antwort vom Server.'}));
+  if(!r.ok||d.error)throw Error(d.error||'Fehler '+r.status);
+  return d;
+}
+async function netDo(fn,okMsg){
+  try{const d=await fn();if(d&&d.friends)NET=d;netErr='';if(okMsg)toast(typeof okMsg==='function'?okMsg(d):okMsg);save();renderOnline();return d}
+  catch(e){toast(e.message);netErr=e.message;renderOnline()}
+}
+async function goOnline(){
+  const url=($('#srvIn')?.value||serverUrl()).trim().replace(/\/+$/,'');
+  if(!url){toast('Bitte zuerst die Server-Adresse eintragen.');return}
+  S.net={url};
+  const d=await netDo(()=>api('/register',{name:S.owner}));
+  if(!d){S.net=null;save();renderOnline();return}
+  S.net={url,id:d.id,secret:d.secret,code:d.code,sent:''};log(`🌐 ${S.owner} ist jetzt online. Freundescode: ${d.code}`);save();netSync();
+}
+function goOffline(){if(!confirm('Wirklich offline gehen? Dein Freundescode und deine Freundesliste gehen verloren.'))return;S.net=null;NET=null;save();renderOnline()}
+async function netSync(){
+  if(!S||!S.net?.id||netBusy)return;netBusy=true;
+  try{
+    let monster=null;
+    if(S.stage>0){const snap=snapshot(),key=JSON.stringify({...snap,at:0});if(key!==S.net.sent){monster=snap;S.net.sent=key}}
+    NET=await api('/sync',{name:S.owner,monster});netErr='';netLast=Date.now();
+    for(const r of NET.returns){
+      if(S.claimed.includes(r.id))continue;
+      const d=await api('/claim',{id:r.id}).catch(()=>null);if(!d)continue;
+      S.claimed.push(r.id);applyReward(d);count('quests');curWeek().quests++;effect('🎒');
+      log(`🎒 ${S.name} ist von ${d.host}s Quest „${d.quest}" zurück: ${d.ok?'Erfolg':'gescheitert'}, +${d.xp} EP, +${d.coins} Münzen ${lootText(d.items)}`);
+      toast(`${S.name} bringt Beute von ${d.host} mit!`);
+    }
+    S.netGuests=S.netGuests||{};
+    for(const gid of Object.keys(S.netGuests))if(!NET.guests.some(g=>g.id===gid))delete S.netGuests[gid];
+    save();renderStatus();
+  }catch(e){netErr=e.message;if(/angemeldet/.test(e.message))S.net.sent=''}
+  finally{netBusy=false;renderOnline()}
+}
+function addFriend(){
+  const code=$('#friendCodeIn').value.trim();if(!code)return;
+  netDo(()=>api('/friend',{code}),d=>`${d.name} ist jetzt dein Freund!`).then(d=>{if(d){log(`🤝 ${d.name} ist jetzt dein Freund.`);netSync()}});
+}
+function removeOnlineFriend(id,name){if(confirm(`${name} wirklich aus der Freundesliste entfernen?`))netDo(()=>api('/unfriend',{id}))}
+function sendVisit(id,name){
+  if(S.stage===0){toast('Ein Ei kann noch nicht verreisen.');return}
+  netSync().then(()=>netDo(()=>api('/visit',{to:id}),`${S.name} ist auf dem Weg zu ${name}!`)).then(d=>{if(d)log(`🏠 ${S.name} besucht ${name}. ${name} kann es auf eine Quest schicken.`)});
+}
+function onlineGuestQuest(gid,qid){
+  const g=NET?.guests.find(x=>x.id===gid);if(!g)return;
+  const q=QUESTS.find(x=>x.id===qid);S.netGuests=S.netGuests||{};
+  S.netGuests[gid]={id:qid,start:S.gameTime,end:S.gameTime+q.dur};
+  log(`${q.icon} Gast ${g.monster.name} (von ${g.ownerName}) bricht zur Quest „${q.name}" auf.`);save();renderOnline();
+}
+function netFinishGuests(){
+  if(!NET||!S.netGuests)return;
+  for(const[gid,gq]of Object.entries(S.netGuests)){
+    if(S.gameTime<gq.end||finishing.has(gid))continue;
+    const g=NET.guests.find(x=>x.id===gid);if(!g)continue;
+    finishing.add(gid);
+    const q=QUESTS.find(x=>x.id===gq.id),r=rollQuest(g.monster,q);
+    api('/return',{guest:gid,result:{monsterName:g.monster.name,quest:q.name,ok:r.ok,xp:r.xp,coins:r.coins,items:r.items}}).then(d=>{
+      NET=d;delete S.netGuests[gid];S.coins+=5;
+      log(`📨 Gast ${g.monster.name} ist von „${q.name}" zurück (${r.ok?'Erfolg':'gescheitert'}) und reist heim zu ${g.ownerName}. Gastgeber-Bonus: +5 Münzen`);
+      save();renderStatus();renderOnline();
+    }).catch(e=>{netErr=e.message}).finally(()=>finishing.delete(gid));
+  }
+}
+function onlineBattle(id){const f=NET?.friends.find(x=>x.id===id);if(f?.monster)startBattle({...f.monster,owner:f.name},'online',id)}
+function monsterLine(m){const e=eff(m);return`${esc(speciesLabel(m))}${m.element?' '+ELEMENTS[m.element].icon:''} · Lv ${m.level} · ⚔️${e.atk} 🛡️${e.def} ⚡${e.spd}`}
+function renderOnline(){
+  if(!S)return;const box=$('#onlineBox');if(!box)return;
+  const keep={},focus=document.activeElement?.id;box.querySelectorAll('input,select').forEach(el=>{if(el.id)keep[el.id]=el.value});
+  if(!S.net?.id){
+    box.innerHTML=`<p class="muted">Wenn du online gehst, bekommst du einen Freundescode. Gib ihn deinen Freunden. Sobald ihr euch gegenseitig hinzugefügt habt, seht ihr eure Monster automatisch, könnt gegeneinander kämpfen und euch Monster zu Besuch schicken, ganz ohne Dateien.</p>
+      <label class="muted">Server-Adresse</label><input type="text" id="srvIn" value="${esc(serverUrl())}" placeholder="https://pixelmonster.DEINNAME.workers.dev">
+      <div class="row" style="margin-top:10px"><button class="primary" onclick="goOnline()">🌐 Online gehen</button></div>`;
+    $('#fightOnline').innerHTML='';return;
+  }
+  const N=NET||{friends:[],guests:[],outgoing:[]};
+  const status=netErr?`<span style="color:var(--bad)">⚠️ ${esc(netErr)}</span>`:NET?`<span style="color:var(--good)">● verbunden</span>`:'verbinde …';
+  N.friends.forEach(f=>seen(f.monster));
+  const friends=N.friends.length?N.friends.map(f=>{
+    const away=N.outgoing.some(o=>o.host===f.id);
+    return`<div class="item">${f.monster?`<img src="${spriteURL(f.monster)}">`:'<div style="font-size:34px;width:56px;text-align:center">🥚</div>'}<div class="grow"><div class="t">${esc(f.name)} <span class="muted">${f.code}</span></div>
+      <div class="muted">${f.monster?esc(f.monster.name)+' · '+monsterLine(f.monster):'hat noch kein geschlüpftes Monster'}</div>
+      <div class="row" style="margin-top:6px"><button onclick="onlineBattle('${f.id}')" ${f.monster?'':'disabled'}>⚔️ Kämpfen</button>
+      <button onclick="sendVisit('${f.id}','${esc(f.name).replace(/'/g,'')}')" ${away?'disabled':''}>${away?'🏠 '+esc(S.name)+' ist dort zu Besuch':'🏠 Zu Besuch schicken'}</button></div></div>
+      <button title="Entfernen" onclick="removeOnlineFriend('${f.id}','${esc(f.name).replace(/'/g,'')}')">✖</button></div>`}).join(''):'<p class="muted">Noch keine Freunde. Gib oben den Freundescode eines Freundes ein.</p>';
+  const guests=N.guests.length?N.guests.map(g=>{
+    const gq=S.netGuests?.[g.id];let qa;
+    if(gq)qa=`<div class="muted">Auf Quest: ${QUESTS.find(q=>q.id===gq.id).name}</div>${progHtml(gq)}`;
+    else qa=`<div class="row" style="margin-top:6px"><select id="ogq-${g.id}">${QUESTS.map(q=>`<option value="${q.id}">${q.icon} ${q.name} (${Math.round(chance(g.monster,q)*100)} %)</option>`).join('')}</select><button onclick="onlineGuestQuest('${g.id}',$('#ogq-${g.id}').value)">🗺️ Auf Quest schicken</button></div>`;
+    return`<div class="item" style="align-items:flex-start"><img src="${spriteURL(g.monster)}"><div class="grow"><div class="t">${esc(g.monster.name)} <span class="muted">von ${esc(g.ownerName)}</span></div><div class="muted">${monsterLine(g.monster)}</div>${qa}</div></div>`}).join(''):'<p class="muted">Gerade ist kein Gast da.</p>';
+  box.innerHTML=`<div class="item"><div style="font-size:30px">🔑</div><div class="grow"><div class="muted">Dein Freundescode</div><div class="t" style="font-size:24px;letter-spacing:3px">${S.net.code}</div></div><button onclick="copyText('${S.net.code}')">📋 Kopieren</button></div>
+    <div class="row"><input type="text" id="friendCodeIn" maxlength="7" placeholder="Freundescode, z. B. K7M-Q2P" style="flex:1;width:auto;text-transform:uppercase"><button class="primary" onclick="addFriend()">➕ Hinzufügen</button></div>
+    <div class="muted" style="margin:8px 0">${status} · <a href="#" onclick="netSync();return false" style="color:var(--accent)">aktualisieren</a></div>
+    <h3 style="margin-top:14px">Freunde</h3>${friends}
+    <h3 style="margin-top:14px">Gäste bei dir</h3>${guests}
+    <details style="margin-top:12px"><summary class="muted" style="cursor:pointer">Verbindung</summary><div class="muted" style="margin:6px 0">Server: ${esc(serverUrl())}</div><button onclick="goOffline()">Offline gehen</button></details>`;
+  for(const[id,v]of Object.entries(keep)){const el=document.getElementById(id);if(el)el.value=v}if(focus)document.getElementById(focus)?.focus();
+  renderNest();
+  $('#fightOnline').innerHTML=N.friends.some(f=>f.monster)?'<h3>Online-Freunde</h3>'+N.friends.filter(f=>f.monster).map(f=>`<div class="item"><img src="${spriteURL(f.monster)}"><div class="grow"><div class="t">${esc(f.monster.name)} <span class="muted">von ${esc(f.name)}</span></div><div class="muted">${monsterLine(f.monster)}</div></div><button onclick="onlineBattle('${f.id}')">⚔️ Kämpfen</button></div>`).join(''):'';
+  renderStatus();
+}
+
+// ---------- Erweiterungen: Zuneigung, Elemente, Zucht, Lebenszyklus, Wetter, Boss, Turnier, Minispiel, Lexikon ----------
+const ULT_NAMES={schleim:'Glibberkönig'};for(const k of FAM_KEYS)ULT_NAMES[k+'3']='Ur-'+FAMILIES[k].names[2];
+const ADV={feuer:'natur',natur:'erde',erde:'blitz',blitz:'wasser',wasser:'feuer'};
+const RARE=['licht','dunkel'],BASIC=['feuer','wasser','erde','blitz','natur'];
+function elemMult(a,b){
+  if(!a||!b)return 1;
+  if(RARE.includes(a)&&RARE.includes(b))return a===b?1:1.5;
+  if(RARE.includes(a))return 1.15;
+  if(RARE.includes(b))return 0.9;
+  if(ADV[a]===b)return 1.5;
+  if(ADV[b]===a)return 0.75;
+  return 1;
+}
+function migrate(s){
+  s.bond??=50;s.nest??=[];s.hall??=[];s.dex??={};s.ach??={};s.cnt??={};s.trophies??=[];
+  s.week??={id:'',quests:0,boss:null};s.items.stern??=0;
+  s.family??=EL_FAM[s.element]||'feuer';normMon(s);s.hall.forEach(normMon);s.friends.forEach(normMon);
+  for(const e of s.nest)e.family??=EL_FAM[e.element]||'feuer';
+  for(const k of Object.keys(s.dex)){const n=k.replace(/^(ult:)?(.*)$/,(_,u,sp)=>{const o=normMon({species:sp,element:s.element,family:s.family});return(u||'')+o.species});if(n!==k){s.dex[n]??=s.dex[k];delete s.dex[k]}}
+  return s;
+}
+function bondUp(n){if(S&&S.stage>0)S.bond=clamp((S.bond??50)+n,0,100)}
+function count(k,n=1){S.cnt[k]=(S.cnt[k]||0)+n}
+function keepInputs(box,fn){
+  const keep={};box.querySelectorAll('input,select').forEach(el=>{if(el.id)keep[el.id]=el.value});
+  const focus=document.activeElement?.id;fn();
+  for(const[id,v]of Object.entries(keep)){const el=document.getElementById(id);if(el)el.value=v}
+  if(focus)document.getElementById(focus)?.focus();
+}
+
+// ----- Wetter und Tageszeit (für alle Spieler gleich, wechselt alle 6 Stunden) -----
+const WEATHER={sonne:{name:'Sonnig',icon:'☀️',boost:['feuer','licht']},wolken:{name:'Bewölkt',icon:'☁️',boost:[]},regen:{name:'Regen',icon:'🌧️',boost:['wasser','natur']},
+  gewitter:{name:'Gewitter',icon:'⛈️',boost:['blitz']},nebel:{name:'Nebel',icon:'🌫️',boost:['dunkel','erde']},schnee:{name:'Schnee',icon:'❄️',boost:['wasser','erde']}};
+function weatherNow(){
+  const d=new Date(),block=`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${Math.floor(d.getHours()/6)}`;
+  const list=[11,0,1].includes(d.getMonth())?['sonne','wolken','schnee','schnee','nebel','regen']:['sonne','sonne','wolken','regen','gewitter','nebel'];
+  return list[Math.floor(seeded(hash32('wetter'+block))()*list.length)];
+}
+function isNight(){const h=new Date().getHours();return h>=21||h<6}
+function weatherBonus(m){return WEATHER[weatherNow()].boost.includes(m.element)?0.15:0}
+function drawWeather(ctx,W,H,t){
+  const w=weatherNow();
+  if(isNight()){
+    ctx.fillStyle='rgba(5,8,30,.4)';ctx.fillRect(0,0,W,H);
+    for(let i=0;i<16;i++){ctx.globalAlpha=.35+.4*Math.sin(t/700+i);ctx.fillStyle='#fff';ctx.fillRect((i*97)%W,(i*53)%(H*.45),1.6,1.6)}ctx.globalAlpha=1;
+    glow(ctx,W*.84,H*.13,W*.09,'#f4f1da',.6);ctx.fillStyle='#f4f1da';ctx.beginPath();ctx.arc(W*.84,H*.13,W*.035,0,7);ctx.fill();
+  }else if(w==='sonne')glow(ctx,W*.1,H*.08,W*.28,'#ffd75e',.35);
+  if(w==='regen'||w==='gewitter'){
+    ctx.strokeStyle='rgba(180,210,255,.45)';ctx.lineWidth=1.2;ctx.beginPath();
+    for(let i=0;i<40;i++){const x=(i*37+t*.25)%(W+20)-10,y=(i*71+t*.6)%H;ctx.moveTo(x,y);ctx.lineTo(x-3,y+10)}ctx.stroke();
+    if(w==='gewitter'&&t%7000<90){ctx.fillStyle='rgba(255,255,230,.35)';ctx.fillRect(0,0,W,H)}
+  }
+  if(w==='schnee'){ctx.fillStyle='rgba(255,255,255,.85)';for(let i=0;i<35;i++){ctx.beginPath();ctx.arc((i*41+Math.sin(t/900+i)*12+W*2)%W,(i*67+t*.05)%H,1.5,0,7);ctx.fill()}}
+  if(w==='nebel')for(let i=0;i<3;i++){ctx.fillStyle='rgba(200,200,220,.13)';ctx.beginPath();ctx.ellipse((t/40+i*W/2)%(W*1.5)-W*.25,H*(.55+i*.12),W*.5,H*.08,0,0,7);ctx.fill()}
+}
+function timeInfo(){const w=WEATHER[weatherNow()];return`${isNight()?'🌙 Nacht':'🌞 Tag'} · ${w.icon} ${w.name}`}
+
+// ----- Entwicklung: Glanz, Ultimativ, Alter -----
+function checkGrowth(){
+  if(S.stage!==3)return;
+  if(!S.ult&&S.level>=15&&S.bond>=60){
+    S.ult=true;S.atk+=5;S.def+=5;S.spd+=5;
+    log(`🌟 ${S.name} hat die Stufe Ultimativ erreicht und ist jetzt ${ULT_NAMES[S.species]}!`);effect('🌟');toast(`${S.name} ist ultimativ!`);seen(S);renderLists();
+  }
+  const adultAge=S.gameTime-S.born-EVO.adult;
+  if(!S.elder&&adultAge>=7*1440){
+    S.elder=true;
+    if(S.nest.length<3){legacyEgg();log(`🥚 ${S.name} ist jetzt ein weiser Ältester und hat ein Erbe-Ei ins Nest gelegt. Darin steckt ein Teil seiner Stärke.`)}
+    else log(`${S.name} ist jetzt ein weiser Ältester.`);
+    renderNest();
+  }
+}
+
+// ----- Zucht -----
+const BREED_CD=1440;
+function hueOf(m){return parseCol(lookOf(m).main)[0]}
+function mixHue(a,b){const d=((b-a+540)%360)-180;return(a+d/2+360)%360}
+function breedPartners(){
+  const list=[];
+  for(const f of NET?.friends||[])if(f.monster&&f.monster.stage>=3)list.push({key:'o:'+f.id,owner:f.name,m:f.monster});
+  for(const f of S.friends)if(f.stage>=3)list.push({key:'f:'+f.exportId,owner:f.owner,m:f});
+  return list;
+}
+function breed(key){
+  if(S.stage<3){toast('Nur erwachsene Monster können ein Ei bekommen.');return}
+  if(!canAct())return;
+  if(S.bond<40){toast(`${S.name} braucht mindestens 40 Zuneigung.`);return}
+  if(S.energy<30){toast(`${S.name} braucht mindestens 30 Energie.`);return}
+  if(S.nest.length>=3){toast('Das Nest ist voll. Höchstens 3 Eier haben Platz.');return}
+  if(S.lastBreed!=null&&S.gameTime-S.lastBreed<BREED_CD){toast(`Erst in ${fmtLeft(BREED_CD-(S.gameTime-S.lastBreed))} wieder möglich.`);return}
+  const p=breedPartners().find(x=>x.key===key);if(!p)return;
+  const a=snapshot(),b=p.m,ba=a.bond??50,bb=b.bond??50;
+  const rareParent=[a.element,b.element].find(e=>RARE.includes(e));
+  let family,mutation=false;
+  if(ba>=85&&bb>=85&&Math.random()<(rareParent?0.5:0.2))family=EL_FAM[rareParent||(Math.random()<.5?'licht':'dunkel')];
+  else{
+    const basic=FAM_KEYS.filter(k=>BASIC.includes(FAMILIES[k].element)),opts=[famOf(a),famOf(b)].filter(f=>basic.includes(f));
+    family=opts.length?opts[rint(0,opts.length-1)]:basic[rint(0,basic.length-1)];
+    // Mutation: manchmal schlüpft eine verwandte Familie mit demselben Element
+    if(Math.random()<0.15){const sib=basic.filter(k=>k!==family&&FAMILIES[k].element===FAMILIES[family].element);family=sib[rint(0,sib.length-1)];mutation=true}
+  }
+  const element=FAMILIES[family].element;
+  const traits=[a.trait,b.trait].filter(Boolean);
+  S.nest.push({id:rid(),element,family,mutation,hue:(mixHue(hueOf(a),hueOf(b))+rint(-12,12)+360)%360,trait:traits[rint(0,traits.length-1)]||'verspielt',
+    bonus:{atk:Math.round((a.atk+b.atk)/10),def:Math.round((a.def+b.def)/10),spd:Math.round((a.spd+b.spd)/10)},bond:ba>=80&&bb>=80?60:50,
+    parents:[`${a.name} (${a.owner})`,`${b.name} (${p.owner})`],kind:'zucht',created:Date.now()});
+  S.lastBreed=S.gameTime;S.energy-=30;bondUp(3);count('breeds');if(mutation)count('mutations');
+  log(`🥚 ${S.name} und ${b.name} haben ein Ei bekommen!${RARE.includes(element)?' Es schimmert geheimnisvoll …':mutation?` Überraschung: eine Mutation zur Familie ${FAMILIES[family].name}!`:''}`);
+  toast(RARE.includes(element)?'Ein geheimnisvoll schimmerndes Ei!':'Ein neues Ei liegt im Nest!');
+  save();renderStatus();renderNest();
+}
+function legacyEgg(){
+  S.nest.push({id:rid(),element:S.element,family:S.family,hue:hueOf(S),trait:S.trait,bonus:{atk:Math.round(S.atk*.3),def:Math.round(S.def*.3),spd:Math.round(S.spd*.3)},bond:60,
+    parents:[`${S.name} (Erbe)`],kind:'erbe',created:Date.now()});
+}
+function hatchEgg(id){
+  const egg=S.nest.find(e=>e.id===id);if(!egg)return;
+  if(S.quest){toast(`${S.name} ist gerade auf Quest.`);return}
+  const name=($('#eggName-'+id)?.value||'').trim();
+  if(!name){toast('Gib dem Baby zuerst einen Namen.');return}
+  if(!confirm(`${S.name} zieht dann in die Ruhmeshalle, und aus dem Ei schlüpft ${name}. Fortfahren?`))return;
+  const keep={owner:S.owner,coins:S.coins,items:S.items,friends:S.friends,claimed:S.claimed,log:S.log,net:S.net,netGuests:S.netGuests,speed:S.speed,
+    dex:S.dex,ach:S.ach,cnt:S.cnt,trophies:S.trophies,week:S.week,lastTour:S.lastTour,nest:S.nest.filter(e=>e.id!==id),hall:[...S.hall,{...snapshot(),retired:Date.now()}].slice(-20)};
+  const fam=egg.family||EL_FAM[egg.element];
+  const n=newState(S.owner,name,egg.element,egg.trait,egg.hue,fam);
+  Object.assign(n,{id:egg.id,look:makeLook(egg.id,egg.hue,egg.element,fam),gameTime:S.gameTime,born:S.gameTime,bond:egg.bond,parents:egg.parents});
+  n.atk+=egg.bonus.atk;n.def+=egg.bonus.def;n.spd+=egg.bonus.spd;
+  S=migrate({...n,...keep});if(S.net)S.net.sent='';
+  log(`🥚 ${name} wächst jetzt im Ei heran. Eltern: ${egg.parents.join(' und ')}.`);
+  save();renderLists();renderOnline();
+}
+function renderNest(){
+  const box=$('#nestBox');if(!box||!S)return;
+  keepInputs(box,()=>{
+    const cd=S.lastBreed!=null?BREED_CD-(S.gameTime-S.lastBreed):0;
+    const req=[[S.stage>=3,'erwachsen'],[S.bond>=40,`Zuneigung mindestens 40 (jetzt ${Math.round(S.bond)})`],[S.energy>=30,'Energie mindestens 30'],[cd<=0,cd>0?`Pause: noch ${fmtLeft(cd)}`:'keine Pause nötig'],[S.nest.length<3,`Platz im Nest (${S.nest.length}/3)`]];
+    const partners=breedPartners();
+    box.innerHTML=`<p class="muted">Zwei erwachsene Monster können ein Ei bekommen, das Eigenschaften von beiden erbt: Element, Farbe, Charakter und einen Teil der Stärke. Haben <b>beide</b> Eltern mindestens <b>85 Zuneigung</b>, kann mit etwas Glück ein seltenes ☀️ Licht- oder 🌑 Dunkel-Ei entstehen.</p>
+      <div class="muted">${req.map(([ok,t])=>`${ok?'✅':'❌'} ${t}`).join('<br>')}</div>
+      <h3 style="margin-top:14px">Partner</h3>
+      ${partners.length?partners.map(p=>`<div class="item"><img src="${spriteURL(p.m)}"><div class="grow"><div class="t">${esc(p.m.name)} <span class="muted">von ${esc(p.owner)}</span></div><div class="muted">${monsterLine(p.m)} · 💞 ${Math.round(p.m.bond??50)}</div></div><button onclick="breed('${p.key}')">💞 Ei bekommen</button></div>`).join(''):'<p class="muted">Noch kein erwachsenes Monster von Freunden da. Füge Freunde im Tab „Online“ hinzu.</p>'}
+      <h3 style="margin-top:14px">Nest</h3>
+      ${S.nest.length?S.nest.map(e=>`<div class="item" style="align-items:flex-start"><img src="${spriteURL({species:'ei',look:makeLook(e.id,e.hue,e.element,e.family)})}"><div class="grow"><div class="t">${e.kind==='erbe'?'Erbe-Ei':'Zucht-Ei'}${RARE.includes(e.element)?' ✨':''}</div><div class="muted">Eltern: ${esc(e.parents.join(' und '))} · Familie ${FAMILIES[e.family]?.icon||''} ${FAMILIES[e.family]?.name||''}${e.mutation?' (Mutation!)':''}${RARE.includes(e.element)?' · Es schimmert geheimnisvoll.':''}</div>
+        <div class="row" style="margin-top:6px"><input type="text" id="eggName-${e.id}" maxlength="16" placeholder="Name für das Baby" style="flex:1;width:auto"><button onclick="hatchEgg('${e.id}')">🐣 Ausbrüten</button></div></div></div>`).join(''):'<p class="muted">Das Nest ist leer.</p>'}
+      <p class="muted">Beim Ausbrüten zieht dein jetziges Monster in die Ruhmeshalle. Münzen, Gegenstände, Freunde und Erfolge bleiben erhalten.</p>
+      ${S.hall.length?`<h3 style="margin-top:14px">Ruhmeshalle</h3><div class="row">${S.hall.map(h=>`<div style="text-align:center;width:76px"><img src="${spriteURL(h)}" style="width:64px;height:64px"><div class="muted" style="font-size:11px">${esc(h.name)}<br>Lv ${h.level}</div></div>`).join('')}</div>`:''}`;
+  });
+}
+
+// ----- Wochen-Boss -----
+const BOSSES=[{name:'Glutkoloss',species:'vulkan3',element:'feuer',hue:12},{name:'Tiefseeschlange Nerith',species:'meer3',element:'wasser',hue:200},
+  {name:'Sturmwolf Fenrar',species:'elektro3',element:'blitz',hue:230},{name:'Uralter Waldriese',species:'wald3',element:'natur',hue:100},
+  {name:'Schattendrache Morvax',species:'drache3',element:'dunkel',hue:280},{name:'Gefallener Seraph',species:'himmel3',element:'licht',hue:40},
+  {name:'Kristallkoloss Ysgar',species:'kristall3',element:'erde',hue:290},{name:'Höllenfürst Azgor',species:'daemon3',element:'feuer',hue:350}];
+const BOSS_HP_SOLO=350,QUESTS_FOR_BOSS=3,BOSS_ROUNDS=8;
+function weekId(d=new Date()){
+  const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())),day=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-day);
+  const y=t.getUTCFullYear();return`${y}-W${String(Math.ceil(((t-Date.UTC(y,0,1))/864e5+1)/7)).padStart(2,'0')}`;
+}
+function curWeek(){if(S.week.id!==weekId())S.week={id:weekId(),quests:0,boss:null};return S.week}
+function bossOfWeek(){const w=weekId(),b=BOSSES[hash32(w)%BOSSES.length];return{...b,level:20,atk:30,def:20,spd:14,stage:3,ult:true,boss:true,look:makeLook('boss'+w,b.hue,b.element,SPECIES[b.species].family),owner:'Wochen-Boss'}}
+let BOSS=null;
+async function loadBoss(){if(!S?.net?.id)return;try{BOSS=await api('/boss',{week:weekId()})}catch(e){BOSS=null}renderBoss()}
+function bossLeft(){return BOSS?Math.max(0,BOSS.hp-BOSS.dmg):Math.max(0,BOSS_HP_SOLO-(S.week.boss?.dmg||0))}
+function startBoss(){
+  const wk=curWeek();
+  if(wk.quests<QUESTS_FOR_BOSS){toast(`Schließe diese Woche erst ${QUESTS_FOR_BOSS} Quests ab (${wk.quests}/${QUESTS_FOR_BOSS}).`);return}
+  if(wk.boss){toast('Du hast diese Woche schon gegen den Boss gekämpft.');return}
+  if(bossLeft()<=0){toast('Der Boss ist diese Woche schon besiegt.');return}
+  startBattle(bossOfWeek(),'boss');
+}
+function endBoss(){
+  B.over=true;
+  const dmg=B.startHp-B.foe.hp,xp=20+Math.round(dmg/3),coins=Math.round(dmg/5);
+  S.week.boss={dmg};count('bosses');gainXp(xp);S.coins+=coins;bondUp(3);
+  bl(`⚔️ Du hast dem Boss ${dmg} Schaden zugefügt. +${xp} EP, +${coins} Münzen.`);log(`👹 ${S.name} hat gegen ${B.foe.name} gekämpft: ${dmg} Schaden.`);
+  if(BOSS){api('/boss/hit',{week:weekId(),dmg}).then(d=>{BOSS=d;renderBoss()}).catch(e=>toast(e.message))}
+  else if(B.foe.hp<=0)bossReward();
+  clampAll();save();renderStatus();renderBoss();
+  $('#bActs').style.display='none';$('#bDone').style.display='flex';
+}
+function bossReward(){
+  S.items.stern=(S.items.stern||0)+2;S.coins+=100;gainXp(150);S.trophies.push({type:'boss',name:bossOfWeek().name,week:weekId()});
+  log(`🏆 Der Wochen-Boss ${bossOfWeek().name} ist besiegt! +150 EP, +100 Münzen, 2× ✨ Sternenstaub.`);toast('Boss besiegt! Belohnung erhalten.');
+}
+function claimBoss(){api('/boss/claim',{week:weekId()}).then(d=>{BOSS=d;bossReward();save();renderStatus();renderBoss()}).catch(e=>toast(e.message))}
+function renderBoss(){
+  const box=$('#bossBox');if(!box||!S)return;
+  const b=bossOfWeek(),wk=curWeek(),left=bossLeft(),hp=BOSS?BOSS.hp:BOSS_HP_SOLO;
+  const shared=BOSS?`<div class="muted">Gemeinsam mit allen Online-Spielern · ${BOSS.players.length} Kämpfer: ${esc(BOSS.players.join(', ')||'noch niemand')}</div>`:`<div class="muted">Allein (online kämpfst du zusammen mit deinen Freunden)</div>`;
+  let btn;
+  if(left<=0)btn=BOSS&&BOSS.hit!=null&&!BOSS.claimed?`<button class="primary" onclick="claimBoss()">🎁 Belohnung abholen</button>`:`<span class="muted">✅ Besiegt! Nächste Woche kommt ein neuer Boss.</span>`;
+  else if(wk.boss)btn=`<span class="muted">Du hast diese Woche schon gekämpft (${wk.boss.dmg} Schaden).</span>`;
+  else btn=`<button class="primary" onclick="startBoss()" ${wk.quests<QUESTS_FOR_BOSS?'disabled':''}>👹 Gegen den Boss kämpfen</button>`;
+  box.innerHTML=`<div class="item" style="align-items:flex-start"><img src="${spriteURL(b)}" style="width:72px;height:72px"><div class="grow"><div class="t">👹 Wochen-Boss: ${esc(b.name)} ${ELEMENTS[b.element].icon}</div>${shared}
+    <div class="track" style="margin:6px 0"><div class="fill" style="width:${left/hp*100}%;background:var(--bad)"></div></div><div class="muted">${left} / ${hp} Lebenspunkte · Quests diese Woche: ${Math.min(wk.quests,QUESTS_FOR_BOSS)}/${QUESTS_FOR_BOSS} · ein Kampf pro Woche, höchstens ${BOSS_ROUNDS} Runden</div>
+    <div class="row" style="margin-top:6px">${btn}</div></div></div>`;
+}
+
+// ----- Freundesturnier -----
+let tour=null;
+function startTournament(){
+  const opp=[...(NET?.friends||[]).filter(f=>f.monster&&f.monster.stage>0).map(f=>({...f.monster,owner:f.name})),...S.friends];
+  if(opp.length<2){toast('Für ein Turnier brauchst du mindestens 2 Freunde mit Monstern.');return}
+  if(S.lastTour!=null&&S.gameTime-S.lastTour<1440){toast(`Das nächste Turnier gibt es in ${fmtLeft(1440-(S.gameTime-S.lastTour))}.`);return}
+  if(!canAct()||S.energy<25){if(S.energy<25)toast(`${S.name} braucht mindestens 25 Energie.`);return}
+  opp.sort((a,b)=>a.level-b.level);
+  tour={list:opp.slice(0,5),idx:0,wins:0};S.lastTour=S.gameTime;S.energy-=10;
+  startBattle(tour.list[0],'tour');
+}
+function nextTour(){
+  const hp=B.me.hp;tour.idx++;startBattle(tour.list[tour.idx],'tour',null,true);
+  B.me.hp=Math.min(B.me.maxHp,hp+Math.round(B.me.maxHp*.3));bl(`Runde ${tour.idx+1} von ${tour.list.length}: ${B.me.name} hat sich etwas erholt.`);renderBattle();
+}
+
+// ----- Minispiel: Beerenregen -----
+let MG=null;
+function startMinigame(){
+  if(!canAct())return;if(S.energy<10){toast(`${S.name} ist zu müde zum Spielen.`);return}
+  S.energy-=10;MG={t0:performance.now(),x:160,items:[],score:0,keys:{},last:0,dur:25000};
+  $('#gameOv').classList.add('on');requestAnimationFrame(mgLoop);
+}
+function mgLoop(now){
+  if(!MG)return;
+  const ctx=$('#mgCv').getContext('2d'),W=320,H=320,el=now-MG.t0,left=Math.max(0,MG.dur-el);
+  if(MG.keys.ArrowLeft)MG.x-=6;if(MG.keys.ArrowRight)MG.x+=6;MG.x=clamp(MG.x,26,W-26);
+  if(now-MG.last>Math.max(230,620-el/60)){MG.last=now;const r=Math.random();MG.items.push({x:rand(14,W-14),y:-10,v:rand(2,3.4)+el/9000,k:r<.12?'gold':r<.32?'stein':'beere'})}
+  drawScene(ctx,S.element,W,H,now);
+  for(const it of MG.items){it.y+=it.v;if(!it.done&&it.y>H-66&&it.y<H-22&&Math.abs(it.x-MG.x)<28){it.done=true;MG.score+=it.k==='gold'?3:it.k==='stein'?-2:1}}
+  MG.items=MG.items.filter(i=>!i.done&&i.y<H+20);
+  ctx.font='22px serif';ctx.textAlign='center';for(const it of MG.items)ctx.fillText(it.k==='gold'?'🌟':it.k==='stein'?'🪨':'🍓',it.x,it.y);
+  drawSprite(ctx,S,MG.x-36,H-84,72,false,now);
+  ctx.fillStyle='#f0d9a4';ctx.font='bold 16px Georgia,serif';ctx.textAlign='left';ctx.fillText(`Punkte: ${MG.score}`,10,22);ctx.textAlign='right';ctx.fillText(`${Math.ceil(left/1000)} s`,W-10,22);
+  if(left<=0)return endMinigame();
+  requestAnimationFrame(mgLoop);
+}
+function endMinigame(){
+  const s=Math.max(0,MG.score),coins=Math.min(20,Math.floor(s/2));MG=null;$('#gameOv').classList.remove('on');
+  S.mood+=Math.min(40,s*2);S.coins+=coins;bondUp(2);gainXp(5+s);S.cnt.mgBest=Math.max(S.cnt.mgBest||0,s);clampAll();
+  log(`🎮 ${S.name} hat beim Beerenregen ${s} Punkte geholt (+${coins} Münzen).`);toast(`Beerenregen: ${s} Punkte!`);save();renderStatus();
+}
+function mgMove(e){if(!MG)return;const c=$('#mgCv'),r=c.getBoundingClientRect(),x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;MG.x=x/r.width*320}
+document.addEventListener('keydown',e=>{if(MG&&e.key.startsWith('Arrow')){MG.keys[e.key]=true;e.preventDefault()}});
+document.addEventListener('keyup',e=>{if(MG)MG.keys[e.key]=false});
+
+// ----- Lexikon und Erfolge -----
+const DEX=[['ei','Das Ei'],['schleim','Glibber'],['ult:schleim','Glibberkönig']];
+for(const k of FAM_KEYS){const f=FAMILIES[k];for(let st=1;st<=3;st++)DEX.push([k+st,f.names[st-1]]);DEX.push(['ult:'+k+'3','Ur-'+f.names[2]])}
+const SILHOUETTE={main:'#0b0910',light:'#0b0910',dark:'#0b0910',accent:'#2a2433',pattern:'keine',accessory:'keins'};
+function dexKey(m){return(m.ult?'ult:':'')+m.species}
+function seen(m){normMon(m);if(S&&m&&SPECIES[m.species]&&!S.dex[dexKey(m)])S.dex[dexKey(m)]=Date.now()}
+const ACH=[
+  ['schlupf','Geschlüpft!','Dein erstes Ei ist geschlüpft.',s=>s.stage>=1,20],
+  ['erwachsen','Ausgewachsen','Ein Monster ist erwachsen geworden.',s=>s.stage>=3,50],
+  ['ultimativ','Ultimative Kraft','Erreiche die Stufe Ultimativ.',s=>s.ult,200],
+  ['glanz','Strahlend','Ziehe ein Glanz-Monster groß: keine Pflegefehler und mindestens 80 Zuneigung beim Erwachsenwerden.',s=>s.shiny,150],
+  ['herz','Beste Freunde','Erreiche 100 Zuneigung.',s=>s.bond>=100,80],
+  ['sieger','Kämpferherz','Gewinne 10 Kämpfe.',s=>s.wins>=10,60],
+  ['abenteurer','Abenteurer','Schließe 10 Quests ab.',s=>(s.cnt.quests||0)>=10,60],
+  ['freund','Gemeinsam stark','Füge einen Online-Freund hinzu.',s=>(NET?.friends.length||0)>=1,30],
+  ['zucht','Nachwuchs','Bekomme ein Ei durch Zucht.',s=>(s.cnt.breeds||0)>=1,50],
+  ['ahne','Generationen','Brüte ein Ei aus dem Nest aus.',s=>s.hall.length>=1,40],
+  ['selten','Legende','Brüte ein Licht- oder Dunkel-Monster aus.',s=>RARE.includes(s.element),300],
+  ['boss','Bossjäger','Kämpfe gegen einen Wochen-Boss.',s=>(s.cnt.bosses||0)>=1,50],
+  ['bosssieg','Bezwinger','Besiege einen Wochen-Boss.',s=>s.trophies.some(t=>t.type==='boss'),150],
+  ['turnier','Champion','Gewinne ein Freundesturnier.',s=>s.trophies.some(t=>t.type==='turnier'),120],
+  ['beeren','Beerenprofi','Hole 25 Punkte im Beerenregen.',s=>(s.cnt.mgBest||0)>=25,40],
+  ['level10','Erfahren','Erreiche Level 10.',s=>s.level>=10,60],
+  ['forscher','Forscher','Entdecke 8 Formen im Lexikon.',s=>Object.keys(s.dex).length>=8,60],
+  ['sammler','Sammler','Entdecke 30 Formen im Lexikon.',s=>Object.keys(s.dex).length>=30,150],
+  ['mutation','Mutation','Bekomme ein Zucht-Ei, das zu einer anderen Familie mutiert ist.',s=>s.nest.some(e=>e.mutation)||(s.cnt.mutations||0)>0,60]
+];
+function checkAch(){
+  for(const[id,name,,test,coins]of ACH)if(!S.ach[id]&&test(S)){S.ach[id]=Date.now();S.coins+=coins;log(`🏅 Erfolg: ${name} (+${coins} Münzen)`);toast(`🏅 Erfolg freigeschaltet: ${name}`);renderDex()}
+}
+function dexImg(k,known){
+  const ult=k.startsWith('ult:'),sp=ult?k.slice(4):k,fam=FAMILIES[SPECIES[sp]?.family];
+  const m={species:sp,ult,stage:SPECIES[sp].stage,look:known?makeLook('dex'+k,fam?fam.h:120,fam?fam.element:'natur',fam?.key):SILHOUETTE};
+  return`<img src="${spriteURL(m)}" title="${known?esc(DEX.find(d=>d[0]===k)[1]):'???'}">`;
+}
+function renderDex(){
+  const box=$('#dexBox');if(!box||!S)return;
+  const n=DEX.filter(([k])=>S.dex[k]).length,a=ACH.filter(([id])=>S.ach[id]).length;
+  const slot=(k,label)=>{const known=!!S.dex[k];return`<div class="dexslot ${known?'':'unknown'}">${dexImg(k,known)}<span>${known?esc(DEX.find(d=>d[0]===k)[1]):'???'}</span><i>${label}</i></div>`};
+  box.innerHTML=`<p class="muted">Entdeckt: ${n} von ${DEX.length} Formen in ${FAM_KEYS.length} Familien. Du entdeckst Formen durch eigene Monster, Zucht, Kämpfe und die Monster deiner Freunde. ☀️ Licht und 🌑 Dunkelheit gibt es nur durch Zucht mit viel Zuneigung.</p>
+    <div class="dexgrid">${FAM_KEYS.map(k=>{const f=FAMILIES[k],any=[1,2,3].some(st=>S.dex[k+st]);
+      return`<div class="dexfam"><div class="dexhead">${any||!RARE.includes(f.element)?f.icon+' '+f.name:'❔ ???'} <span class="muted">${ELEMENTS[f.element].icon}</span></div><div class="dexrow">${slot(k+'1','Baby')}${slot(k+'2','Jung')}${slot(k+'3','Erwachsen')}${slot('ult:'+k+'3','Ur-Form')}</div></div>`}).join('')}
+    <div class="dexfam"><div class="dexhead">🫠 Sonderformen</div><div class="dexrow">${slot('ei','Anfang')}${slot('schleim','zu wenig Pflege')}${slot('ult:schleim','Ur-Form')}</div></div></div>
+    <h3 style="margin-top:16px">🏅 Erfolge (${a}/${ACH.length})</h3>
+    ${ACH.map(([id,name,desc,,coins])=>`<div class="item" style="padding:8px;${S.ach[id]?'':'opacity:.55'}"><div style="font-size:22px">${S.ach[id]?'🏅':'🔒'}</div><div class="grow"><div class="t">${name}</div><div class="muted">${desc}</div></div><span class="muted">${coins} 🪙</span></div>`).join('')}
+    ${S.trophies.length?`<h3 style="margin-top:16px">🏆 Trophäen</h3>${S.trophies.map(t=>`<span class="pill">${t.type==='boss'?'👹 '+esc(t.name)+' ('+t.week+')':'🏆 Freundesturnier'}</span>`).join('')}`:''}`;
+}
+function useStern(){if(!S.items.stern){toast('Du hast keinen Sternenstaub. Den gibt es für besiegte Wochen-Bosse.');return}if(!canAct(false))return;S.items.stern--;bondUp(15);effect('✨');log(`✨ ${S.name} wurde mit Sternenstaub verwöhnt. +15 Zuneigung`);save();renderStatus();renderLists()}
+
+// ---------- Laden ----------
+function buy(k){const it=ITEMS[k];if(S.coins<it.price){toast('Nicht genug Münzen.');return}S.coins-=it.price;S.items[k]=(S.items[k]||0)+1;toast(`${it.icon} ${it.name} gekauft.`);save();renderStatus();renderLists()}
+// Freilassen: das Monster kehrt in die Wildnis zurück, über den Fragebogen gibt es ein neues Ei
+function keepData(extra={}){
+  return{owner:S.owner,coins:S.coins,items:S.items,friends:S.friends,claimed:S.claimed,log:S.log,net:S.net,netGuests:S.netGuests,speed:S.speed,
+    dex:S.dex,ach:S.ach,cnt:S.cnt,trophies:S.trophies,week:S.week,lastTour:S.lastTour,nest:S.nest,hall:[...S.hall,{...snapshot(),retired:Date.now()}].slice(-20),...extra};
+}
+function releaseMonster(){
+  if(S.quest){toast(`${S.name} ist gerade auf Quest.`);return}
+  if(!confirm(`${S.name} wird freigelassen und zieht in die Ruhmeshalle. Du beantwortest den Fragebogen neu und bekommst ein neues Ei. Münzen, Gegenstände, Freunde, Lexikon und Erfolge bleiben. Fortfahren?`))return;
+  Q={step:0,owner:S.owner,name:'',el:{},trait:null,hue:null,pending:null,keep:keepData(),from:S.name};
+  $('#startOv').classList.add('on');renderQuiz();
+}
+function useTrank(){if(!S.items.trank){toast('Kein Heiltrank da.');return}if(!canAct(false))return;S.items.trank--;S.health+=50;if(S.health>=30)S.sick=false;clampAll();effect('🧪');log(`🧪 ${S.name} trinkt einen Heiltrank.`);save();renderStatus();renderLists()}
+
+// ---------- Darstellung ----------
+function bar(label,v,color){return`<div class="bar"><label><span>${label}</span><span>${Math.round(v)}</span></label><div class="track"><div class="fill" style="width:${v}%;background:${color}"></div></div></div>`}
+function fmtAge(min){if(min<60)return Math.floor(min)+' Min';const h=min/60;return h<24?h.toFixed(1)+' Std':(h/24).toFixed(1)+' Tage'}
+function renderStatus(){
+  if(!S)return;
+  const sp=SPECIES[S.species],age=S.stage?S.gameTime-S.born:0;
+  $('#devName').textContent=`${S.name} · ${speciesLabel(S)} ${S.ult?'· Ultimativ':'('+STAGES[S.stage]+')'} ${ELEMENTS[S.element].icon}${S.sick?' · 🤒':''}`;
+  $('#topinfo').innerHTML=`<span class="pill">👤 ${esc(S.owner)}</span><span class="pill">⭐ Lv ${S.level}</span><span class="pill">🪙 ${S.coins}</span><span class="pill">🍓 ${S.items.beere||0} · 🧪 ${S.items.trank||0}</span><span class="pill">🏆 ${S.wins}/${S.losses}</span><span class="pill">${timeInfo()}</span>`;
+  const col=v=>v>50?'var(--good)':v>20?'var(--warn)':'var(--bad)';
+  $('#bars').innerHTML=bar('🍙 Sattheit',S.hunger,col(S.hunger))+bar('😊 Laune',S.mood,col(S.mood))+bar('⚡ Energie',S.energy,col(S.energy))+bar('🧽 Sauberkeit',S.clean,col(S.clean))+bar('❤️ Gesundheit',S.health,col(S.health))+bar('💞 Zuneigung',S.bond,'#ff7eb6')+
+    bar(`⭐ Erfahrung (${S.xp}/${xpNeed(S.level)})`,S.xp/xpNeed(S.level)*100,'#8c7bff').replace(/<span>\d+<\/span><\/label>/,'<span></span></label>')+
+    `<div class="muted" style="margin-top:8px">Alter: ${fmtAge(age)} · Pflegefehler: ${S.mistakes}${S.stage<3?'<br>⏳ '+nextStageText():''}</div><div class="muted" style="margin-top:6px">${ELEMENTS[S.element].icon} Element ${ELEMENTS[S.element].name} · ${FAMILIES[S.family].icon} Familie ${FAMILIES[S.family].name} · Charakter: <b>${TRAITS[S.trait].name}</b> (${TRAITS[S.trait].desc}) · ${PATTERNS[S.look.pattern]}${S.look.accessory!=='keins'?', mit '+ACCESSORIES[S.look.accessory].name:''}</div>`;
+  $('#sleepBtn').innerHTML=S.sleeping?'☀️<span class="lbl"> Wecken</span>':'💤<span class="lbl"> Schlafen</span>';$('#sleepBtn').title=S.sleeping?'Wecken':'Schlafen';
+  $('#miniName').textContent=`${S.name} · Lv ${S.level}`;
+  $('#miniBars').innerHTML=[['🍙',S.hunger],['😊',S.mood],['⚡',S.energy],['🧽',S.clean],['❤️',S.health],['💞',S.bond]].map(([i,v])=>`<div title="${i} ${Math.round(v)}"><div class="fill" style="width:${v}%;background:${col(v)}"></div></div>`).join('');
+  const e=eff(S);
+  $('#statBox').innerHTML=`<div class="stat">⚔️<b>${e.atk}</b>Kraft</div><div class="stat">🛡️<b>${e.def}</b>Abwehr</div><div class="stat">⚡<b>${e.spd}</b>Tempo</div><div class="stat">❤️<b>${e.maxHp}</b>KP</div>`;
+  const t=S.train;
+  $('#evoHint').textContent=S.stage===3?`Spezialangriff: ${SPECIALS[sp.sp].name} (${SPECIALS[sp.sp].desc}).${S.ult?'':` Ab Level 15 und 60 Zuneigung erreicht ${S.name} die Stufe Ultimativ.`}`:
+    `Trainiert: Kraft ${t.atk}× · Abwehr ${t.def}× · Tempo ${t.spd}×. ${S.stage===0?nextStageText():`${nextStageText()} Aus deinem ${ELEMENTS[S.element].name}-Monster wird ${adultForm()==='schleim'?'bei zu wenig Pflege oder Training ein Glibber':'ein '+SPECIES[adultForm()].name}. Was du am meisten trainierst, wird sein Titel (Krieger, Wächter oder Sprinter).`}`;
+  // Quest-Fortschritt
+  document.querySelectorAll('[data-qs]').forEach(el=>{const s=+el.dataset.qs,en=+el.dataset.qe,p=clamp((S.gameTime-s)/(en-s)*100,0,100);el.style.width=p+'%';const lbl=el.closest('.qwrap')?.querySelector('.qleft');if(lbl)lbl.textContent=`noch ${Math.max(0,Math.ceil((en-S.gameTime)/S.speed))} Min`});
+}
+function renderLog(){$('#log').innerHTML=S.log.map(l=>`<li><time>${new Date(l.t).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}</time>${esc(l.m)}</li>`).join('')}
+function progHtml(q){return`<div class="qwrap"><div class="track prog"><div class="fill" data-qs="${q.start}" data-qe="${q.end}" style="width:0;background:var(--accent)"></div></div><div class="muted qleft"></div></div>`}
+function renderLists(){
+  if(!S)return;
+  // Quests
+  const own=S.quest&&QUESTS.find(x=>x.id===S.quest.id);
+  $('#questNow').innerHTML=own?`<div class="item"><div style="font-size:30px">${own.icon}</div><div class="grow"><div class="t">${esc(S.name)} ist im ${own.name} unterwegs…</div>${progHtml(S.quest)}</div></div>`:'';
+  $('#questList').innerHTML=QUESTS.map(q=>`<div class="item"><div style="font-size:30px">${q.icon}</div><div class="grow"><div class="t">${q.name}</div><div class="muted">Dauer ${q.dur} Min · Beute: ${q.xp} EP, ${q.coins} 🪙 ${lootText(q.loot)}</div><div class="muted">Erfolgschance für ${esc(S.name)}: <b>${S.stage?Math.round(chance(S,q)*100)+' %':'–'}</b></div></div><button onclick="startQuest('${q.id}')" ${own?'disabled':''}>Losschicken</button></div>`).join('');
+  // Freunde
+  const fr=S.friends;
+  $('#fightList').innerHTML=fr.length?'<h3>Monster von Freunden</h3>'+fr.map(f=>{const e=eff(f);return`<div class="item"><img src="${spriteURL(f)}"><div class="grow"><div class="t">${esc(f.name)} <span class="muted">von ${esc(f.owner)}</span></div><div class="muted">${esc(speciesLabel(f))}${f.element?' '+ELEMENTS[f.element].icon:''} · Lv ${f.level} · ⚔️${e.atk} 🛡️${e.def} ⚡${e.spd}${f.beaten?` · von dir ${f.beaten}× besiegt`:''}</div></div><button onclick="friendBattle('${f.exportId}')" ${f.guestQuest?'disabled':''}>⚔️ Kämpfen</button></div>`}).join(''):'<p class="muted">Noch keine Monster von Freunden. Importiere eins im Tab „Austausch".</p>';
+  $('#friendList').innerHTML=fr.length?fr.map(f=>{
+    const e=eff(f);let qa='';
+    if(f.guestQuest){qa=`<div class="muted">Auf Quest: ${QUESTS.find(q=>q.id===f.guestQuest.id).name}</div>${progHtml(f.guestQuest)}`}
+    else if(f.ret){qa=`<div class="muted">Zurück von der Quest: ${esc(f.retText)}. Schick diesen Rückkehr-Code an ${esc(f.owner)}:</div><textarea readonly onclick="this.select()">${f.ret}</textarea><div class="row" style="margin-top:6px"><button onclick="copyText(S.friends.find(x=>x.exportId==='${f.exportId}').ret)">📋 Kopieren</button><button onclick="download('rueckkehr-${esc(f.name).replace(/[^\w-]/g,'_')}.pxm',S.friends.find(x=>x.exportId==='${f.exportId}').ret)">💾 Als Datei</button></div>`}
+    else if(!f.questDone){qa=`<div class="row" style="margin-top:6px"><select id="gq-${f.exportId}">${QUESTS.map(q=>`<option value="${q.id}">${q.icon} ${q.name} (${Math.round(chance(f,q)*100)} %)</option>`).join('')}</select><button onclick="guestQuest('${f.exportId}',$('#gq-${f.exportId}').value)">🗺️ Auf Gast-Quest schicken</button></div>`}
+    return`<div class="item" style="align-items:flex-start"><img src="${spriteURL(f)}"><div class="grow"><div class="t">${esc(f.name)} <span class="muted">von ${esc(f.owner)}</span></div><div class="muted">${esc(speciesLabel(f))}${f.element?' '+ELEMENTS[f.element].icon:''} · Lv ${f.level} · ⚔️${e.atk} 🛡️${e.def} ⚡${e.spd} · Siege ${f.wins}</div>${qa}</div><button title="Entfernen" onclick="removeFriend('${f.exportId}')">✖</button></div>`;
+  }).join(''):'<p class="muted">Noch niemand zu Besuch.</p>';
+  // Laden
+  $('#shop').innerHTML=Object.entries(ITEMS).filter(([,it])=>it.price>0).map(([k,it])=>`<div class="item"><div style="font-size:30px">${it.icon}</div><div class="grow"><div class="t">${it.name}</div><div class="muted">${it.desc} · Du hast ${S.items[k]||0}</div></div><button onclick="buy('${k}')">${it.price} 🪙 kaufen</button></div>`).join('')+
+    `<div class="row"><button onclick="useTrank()">🧪 Heiltrank jetzt benutzen</button><button onclick="useStern()">✨ Sternenstaub benutzen (${S.items.stern||0})</button></div>`;
+  renderNest();renderBoss();renderDex();
+  renderStatus();
+}
+function friendBattle(id){const f=S.friends.find(x=>x.exportId===id);if(f)startBattle(f,'friend',id)}
+
+function drawScreen(t){
+  const ctx=$('#screen').getContext('2d'),W=288;
+  if(S){
+    drawScene(ctx,S.element,W,W,t);
+    if(S.quest){
+      const q=QUESTS.find(x=>x.id===S.quest.id);
+      ctx.textAlign='center';ctx.font='64px serif';ctx.fillText(q.icon,W/2,140);
+      ctx.font='bold 18px Georgia,serif';ctx.fillStyle='#f3dfb0';ctx.fillText('Auf Quest unterwegs'+'.'.repeat(Math.floor(t/400)%4),W/2,190);
+    }else{
+      const dx=S.stage>0&&!S.sleeping?Math.sin(t/2200)*22:0;
+      sleepy=S.sleeping;drawSprite(ctx,S,44+dx,46,200,S.stage>0&&!S.sleeping&&Math.cos(t/2200)<0,t);sleepy=false;drawWeather(ctx,W,W,t);
+      for(let i=0;i<S.poop;i++){const px=22+(i%2)*244,py=262-Math.floor(i/2)*26;ctx.fillStyle='#6b4423';ctx.strokeStyle=OUT;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(px,py,11,6,0,0,7);ctx.ellipse(px,py-7,7,5,0,0,7);ctx.ellipse(px,py-13,3.5,3,0,0,7);ctx.stroke();ctx.fill()}
+      if(S.sick){ctx.font='30px serif';ctx.textAlign='left';ctx.fillText('🤒',12,40)}
+      if(S.sleeping){ctx.fillStyle='rgba(5,5,25,.55)';ctx.fillRect(0,0,W,W);ctx.fillStyle='#cfd8ff';ctx.font='bold 22px Georgia,serif';ctx.textAlign='left';ctx.fillText('Z'+' z'.repeat(Math.floor(t/500)%3),190,60)}
+      if(fx&&t<fx.until){ctx.font='34px serif';ctx.textAlign='center';ctx.fillText(fx.icon,220,90-(1500-(fx.until-t))/30)}
+    }
+  }
+  if(Q.egg&&$('#eggCv')){const c=$('#eggCv').getContext('2d');drawScene(c,Q.egg.element,240,240,t);drawSprite(c,Q.egg,30,26,180,false,t)}
+  if(B){for(const[id,f,flip]of[['#bMe',B.me,false],['#bFoe',B.foe,true]]){const c=$(id).getContext('2d');drawScene(c,f.element||'erde',240,240,t);if(f.hp>0)drawSprite(c,f,20,30,200,flip,t)}}
+  requestAnimationFrame(drawScreen);
+}
+let sleepy=false;
+
+// ---------- Start ----------
+// ---------- Fragebogen ----------
+// Was dich fasziniert, bestimmt die Familie innerhalb deines Elements
+const FLAVOR={feuer:['feuer','dino','lava','drache','drache','daemon','vulkan'],wasser:['arktis','sumpf','wasser','nacht','meer','geist','eis'],
+  erde:['boden','fels','roboter','erdgeist','metall','maschine','kristall'],blitz:['wind','luft','elektro','magie','himmel','psycho','kosmos'],
+  natur:['pflanze','wald','kaefer','gift','insekt','unhold','kaefer']};
+let Q={step:-1,owner:'',name:'',el:{},trait:null,hue:null,pending:null};
+function renderQuiz(){
+  const box=$('#quiz'),dots=`<div class="dots">${['',...QUIZ].map((_,i)=>`<i class="${i<=Q.step+1?'on':''}"></i>`).join('')}</div>`;
+  if(Q.step<0){
+    box.innerHTML=`${dots}<h3>🥚 Willkommen bei Pixelmonster!</h3><p class="muted">Bevor du dein Ei bekommst, möchte ich dich kennenlernen. Aus deinen Antworten entsteht ein Monster, das genau zu dir passt. Kein Monster gleicht einem anderen.</p>
+      <label class="muted">Wie heißt du?</label><input type="text" id="ownerIn" maxlength="20" placeholder="z. B. Enchio" value="${esc(Q.owner)}">
+      <div style="height:14px"></div><button class="primary" onclick="quizNames()">Weiter</button>`;
+    setTimeout(()=>$('#ownerIn')?.focus(),50);return;
+  }
+  if(Q.step<QUIZ.length){
+    const it=QUIZ[Q.step];
+    box.innerHTML=`${dots}<div class="muted">Frage ${Q.step+1} von ${QUIZ.length}</div><h3 style="margin-top:6px">${it.q}</h3>`+
+      (it.color?`<div class="colors">${it.a.map(([n,h],i)=>`<button style="background:hsl(${h},65%,52%)" onclick="quizAnswer(${i})">${n}</button>`).join('')}</div>`
+               :it.a.map(([n],i)=>`<button class="ans" onclick="quizAnswer(${i})">${n}</button>`).join(''))+
+      (Q.keep?`<div style="height:10px"></div><button onclick="Q={step:-1,owner:'',name:'',el:{},trait:null,hue:null,pending:null};$('#startOv').classList.remove('on')">Abbrechen, ${esc(Q.from)} behalten</button>`:'');
+    return;
+  }
+  // Ergebnis
+  const el=Q.pending.element,tr=Q.pending.trait,fa=FAMILIES[Q.pending.family];
+  box.innerHTML=`${dots}<h3>✨ Dein Ei ist da!</h3><canvas id="eggCv" width="240" height="240"></canvas>
+    <p>Es fühlt sich warm an und pulsiert leicht. Es ist ein <b>${ELEMENTS[el].icon} ${ELEMENTS[el].name}-Ei</b> aus der Familie <b>${fa.icon} ${fa.name}</b>. Das Monster darin wird <b>${TRAITS[tr].name}</b> sein: ${TRAITS[tr].desc}.</p>
+    <label class="muted">Wie soll dein Monster heißen?</label><input type="text" id="nameIn" maxlength="16" placeholder="z. B. Krümel">
+    <div style="height:14px"></div><button class="primary" onclick="startGame()">Ei annehmen</button>`;
+  Q.egg={species:'ei',look:makeLook(Q.pending.id,Q.hue,el,Q.pending.family),element:el};
+  setTimeout(()=>$('#nameIn')?.focus(),50);
+}
+function quizNames(){Q.owner=$('#ownerIn').value.trim()||'Spieler';Q.step=0;renderQuiz()}
+function quizAnswer(i){
+  const it=QUIZ[Q.step],v=it.a[i][1];
+  if(it.color)Q.hue=v;else if(it.trait)Q.trait=v;else if(it.flavor)Q.flavor=v;else Q.el[v]=(Q.el[v]||0)+1;
+  Q.step++;
+  if(Q.step>=QUIZ.length){
+    const best=Math.max(...Object.values(Q.el)),top=Object.keys(Q.el).filter(k=>Q.el[k]===best);
+    const element=top[Math.floor(Math.random()*top.length)];
+    Q.pending={element,family:FLAVOR[element][Q.flavor??0],trait:Q.trait,id:rid()};
+  }
+  renderQuiz();
+}
+function startGame(){
+  const n=$('#nameIn').value.trim()||'Krümel';
+  const fresh=newState(Q.owner,n,Q.pending.element,Q.pending.trait,Q.hue,Q.pending.family);
+  if(Q.keep)Object.assign(fresh,Q.keep,{gameTime:0,born:0});
+  S=migrate(fresh);if(S.net)S.net.sent='';
+  S.id=Q.pending.id;S.look=makeLook(S.id,Q.hue,S.element,S.family);
+  if(Q.keep)log(`🕊️ ${Q.from} ist in die Wildnis zurückgekehrt und lebt jetzt in der Ruhmeshalle.`);
+  log(`🥚 ${Q.owner} hat ein ${ELEMENTS[S.element].name}-Ei bekommen. Es heißt ${n}.`);save();$('#startOv').classList.remove('on');
+  if(booted){renderLog();renderLists();renderOnline();renderNest();netSync()}else boot();
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&$('#startOv').classList.contains('on')){if($('#ownerIn'))quizNames();else if($('#nameIn'))startGame()}});
+// Mini-Ansicht: In der Desktop-App öffnet sich ein kleines Fenster, im Browser wird nur das Layout umgeschaltet
+function toggleMini(on){
+  if(!S){return}
+  save();
+  if(window.pxm?.setMini)window.pxm.setMini(on);
+  else document.body.classList.toggle('mini',on);
+}
+// Updates der Desktop-App: neue Spielversion wird im Hintergrund geladen und hier angeboten
+if(window.pxm?.onUpdate){
+  window.pxm.onUpdate(info=>{
+    const b=$('#updBar'),dl=/^https:\/\//.test(info.download||'')?info.download:'';
+    b.innerHTML=info.needApp?`🆕 Für Version ${esc(info.version)} brauchst du die neue App.${dl?` <button class="primary" onclick="pxm.openLink('${esc(dl)}')">Herunterladen</button>`:''}`
+      :`🆕 Version ${esc(info.version)} ist bereit${info.notes&&!document.body.classList.contains('mini')?': '+esc(info.notes):''}. <button class="primary" onclick="save();pxm.reloadGame()">Jetzt starten</button>`;
+    b.style.display='flex';
+  });
+  window.pxm.version().then(v=>{const e=$('#verInfo');if(e)e.textContent='Spielversion '+v+' · Updates kommen automatisch.'});
+}
+if(new URLSearchParams(location.search).has('mini'))document.body.classList.add('mini');
+function resetGame(){if(confirm('Wirklich neu anfangen? Dein jetziges Monster geht verloren.')){localStorage.removeItem(SAVE_KEY);location.reload()}}
+let booted=false;
+function boot(){
+  if(booted)return;booted=true;
+  $('#speedSel').value=String(S.speed);
+  tick();renderLog();renderLists();renderOnline();setInterval(tick,1000);
+  netSync().then(loadBoss);setInterval(netSync,20000);setInterval(loadBoss,120000);
+}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.dataset.panel===b.dataset.tab));
+});
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&train&&train.run){e.preventDefault();trainHit()}});
+S=load();
+if(S&&S.v===2){migrate(S);boot()}else{S=null;$('#startOv').classList.add('on');renderQuiz()}
+requestAnimationFrame(drawScreen);
+</script>
+</body>
+</html>

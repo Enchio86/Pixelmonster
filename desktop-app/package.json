@@ -1,0 +1,10 @@
+{
+  "name": "pixelmonster",
+  "productName": "Pixelmonster",
+  "version": "0.9.0",
+  "description": "Zieh dein eigenes Monster gross",
+  "main": "main.js",
+  "updateUrl": "https://raw.githubusercontent.com/Enchio86/Pixelmonster/main/update/",
+  "scripts": { "start": "electron .", "build-win": "electron-packager . Pixelmonster --platform=win32 --arch=x64 --out=dist --overwrite --ignore=dist" },
+  "devDependencies": { "electron": "33.2.1", "@electron/packager": "18.3.6" }
+}
