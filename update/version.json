@@ -1,6 +1,6 @@
 {
- "version": "0.9.7",
- "sha256": "435821bdafef7e122e69fb5407bc1e26931f36a0371ae909cb31b20669ce9e27",
- "notes": "Dein Monster auch unterwegs auf dem Handy",
- "download": "https://github.com/Enchio86/Pixelmonster/releases/latest"
+  "version": "0.9.8",
+  "sha256": "a28bab9d1b68b8caa63c2058a8eff67f291ed3a34e7c33f5d5a998d6ec98b538",
+  "notes": "Neues, übersichtliches Menü: Arena, Abenteuer, Reden, Freunde, Familie, Shop und ⚙️ oben rechts",
+  "download": "https://github.com/Enchio86/Pixelmonster/releases/latest"
 }

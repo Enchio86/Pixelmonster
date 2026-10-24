@@ -8,14 +8,14 @@
 :root{--bg:#120e18;--panel:#1f1a28;--panel2:#2c2538;--text:#f3ecdf;--muted:#a99fb8;--accent:#e2b65c;--gold:#b8945a;--good:#5fd38a;--bad:#ff6b6b;--warn:#ffb347}
 *{box-sizing:border-box}
 html{background:#0d0a12}
-@media(max-width:700px){.miniBtn{display:none}}
+@media(max-width:700px){.miniBtn{display:none!important}}
 body{margin:0;font-family:system-ui,"Segoe UI",sans-serif;background:radial-gradient(ellipse at top,#2e2240,#0d0a12 70%) fixed;color:var(--text);min-height:100vh}
 .wrap{max-width:1000px;margin:0 auto;padding:16px}
 .top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 h1{font-size:26px;margin:0;letter-spacing:2px;font-family:Georgia,'Times New Roman',serif;color:#f0d9a4;text-shadow:0 0 12px #e2b65c55}
 h3{margin:0 0 10px;font-size:17px;font-family:Georgia,'Times New Roman',serif;color:#f0d9a4;letter-spacing:.5px}
 .muted{color:var(--muted);font-size:13px}
-.grid{display:grid;grid-template-columns:330px 1fr;gap:16px}
+.grid{display:grid;grid-template-columns:330px 1fr;gap:16px}.grid>div{min-width:0}
 @media(max-width:760px){.grid{grid-template-columns:1fr}}
 .card{background:linear-gradient(180deg,#231d2e,#1a1522);border:1px solid #b8945a33;border-radius:14px;padding:14px;box-shadow:0 6px 20px #0005;margin-bottom:14px}
 .device{background:linear-gradient(160deg,#3a3048,#17121e);border:2px solid var(--gold);border-radius:22px;padding:18px 16px 20px;text-align:center;box-shadow:0 10px 30px #000a,inset 0 0 30px #0008,0 0 0 4px #00000055;margin-bottom:14px}
@@ -30,8 +30,38 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .bar{margin:6px 0}.bar label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px}
 .track{height:10px;background:#1b1929;border-radius:6px;overflow:hidden}
 .fill{height:100%;border-radius:6px;transition:width .4s}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:10px}
+.tabs button{position:relative;display:flex;gap:6px;align-items:center;justify-content:center;padding:9px 4px;font-weight:600}
+.tabs button i{font-style:normal}
 .tabs button.on{background:var(--accent);color:#2b2233;font-weight:700}
+.tabs button.has::after,.seg button.has::after{content:'';position:absolute;top:4px;right:6px;width:9px;height:9px;border-radius:50%;background:var(--bad);box-shadow:0 0 0 2px #1a1522}
+@media(max-width:960px) and (min-width:701px){.tabs button{flex-direction:column;gap:2px;font-size:12px}.tabs button i{font-size:18px}}
+.seg{display:flex;gap:4px;background:#15111c;border-radius:12px;padding:4px;margin-bottom:12px}
+.seg button{position:relative;flex:1;background:transparent;padding:7px 6px}
+.seg button.on{background:var(--panel2);color:#f0d9a4;font-weight:700;box-shadow:inset 0 0 0 1px #b8945a55}
+.sub{display:none}.sub.on{display:block}
+.gear{font-size:18px;padding:5px 10px}
+button.mini{font:600 12px system-ui,sans-serif;padding:3px 8px;float:right;color:var(--muted)}
+#logCard:not(.all) #log li:nth-child(n+4){display:none}
+#logCard.all #log{max-height:260px}
+@media(max-width:700px){
+  .wrap{padding:10px 10px calc(78px + env(safe-area-inset-bottom))}
+  h1{font-size:18px;letter-spacing:1px;white-space:nowrap}
+  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:15;margin:0;gap:0;padding:4px 2px calc(4px + env(safe-area-inset-bottom));background:linear-gradient(180deg,#231d2e,#140f1a);border-top:1px solid #b8945a66;box-shadow:0 -6px 20px #0008}
+  .tabs button{flex-direction:column;gap:1px;background:transparent;font-size:10.5px;padding:5px 0;border-radius:10px}
+  .tabs button i{font-size:21px;line-height:1.1}
+  .tabs button.on{background:#e2b65c22;color:#f0d9a4}
+  .tabs button.has::after{right:calc(50% - 18px)}
+  body #toast{bottom:calc(84px + env(safe-area-inset-bottom))}
+  .top{flex-wrap:nowrap;margin-bottom:8px}.top .row{flex-wrap:nowrap;gap:4px}
+  #topinfo .pill{font-size:12px;padding:3px 8px;margin:1px}
+  #topinfo .pill:first-child{display:none}
+  .gear{font-size:16px;padding:4px 8px}
+  #bars{display:grid;grid-template-columns:1fr 1fr;column-gap:14px}#bars>.muted{grid-column:1/-1}
+  .panel{scroll-margin-top:8px}
+  .device{padding:12px 10px 14px}
+  .screen{max-width:250px}
+}
 .panel{display:none}.panel.on{display:block}
 #chatLog{height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:10px;background:#17141f;border-radius:12px;margin-bottom:10px}
 .bub{max-width:80%;padding:8px 12px;border-radius:14px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word}
@@ -68,7 +98,7 @@ textarea{height:70px;resize:vertical}
 .minitop,#miniBars{display:none}
 body.mini{background:transparent;min-height:0;overflow:hidden}
 body.mini .wrap{padding:0;max-width:none}
-body.mini .top,body.mini .grid>div:last-child,body.mini #bars,body.mini .devname,body.mini .lbl{display:none}
+body.mini .top,body.mini .grid>div:last-child,body.mini #bars,body.mini #logCard,body.mini .devname,body.mini .lbl{display:none}
 body.mini .grid{display:block}
 body.mini .device{margin:0;padding:6px 8px 8px;border-radius:16px;height:100vh;box-sizing:border-box}
 body.mini .minitop{display:flex;align-items:center;gap:4px;-webkit-app-region:drag;cursor:move;margin-bottom:5px;font:600 12px Georgia,serif;color:#f0d9a4}
@@ -115,7 +145,7 @@ body.mini #toast{bottom:6px;font-size:12px;padding:6px 10px}
 <div class="wrap">
   <div class="top">
     <h1>👾 Pixelmonster</h1>
-    <div class="row"><div id="topinfo"></div><button class="miniBtn" onclick="toggleMini(true)" title="Nur das Monster in einem kleinen Fenster zeigen">🗕 Mini-Ansicht</button></div>
+    <div class="row"><div id="topinfo"></div><button class="gear" onclick="openSettings()" title="Einstellungen">⚙️</button></div>
   </div>
   <div class="grid">
     <div>
@@ -134,23 +164,25 @@ body.mini #toast{bottom:6px;font-size:12px;padding:6px 10px}
         <div id="miniBars"></div>
       </div>
       <div class="card" id="bars"></div>
+      <div class="card" id="logCard">
+        <h3>📖 Tagebuch <button class="mini" id="logMore" onclick="toggleLog()">alle zeigen</button></h3>
+        <ul id="log"></ul>
+      </div>
     </div>
 
     <div>
       <div class="tabs" id="tabs">
-        <button data-tab="training" class="on">💪 Training</button>
-        <button data-tab="kampf">⚔️ Kampf</button>
-        <button data-tab="quests">🗺️ Quests</button>
-        <button data-tab="zucht">🥚 Zucht</button>
-        <button data-tab="reden">💬 Reden</button>
-        <button data-tab="online">🌐 Online</button>
-        <button data-tab="tausch">📨 Datei-Tausch</button>
-        <button data-tab="laden">🛒 Laden</button>
-        <button data-tab="lexikon">📚 Lexikon</button>
-        <button data-tab="info">❓ Info</button>
+        <button data-tab="arena" class="on"><i>⚔️</i><span>Arena</span></button>
+        <button data-tab="abenteuer"><i>🗺️</i><span>Abenteuer</span></button>
+        <button data-tab="reden"><i>💬</i><span>Reden</span></button>
+        <button data-tab="freunde"><i>👥</i><span>Freunde</span></button>
+        <button data-tab="familie"><i>🥚</i><span>Familie</span></button>
+        <button data-tab="shop"><i>🛒</i><span>Shop</span></button>
       </div>
 
-      <div class="card panel on" data-panel="training">
+      <div class="card panel on" data-panel="arena">
+        <div class="seg"><button data-sub="training" class="on">💪 Training</button><button data-sub="kampf">⚔️ Kampf</button><button data-sub="bosse">🐉 Bosse</button></div>
+        <div class="sub on" data-sub="training">
         <h3>Training</h3>
         <div class="muted">Drück im richtigen Moment, wenn der Balken im grünen Bereich ist. Was du am meisten trainierst, wird später sein Titel und bekommt einen Bonus.</div>
         <div class="stats" id="statBox"></div>
@@ -164,26 +196,28 @@ body.mini #toast{bottom:6px;font-size:12px;padding:6px 10px}
           <div class="row" style="margin-top:8px"><button class="primary" onclick="trainHit()">Jetzt! (Leertaste)</button><span class="muted" id="tlabel"></span></div>
         </div>
         <p class="muted" id="evoHint"></p>
-        <h3 style="margin-top:14px">🎮 Minispiel</h3>
-        <div class="row"><button onclick="startMinigame()">🍓 Beerenregen spielen</button><span class="muted">Fange Beeren mit Maus oder Pfeiltasten. Macht glücklich und bringt Münzen.</span></div>
-      </div>
-
-      <div class="card panel" data-panel="kampf">
+        </div>
+        <div class="sub" data-sub="kampf">
         <h3>Kampf</h3>
-        <div class="muted">Ein Kampf kostet Energie. Siege bringen Erfahrung und Münzen. Monster von Freunden importierst du im Tab „Austausch".</div>
-        <div class="muted">Element-Vorteile: 🔥 Feuer schlägt 🌿 Natur, Natur schlägt 🪨 Erde, Erde schlägt ⚡ Blitz, Blitz schlägt 💧 Wasser, Wasser schlägt Feuer. ☀️ Licht und 🌑 Dunkelheit sind gegen alle etwas stärker und gegeneinander sehr stark.</div>
+        <div class="muted">Ein Kampf kostet Energie. Siege bringen Erfahrung und Münzen. <span id="winInfo"></span></div>
         <div class="row" style="margin:10px 0"><button class="primary" onclick="wildBattle()">🌿 Wildes Monster suchen</button><button onclick="startTournament()">🏆 Freundesturnier (1× pro Tag)</button></div>
-        <div id="raidBox"></div>
-        <div id="bossBox"></div>
+        <details class="muted" style="margin-bottom:10px"><summary style="cursor:pointer">Welches Element schlägt welches?</summary>🔥 Feuer schlägt 🌿 Natur, Natur schlägt 🪨 Erde, Erde schlägt ⚡ Blitz, Blitz schlägt 💧 Wasser, Wasser schlägt Feuer. ☀️ Licht und 🌑 Dunkelheit sind gegen alle etwas stärker und gegeneinander sehr stark.</details>
         <div id="fightOnline"></div>
         <div id="fightList"></div>
+        </div>
+        <div class="sub" data-sub="bosse">
+        <div id="raidBox"></div>
+        <div id="bossBox"></div>
+        </div>
       </div>
 
-      <div class="card panel" data-panel="quests">
+      <div class="card panel" data-panel="abenteuer">
         <h3>Quests</h3>
         <div class="muted">Schick dein Monster auf eine Expedition. Je stärker es ist, desto höher die Erfolgschance. Unterwegs braucht es keine Pflege.</div>
         <div id="questNow" style="margin:10px 0"></div>
         <div id="questList"></div>
+        <h3 style="margin-top:14px">🎮 Minispiel</h3>
+        <div class="row"><button onclick="startMinigame()">🍓 Beerenregen spielen</button><span class="muted">Fange Beeren mit Maus oder Pfeiltasten. Macht glücklich und bringt Münzen.</span></div>
       </div>
 
       <div class="card panel" data-panel="reden">
@@ -191,70 +225,52 @@ body.mini #toast{bottom:6px;font-size:12px;padding:6px 10px}
         <div id="chatBox"></div>
       </div>
 
-      <div class="card panel" data-panel="online">
+      <div class="card panel" data-panel="freunde">
         <h3>Online mit Freunden spielen</h3>
         <div id="onlineBox"></div>
+        <div id="oldGuests"><h3 style="margin-top:14px">Gäste von früher</h3><div id="friendList"></div></div>
       </div>
 
-      <div class="card panel" data-panel="tausch">
-        <h3>Dein Monster verschicken</h3>
-        <div class="muted">Erzeuge eine Monster-Datei (oder einen Code zum Kopieren) und schick sie einem Freund. Dein Monster bleibt trotzdem bei dir. Dein Freund kann dann gegen es kämpfen oder es auf eine Gast-Quest mitnehmen.</div>
-        <div class="row" style="margin:10px 0"><button class="primary" onclick="exportMonster()">📤 Monster exportieren</button></div>
-        <textarea id="exportCode" readonly placeholder="Hier erscheint der Code deines Monsters…"></textarea>
-        <h3 style="margin-top:16px">Monster oder Rückkehr empfangen</h3>
-        <div class="muted">Füge einen Code ein oder lade eine .pxm-Datei. Das kann ein fremdes Monster sein oder ein Rückkehr-Code, mit dem dein eigenes Monster die Belohnung einer Gast-Quest bekommt.</div>
-        <textarea id="importCode" placeholder="PXM1.…" style="margin-top:8px"></textarea>
-        <div class="row" style="margin-top:8px">
-          <button class="primary" onclick="importCode($('#importCode').value)">📥 Code einlösen</button>
-          <label class="pill" style="cursor:pointer">📁 Datei laden<input type="file" accept=".pxm,.txt" hidden onchange="importFile(this)"></label>
-        </div>
-        <h3 style="margin-top:16px">Gast-Monster</h3>
-        <div id="friendList"></div>
+      <div class="card panel" data-panel="familie">
+        <div class="seg"><button data-sub="zucht" class="on">🥚 Zucht</button><button data-sub="sammlung">📚 Sammlung</button></div>
+        <div class="sub on" data-sub="zucht"><h3>🥚 Zucht und Nest</h3><div id="nestBox"></div></div>
+        <div class="sub" data-sub="sammlung"><h3>📚 Monsterlexikon</h3><div id="dexBox"></div></div>
       </div>
 
-      <div class="card panel" data-panel="zucht">
-        <h3>🥚 Zucht und Nest</h3>
-        <div id="nestBox"></div>
-      </div>
-
-      <div class="card panel" data-panel="lexikon">
-        <h3>📚 Monsterlexikon</h3>
-        <div id="dexBox"></div>
-      </div>
-
-      <div class="card panel" data-panel="laden">
-        <h3>Laden</h3>
+      <div class="card panel" data-panel="shop">
+        <h3>🛒 Shop</h3>
         <div id="shop"></div>
       </div>
+    </div>
+  </div>
+</div>
 
-      <div class="card panel" data-panel="info">
-        <p class="muted" id="verInfo"></p>
-        <h3>So funktioniert's</h3>
+<div class="overlay" id="setOv" onclick="if(event.target===this)closeSettings()">
+  <div class="modal">
+    <div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">⚙️ Einstellungen</h3><button onclick="closeSettings()" title="Schließen">✖</button></div>
+    <div class="row">
+      <button onclick="togglePension()" id="pensionBtn">🏨 In die Pension geben</button>
+      <button class="miniBtn" onclick="closeSettings();toggleMini(true)" title="Nur das Monster in einem kleinen Fenster zeigen">🗕 Mini-Ansicht</button>
+      <label>Zeitraffer:
+        <select id="speedSel" onchange="S.speed=+this.value;save();toast('Zeitraffer: '+this.value+'×')">
+          <option value="1">1× (normal)</option><option value="10">10×</option><option value="60">60× (Test)</option>
+        </select>
+      </label>
+    </div>
+    <div id="phoneBox"></div>
+    <details style="margin-top:14px">
+        <summary>❓ So funktioniert's</summary>
         <ul class="muted" style="padding-left:18px;line-height:1.6">
           <li>Das Ei schlüpft nach 3 Stunden. Danach wächst dein Monster: 12 Stunden später wird es jugendlich, nach weiteren 24 Stunden ist es erwachsen.</li>
           <li>Hunger, Laune, Energie und Sauberkeit sinken mit der Zeit, auch wenn das Spiel geschlossen ist (bis zu 12 Stunden).</li>
           <li>Lässt du es hungern, verdrecken oder übermüden, zählt das als Pflegefehler. Zu viele Fehler und es wird ein Glibber.</li>
           <li>Der Fragebogen bestimmt Element und Familie deines Monsters. Es gibt 35 Familien mit je drei Stufen (Baby, Jung, Erwachsen), zum Beispiel Feuer, Vulkan, Kristall, Roboter oder Kosmos.</li><li>Bei der Zucht erbt das Ei die Familie eines Elternteils. Manchmal mutiert es zu einer verwandten Familie mit demselben Element.</li><li>☀️ Licht- und 🌑 Dunkel-Monster gibt es nur durch Zucht, wenn beide Eltern mindestens 85 Zuneigung haben.</li><li>Zuneigung wächst, wenn du dich kümmerst, und macht dein Monster im Kampf stärker. Pflegefehler kosten Zuneigung.</li><li>Ab Level 15 und 60 Zuneigung wird ein erwachsenes Monster ultimativ. Ohne Pflegefehler und mit 80 Zuneigung beim Erwachsenwerden wird es ein Glanz-Monster.</li><li>Nach 7 Tagen als Erwachsener wird es ein Ältester und legt ein Erbe-Ei ins Nest.</li><li>Einmal pro Woche erscheint ein Boss. Kämpfen darf, wer in der Woche 3 Quests geschafft hat.</li><li>Farbe, Muster und Accessoire sind bei jedem Monster anders. Der Charakter verändert, wie es sich verhält.</li><li>Das meisttrainierte Talent wird sein Titel: Krieger (Kraft), Wächter (Abwehr) oder Sprinter (Tempo).</li>
-          <li>Freunde tauschen Monster über Codes oder .pxm-Dateien. Ein Gast-Monster kann einmal auf Quest gehen; danach bekommst du einen Rückkehr-Code, den du seinem Besitzer zurückschickst.</li>
         </ul>
-        <h3>Einstellungen</h3>
-        <div class="row">
-          <label>Zeitraffer:
-            <select id="speedSel" onchange="S.speed=+this.value;save();toast('Zeitraffer: '+this.value+'×')">
-              <option value="1">1× (normal)</option><option value="10">10×</option><option value="60">60× (Test)</option>
-            </select>
-          </label>
-          <button onclick="togglePension()" id="pensionBtn">🏨 In die Pension geben</button>
-          <button onclick="releaseMonster()">🕊️ Monster freilassen</button>
-          <button onclick="resetGame()">🗑️ Neues Spiel</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>📖 Tagebuch</h3>
-        <ul id="log"></ul>
-      </div>
-    </div>
+    </details>
+    <details style="margin-top:10px"><summary class="muted" style="cursor:pointer">⚠️ Monster freilassen oder neu anfangen</summary>
+      <div class="row" style="margin-top:8px"><button onclick="releaseMonster()">🕊️ Monster freilassen</button><button onclick="resetGame()">🗑️ Neues Spiel</button></div>
+    </details>
+    <p class="muted" id="verInfo" style="margin-bottom:0"></p>
   </div>
 </div>
 
@@ -1310,7 +1326,7 @@ function tick(){
 
 // ---------- Pflege ----------
 function canAct(needAwake=true){
-  if(S.pension){toast(`${S.name} ist in der Pension. Hol es im Tab „Info“ ab.`);return false}
+  if(S.pension){toast(`${S.name} ist in der Pension. Hol es oben rechts unter ⚙️ ab.`);return false}
   if(S.stage===0){toast('Das Ei muss erst schlüpfen.');return false}
   if(S.quest){toast(`${S.name} ist gerade auf Quest.`);return false}
   if(needAwake&&S.sleeping){toast(`${S.name} schläft gerade. Psst!`);return false}
@@ -1328,7 +1344,7 @@ function act(a){
       if(S.hunger>95){S.mood-=5;toast(`${S.name} ist schon pappsatt.`);return renderStatus()}
       bondUp(S.hunger<70?1:0.3);S.hunger+=30;S.health+=S.trait==='feinschmecker'?8:2;effect('🍙');
     }else if(a==='snack'){
-      if(!S.items.beere){toast('Keine Superbeeren mehr. Im Laden gibt es neue.');return}
+      if(!S.items.beere){toast('Keine Superbeeren mehr. Im Shop gibt es neue.');return}
       S.items.beere--;S.hunger+=15;S.mood+=25;bondUp(1);effect('🍓');
     }else if(a==='play'){
       if(S.energy<10){toast(`${S.name} ist zu müde zum Spielen.`);return}
@@ -1540,7 +1556,7 @@ function checkQuests(){
   if(changed)renderLists();
 }
 
-// ---------- Austausch ----------
+// ---------- Codes (für Rückkehr-Codes alter Gast-Monster) ----------
 const SALT='pixelmonster-v1';
 function fnv(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return h.toString(36)}
 function encode(o){const j=JSON.stringify(o);return'PXM1.'+btoa(unescape(encodeURIComponent(j)))+'.'+fnv(SALT+j)}
@@ -1552,36 +1568,11 @@ function decode(code){
   return JSON.parse(j);
 }
 function download(name,text){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-function exportMonster(){
-  if(S.stage===0){toast('Ein Ei kann man noch nicht verschicken.');return}
-  const snap={...snapshot(),exportId:rid()};
-  const code=encode(snap);$('#exportCode').value=code;
-  download(`${S.name.replace(/[^\wäöüÄÖÜß-]/g,'_')}.pxm`,code);
-  toast('Monster-Datei erstellt. Schick sie oder den Code an einen Freund.');
-}
-function importFile(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>importCode(r.result);r.readAsText(f);inp.value=''}
-function importCode(code){
-  let o;try{o=decode(code)}catch(e){toast(e.message);return}
-  if(o.t==='monster'){
-    normMon(o);if(!SPECIES[o.species]||o.stage<1||(o.look&&!ACCESSORIES[o.look.accessory])){toast('Mit diesem Monster stimmt etwas nicht.');return}
-    if(o.id===S.id){toast('Das ist dein eigenes Monster!');return}
-    if(S.friends.some(f=>f.exportId===o.exportId)){toast('Diesen Code hast du schon eingelöst.');return}
-    seen(o);S.friends.unshift({...o,guestQuest:null,questDone:false,ret:null,beaten:0});S.friends.length=Math.min(S.friends.length,20);
-    log(`📬 ${o.name} von ${o.owner} ist zu Besuch!`);toast(`${o.name} ist angekommen!`);
-  }else if(o.t==='return'){
-    if(o.monsterId!==S.id){toast(`Dieser Rückkehr-Code gehört zu ${o.monsterName}, nicht zu ${S.name}.`);return}
-    if(S.claimed.includes(o.returnId)){toast('Dieser Rückkehr-Code wurde schon eingelöst.');return}
-    S.claimed.push(o.returnId);applyReward(o);count('quests');curWeek().quests++;
-    log(`🎒 ${S.name} ist von ${o.host}s Quest „${o.quest}" zurück: ${o.ok?'Erfolg':'gescheitert'}, +${o.xp} EP, +${o.coins} Münzen ${lootText(o.items)}`);
-    toast(`${S.name} bringt Beute von ${o.host} mit!`);effect('🎒');
-  }else{toast('Unbekannter Code.');return}
-  $('#importCode').value='';save();renderStatus();renderLists();
-}
 function removeFriend(id){S.friends=S.friends.filter(f=>f.exportId!==id);save();renderLists()}
 function copyText(t){navigator.clipboard?.writeText(t).then(()=>toast('Kopiert!'),()=>toast('Kopieren nicht möglich, bitte markieren und kopieren.'))}
 
 // ---------- Online ----------
-// Adresse des Online-Treffpunkts (Cloudflare Worker). Kann im Online-Tab geändert werden.
+// Adresse des Online-Treffpunkts (Cloudflare Worker). Kann im Tab Freunde geändert werden.
 const DEFAULT_SERVER='https://pixelmonster.sebastiandh88.workers.dev';
 let NET=null,netBusy=false,netErr='',netLast=0;
 const finishing=new Set();
@@ -1689,7 +1680,7 @@ function cloudLoop(){
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)cloudPull();else if(cloudDirty)cloudPush()});
 // Koppeln auf dem Handy: Code vom PC eingeben, Spielstand laden, neu starten
 function renderPhonePair(){
-  $('#quiz').innerHTML=`<h3>📱 Monster vom PC holen</h3><ol class="muted" style="padding-left:20px"><li>Öffne am PC die Pixelmonster-App, Tab <b>🌐 Online</b>.</li><li>Tippe dort auf <b>📱 Handy koppeln</b>.</li><li>Gib den Code hier ein.</li></ol>
+  $('#quiz').innerHTML=`<h3>📱 Monster vom PC holen</h3><ol class="muted" style="padding-left:20px"><li>Öffne am PC die Pixelmonster-App und klick oben rechts auf <b>⚙️</b>.</li><li>Tippe dort auf <b>📱 Handy koppeln</b>.</li><li>Gib den Code hier ein.</li></ol>
     <input type="text" id="pairIn" maxlength="7" placeholder="ABC123" style="font-size:22px;letter-spacing:4px;text-transform:uppercase;text-align:center">
     <div style="height:12px"></div><button class="primary" onclick="phonePair()">Koppeln</button> <button onclick="renderQuiz()">Zurück</button>`;
 }
@@ -1747,7 +1738,7 @@ function speakMon(text){
 }
 function renderChat(){
   const box=$('#chatBox');if(!box||!S)return;
-  if(!S.net?.id){box.innerHTML='<p class="muted">Zum Reden braucht dein Monster eine Internetverbindung. Geh dafür im Tab <b>🌐 Online</b> online.</p>';return}
+  if(!S.net?.id){box.innerHTML='<p class="muted">Zum Reden braucht dein Monster eine Internetverbindung. Geh dafür im Tab <b>👥 Freunde</b> online.</p>';return}
   if(S.stage===0){box.innerHTML='<p class="muted">Ein Ei kann noch nicht sprechen. Warte, bis es geschlüpft ist.</p>';return}
   const keep=$('#chatIn')?.value||'',img=spriteURL(S);
   box.innerHTML=`<div id="chatLog">${(S.chat||[]).length?'':`<p class="muted" style="margin:auto;text-align:center">Sag ${esc(S.name)} hallo! Es antwortet passend zu seinem Charakter und wie es ihm gerade geht.</p>`}
@@ -1785,7 +1776,7 @@ async function unpairPhones(){
 function phoneHtml(N){
   if(pairInfo&&(N.remotes||0)>pairInfo.n){pairInfo=null;toast('📱 Handy gekoppelt!');log('📱 Ein Handy ist jetzt als Fernbedienung gekoppelt.')}
   const url=serverUrl()+'/handy',live=pairInfo&&pairInfo.expires>Date.now();if(!live)pairInfo=null;
-  return`<h3 style="margin-top:14px">📱 Handy-Fernbedienung</h3>
+  return`<h3 style="margin-top:14px">📱 Monster aufs Handy</h3>
     <p class="muted">Spiel mit deinem Monster auch unterwegs. Das Handy bekommt das ganze Spiel, und PC und Handy teilen sich denselben Spielstand. Der PC muss dafür nicht an sein.</p>
     ${live?`<div class="item"><div style="font-size:30px">📲</div><div class="grow"><div class="muted">Öffne auf dem Handy und tippe auf „Ich habe schon ein Monster“</div><div class="t" style="word-break:break-all">${esc(url)}</div>
       <div class="muted" style="margin-top:6px">und gib diesen Code ein (10 Minuten gültig):</div><div class="t" style="font-size:26px;letter-spacing:4px">${esc(pairInfo.code)}</div></div><button onclick="copyText('${esc(url)}')">📋</button></div>`:''}
@@ -1830,7 +1821,7 @@ function renderOnline(){
     box.innerHTML=`<p class="muted">Wenn du online gehst, bekommst du einen Freundescode. Gib ihn deinen Freunden. Sobald ihr euch gegenseitig hinzugefügt habt, seht ihr eure Monster automatisch, könnt gegeneinander kämpfen und euch Monster zu Besuch schicken, ganz ohne Dateien.</p>
       <label class="muted">Server-Adresse</label><input type="text" id="srvIn" value="${esc(serverUrl())}" placeholder="https://pixelmonster.DEINNAME.workers.dev">
       <div class="row" style="margin-top:10px"><button class="primary" onclick="goOnline()">🌐 Online gehen</button></div>`;
-    $('#fightOnline').innerHTML='';return;
+    $('#fightOnline').innerHTML='';$('#phoneBox').innerHTML=`<h3 style="margin-top:14px">📱 Monster aufs Handy</h3><p class="muted">Damit du dein Monster auch unterwegs auf dem Handy hast, geh zuerst im Tab <b>👥 Freunde</b> online.</p>`;renderBadges();return;
   }
   const N=NET||{friends:[],guests:[],outgoing:[]};
   const status=netErr?`<span style="color:var(--bad)">⚠️ ${esc(netErr)}</span>`:NET?`<span style="color:var(--good)">● verbunden</span>`:'verbinde …';
@@ -1850,11 +1841,11 @@ function renderOnline(){
   box.innerHTML=`<div class="item"><div style="font-size:30px">🔑</div><div class="grow"><div class="muted">Dein Freundescode</div><div class="t" style="font-size:24px;letter-spacing:3px">${S.net.code}</div></div><button onclick="copyText('${S.net.code}')">📋 Kopieren</button></div>
     <div class="row"><input type="text" id="friendCodeIn" maxlength="7" placeholder="Freundescode, z. B. K7M-Q2P" style="flex:1;width:auto;text-transform:uppercase"><button class="primary" onclick="addFriend()">➕ Hinzufügen</button></div>
     <div class="muted" style="margin:8px 0">${status} · <a href="#" onclick="netSync();return false" style="color:var(--accent)">aktualisieren</a></div>
-    ${phoneHtml(N)}
     <h3 style="margin-top:14px">Freunde</h3>${friends}
     <h3 style="margin-top:14px">Gäste bei dir</h3>${guests}
     <details style="margin-top:12px"><summary class="muted" style="cursor:pointer">Verbindung</summary><div class="muted" style="margin:6px 0">Server: ${esc(serverUrl())}</div><button onclick="goOffline()">Offline gehen</button></details>`;
   for(const[id,v]of Object.entries(keep)){const el=document.getElementById(id);if(el)el.value=v}if(focus)document.getElementById(focus)?.focus();
+  $('#phoneBox').innerHTML=phoneHtml(N);
   renderNest();
   $('#fightOnline').innerHTML=N.friends.some(f=>f.monster)?'<h3>Online-Freunde</h3>'+N.friends.filter(f=>f.monster).map(f=>`<div class="item"><img src="${spriteURL(f.monster)}"><div class="grow"><div class="t">${esc(f.monster.name)} <span class="muted">von ${esc(f.name)}</span></div><div class="muted">${monsterLine(f.monster)}</div></div><button onclick="onlineBattle('${f.id}')">⚔️ Kämpfen</button></div>`).join(''):'';
   renderStatus();
@@ -2001,7 +1992,7 @@ function renderNest(){
     box.innerHTML=`<p class="muted">Zwei erwachsene Monster können ein Ei bekommen, das Eigenschaften von beiden erbt: Element, Farbe, Charakter und einen Teil der Stärke. Haben <b>beide</b> Eltern mindestens <b>85 Zuneigung</b>, kann mit etwas Glück ein seltenes ☀️ Licht- oder 🌑 Dunkel-Ei entstehen.</p>
       <div class="muted">${req.map(([ok,t])=>`${ok?'✅':'❌'} ${t}`).join('<br>')}</div>
       <h3 style="margin-top:14px">Partner</h3>
-      ${partners.length?partners.map(p=>`<div class="item"><img src="${spriteURL(p.m)}"><div class="grow"><div class="t">${esc(p.m.name)} <span class="muted">von ${esc(p.owner)}</span></div><div class="muted">${monsterLine(p.m)} · 💞 ${Math.round(p.m.bond??50)}</div></div><button onclick="breed('${p.key}')">💞 Ei bekommen</button></div>`).join(''):'<p class="muted">Noch kein erwachsenes Monster von Freunden da. Füge Freunde im Tab „Online“ hinzu.</p>'}
+      ${partners.length?partners.map(p=>`<div class="item"><img src="${spriteURL(p.m)}"><div class="grow"><div class="t">${esc(p.m.name)} <span class="muted">von ${esc(p.owner)}</span></div><div class="muted">${monsterLine(p.m)} · 💞 ${Math.round(p.m.bond??50)}</div></div><button onclick="breed('${p.key}')">💞 Ei bekommen</button></div>`).join(''):'<p class="muted">Noch kein erwachsenes Monster von Freunden da. Füge Freunde im Tab „Freunde“ hinzu.</p>'}
       <h3 style="margin-top:14px">Nest</h3>
       ${S.nest.length?S.nest.map(e=>`<div class="item" style="align-items:flex-start"><img src="${spriteURL({species:'ei',look:makeLook(e.id,e.hue,e.element,e.family)})}"><div class="grow"><div class="t">${e.kind==='erbe'?'Erbe-Ei':'Zucht-Ei'}${RARE.includes(e.element)?' ✨':''}</div><div class="muted">Eltern: ${esc(e.parents.join(' und '))} · Familie ${FAMILIES[e.family]?.icon||''} ${FAMILIES[e.family]?.name||''}${e.mutation?' (Mutation!)':''}${RARE.includes(e.element)?' · Es schimmert geheimnisvoll.':''}</div>
         <div class="row" style="margin-top:6px"><input type="text" id="eggName-${e.id}" maxlength="16" placeholder="Name für das Baby" style="flex:1;width:auto"><button onclick="hatchEgg('${e.id}')">🐣 Ausbrüten</button></div></div></div>`).join(''):'<p class="muted">Das Nest ist leer.</p>'}
@@ -2401,7 +2392,7 @@ function renderDex(){
 }
 function useStern(){if(!S.items.stern){toast('Du hast keinen Sternenstaub. Den gibt es für besiegte Wochen-Bosse.');return}if(!canAct(false))return;S.items.stern--;bondUp(15);effect('✨');log(`✨ ${S.name} wurde mit Sternenstaub verwöhnt. +15 Zuneigung`);save();renderStatus();renderLists()}
 
-// ---------- Laden ----------
+// ---------- Shop ----------
 function buy(k){const it=ITEMS[k];if(S.coins<it.price){toast('Nicht genug Münzen.');return}S.coins-=it.price;S.items[k]=(S.items[k]||0)+1;toast(`${it.icon} ${it.name} gekauft.`);save();renderStatus();renderLists()}
 // Pension für Urlaub: die Zeit steht still, keine Pflegefehler, keine Entwicklung
 async function togglePension(){
@@ -2412,7 +2403,7 @@ async function togglePension(){
   }else{
     if(S.stage===0){toast('Ein Ei kann nicht in die Pension.');return}
     if(S.quest){toast(`${S.name} ist gerade auf Quest.`);return}
-    if(!await ask(`${S.name} geht in die Pension. Dort steht die Zeit still: keine Pflegefehler, aber auch keine Entwicklung. Abholen kannst du es jederzeit hier im Tab „Info“.`,'In die Pension'))return;
+    if(!await ask(`${S.name} geht in die Pension. Dort steht die Zeit still: keine Pflegefehler, aber auch keine Entwicklung. Abholen kannst du es jederzeit oben rechts unter ⚙️.`,'In die Pension'))return;
     S.pension={since:Date.now()};S.sleeping=false;log(`🏨 ${S.name} ist in der Pension. Gute Reise!`);
   }
   save();renderStatus();renderLists();
@@ -2448,13 +2439,15 @@ function renderStatus(){
   if(!S)return;
   const sp=SPECIES[S.species],age=S.stage?S.gameTime-S.born:0;
   $('#devName').textContent=`${S.name} · ${speciesLabel(S)} ${S.ult?'· Ultimativ':'('+STAGES[S.stage]+')'} ${ELEMENTS[S.element].icon}${S.sick?' · 🤒':''}`;
-  $('#topinfo').innerHTML=`<span class="pill">👤 ${esc(S.owner)}</span><span class="pill">⭐ Lv ${S.level}</span><span class="pill">🪙 ${S.coins}</span><span class="pill">🍓 ${S.items.beere||0} · 🧪 ${S.items.trank||0}</span><span class="pill">🏆 ${S.wins}/${S.losses}</span><span class="pill">${timeInfo()}</span>`;
+  $('#topinfo').innerHTML=`<span class="pill">${esc(S.name)}</span><span class="pill">⭐ Lv ${S.level}</span><span class="pill">🪙 ${S.coins}</span>`;
+  if($('#winInfo'))$('#winInfo').textContent=`Bisher: ${S.wins} Siege, ${S.losses} Niederlagen.`;
   const col=v=>v>50?'var(--good)':v>20?'var(--warn)':'var(--bad)';
   $('#bars').innerHTML=bar('🍙 Sattheit',S.hunger,col(S.hunger))+bar('😊 Laune',S.mood,col(S.mood))+bar('⚡ Energie',S.energy,col(S.energy))+bar('🧽 Sauberkeit',S.clean,col(S.clean))+bar('❤️ Gesundheit',S.health,col(S.health))+bar('💞 Zuneigung',S.bond,'#ff7eb6')+
     bar(`⭐ Erfahrung (${S.xp}/${xpNeed(S.level)})`,S.xp/xpNeed(S.level)*100,'#8c7bff').replace(/<span>\d+<\/span><\/label>/,'<span></span></label>')+
-    `<div class="muted" style="margin-top:8px">Alter: ${fmtAge(age)} · Pflegefehler: ${S.mistakes}${S.stage<3?'<br>⏳ '+nextStageText():''}</div><div class="muted" style="margin-top:6px">${ELEMENTS[S.element].icon} Element ${ELEMENTS[S.element].name} · ${FAMILIES[S.family].icon} Familie ${FAMILIES[S.family].name} · Charakter: <b>${TRAITS[S.trait].name}</b> (${TRAITS[S.trait].desc}) · ${PATTERNS[S.look.pattern]}${S.look.accessory!=='keins'?', mit '+ACCESSORIES[S.look.accessory].name:''}</div>`;
+    `<div class="muted" style="margin-top:8px">${timeInfo()} · 🍓 ${S.items.beere||0} · 🧪 ${S.items.trank||0}<br>Alter: ${fmtAge(age)} · Pflegefehler: ${S.mistakes}${S.stage<3?'<br>⏳ '+nextStageText():''}</div><div class="muted" style="margin-top:6px">${ELEMENTS[S.element].icon} Element ${ELEMENTS[S.element].name} · ${FAMILIES[S.family].icon} Familie ${FAMILIES[S.family].name} · Charakter: <b>${TRAITS[S.trait].name}</b> (${TRAITS[S.trait].desc}) · ${PATTERNS[S.look.pattern]}${S.look.accessory!=='keins'?', mit '+ACCESSORIES[S.look.accessory].name:''}</div>`;
   $('#sleepBtn').innerHTML=S.sleeping?'☀️<span class="lbl"> Wecken</span>':'💤<span class="lbl"> Schlafen</span>';$('#sleepBtn').title=S.sleeping?'Wecken':'Schlafen';
   $('#miniName').textContent=`${S.name} · Lv ${S.level}`;
+  renderBadges();
   $('#miniBars').innerHTML=[['🍙',S.hunger],['😊',S.mood],['⚡',S.energy],['🧽',S.clean],['❤️',S.health],['💞',S.bond]].map(([i,v])=>`<div title="${i} ${Math.round(v)}"><div class="fill" style="width:${v}%;background:${col(v)}"></div></div>`).join('');
   const e=eff(S);
   $('#statBox').innerHTML=`<div class="stat">⚔️<b>${e.atk}</b>Kraft</div><div class="stat">🛡️<b>${e.def}</b>Abwehr</div><div class="stat">⚡<b>${e.spd}</b>Tempo</div><div class="stat">❤️<b>${e.maxHp}</b>KP</div>`;
@@ -2481,8 +2474,9 @@ function renderLists(){
     else if(f.ret){qa=`<div class="muted">Zurück von der Quest: ${esc(f.retText)}. Schick diesen Rückkehr-Code an ${esc(f.owner)}:</div><textarea readonly onclick="this.select()">${f.ret}</textarea><div class="row" style="margin-top:6px"><button onclick="copyText(S.friends.find(x=>x.exportId==='${f.exportId}').ret)">📋 Kopieren</button><button onclick="download('rueckkehr-${esc(f.name).replace(/[^\w-]/g,'_')}.pxm',S.friends.find(x=>x.exportId==='${f.exportId}').ret)">💾 Als Datei</button></div>`}
     else if(!f.questDone){qa=`<div class="row" style="margin-top:6px"><select id="gq-${f.exportId}">${QUESTS.map(q=>`<option value="${q.id}">${q.icon} ${q.name} (${Math.round(chance(f,q)*100)} %)</option>`).join('')}</select><button onclick="guestQuest('${f.exportId}',$('#gq-${f.exportId}').value)">🗺️ Auf Gast-Quest schicken</button></div>`}
     return`<div class="item" style="align-items:flex-start"><img src="${spriteURL(f)}"><div class="grow"><div class="t">${esc(f.name)} <span class="muted">von ${esc(f.owner)}</span></div><div class="muted">${esc(speciesLabel(f))}${f.element?' '+ELEMENTS[f.element].icon:''} · Lv ${f.level} · ⚔️${e.atk} 🛡️${e.def} ⚡${e.spd} · Siege ${f.wins}</div>${qa}</div><button title="Entfernen" onclick="removeFriend('${f.exportId}')">✖</button></div>`;
-  }).join(''):'<p class="muted">Noch niemand zu Besuch.</p>';
-  // Laden
+  }).join(''):'';
+  $('#oldGuests').style.display=fr.length?'':'none';
+  // Shop
   renderRaid();
   if($('#pensionBtn'))$('#pensionBtn').textContent=S.pension?`🏨 ${S.name} aus der Pension abholen`:'🏨 In die Pension geben';
   $('#shop').innerHTML=Object.entries(ITEMS).filter(([,it])=>it.price>0).map(([k,it])=>`<div class="item"><div style="font-size:30px">${it.icon}</div><div class="grow"><div class="t">${it.name}</div><div class="muted">${it.desc} · Du hast ${S.items[k]||0}</div></div><button onclick="buy('${k}')">${it.price} 🪙 kaufen</button></div>`).join('')+
@@ -2499,7 +2493,7 @@ function drawScreen(t){
     if(S.pension){
       ctx.textAlign='center';ctx.font='64px serif';ctx.fillText('🏨',W/2,140);
       ctx.font='bold 18px Georgia,serif';ctx.fillStyle='#f3dfb0';ctx.fillText('In der Pension',W/2,185);
-      ctx.font='13px sans-serif';ctx.fillText('Abholen im Tab „Info“',W/2,208);
+      ctx.font='13px sans-serif';ctx.fillText('Abholen unter ⚙️ oben rechts',W/2,208);
     }else if(S.quest){
       const q=QUESTS.find(x=>x.id===S.quest.id);
       ctx.textAlign='center';ctx.font='64px serif';ctx.fillText(q.icon,W/2,140);
@@ -2602,11 +2596,39 @@ function boot(){
   if(CLOUD){cloudSent=JSON.stringify(S);cloudPull();cloudStart()}
   netSync().then(()=>{loadBoss();loadRaid()});setInterval(()=>{if(NET?.remotes||pairInfo||Date.now()-netLast>19000)netSync()},8000);setInterval(()=>{loadBoss();loadRaid()},120000);
 }
-document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.dataset.panel===b.dataset.tab));
-  if(b.dataset.tab==='reden')renderChat();
-});
+// Tabs, Unter-Tabs, Einstellungen und rote Punkte
+function showTab(tab,sub){
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab===tab));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.dataset.panel===tab));
+  if(sub){const p=document.querySelector(`.panel[data-panel="${tab}"]`);p.querySelectorAll('.seg button').forEach(x=>x.classList.toggle('on',x.dataset.sub===sub));p.querySelectorAll('.sub').forEach(x=>x.classList.toggle('on',x.dataset.sub===sub))}
+  if(tab==='reden')renderChat();
+  try{localStorage.setItem('pixelmonster.tab',tab)}catch(e){}
+}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{showTab(b.dataset.tab);if(innerWidth<=700)document.querySelector('.panel.on').scrollIntoView({behavior:'smooth'})});
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>showTab(b.closest('.panel').dataset.panel,b.dataset.sub));
+try{const t=localStorage.getItem('pixelmonster.tab');if(t&&document.querySelector(`#tabs [data-tab="${t}"]`))showTab(t)}catch(e){}
+function openSettings(){if(!S)return;renderOnline();renderLists();$('#setOv').classList.add('on')}
+function closeSettings(){$('#setOv').classList.remove('on')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSettings()});
+function toggleLog(){const c=$('#logCard').classList.toggle('all');$('#logMore').textContent=c?'weniger':'alle zeigen'}
+function renderBadges(){
+  if(!S)return;
+  const set=(sel,on)=>{const b=document.querySelector(sel);if(b)b.classList.toggle('has',!!on)};
+  let raid=false,boss=false;
+  try{
+    const rl=raidLeft(),fights=RAID?RAID.fights:curRaid().fights,claimed=RAID?RAID.claimed:curRaid().claimed;
+    raid=rl<=0?!!(RAID&&fights&&!claimed):(!raidFoughtToday()&&S.stage>=3&&S.level>=RAID_MIN_LEVEL);
+    const wk=curWeek(),bl=bossLeft();
+    boss=bl<=0?!!(BOSS&&BOSS.hit!=null&&!BOSS.claimed):(!wk.boss&&wk.quests>=QUESTS_FOR_BOSS&&S.stage>0);
+  }catch(e){}
+  const busy=S.pension||S.stage===0;
+  set('#tabs [data-tab=arena]',!S.pension&&(raid||boss));
+  set('[data-sub=bosse]',!S.pension&&(raid||boss));
+  set('#tabs [data-tab=abenteuer]',!busy&&!S.quest);
+  set('#tabs [data-tab=freunde]',NET?.guests?.some(g=>!S.netGuests?.[g.id]));
+  set('#tabs [data-tab=familie]',S.nest.length>0);
+  set('[data-sub=zucht]',S.nest.length>0);
+}
 document.addEventListener('keydown',e=>{if(e.code==='Space'&&train&&train.run){e.preventDefault();trainHit()}});
 S=load();
 if(S&&S.v===2){migrate(S);boot()}else{S=null;$('#startOv').classList.add('on');renderQuiz()}
