@@ -1,6 +1,6 @@
 {
-  "version": "0.9.8",
-  "sha256": "a28bab9d1b68b8caa63c2058a8eff67f291ed3a34e7c33f5d5a998d6ec98b538",
-  "notes": "Neues, übersichtliches Menü: Arena, Abenteuer, Reden, Freunde, Familie, Shop und ⚙️ oben rechts",
+  "version": "0.9.9",
+  "sha256": "997d6ca7841dbdf1e2a3d3c70095acfbd495e3be2ba5e4042790c7fb4ece1900",
+  "notes": "3 Trainings pro Level, Punkte selbst verteilen, Pension mit 3 Plätzen, Lexikon zeigt nur Entdecktes",
   "download": "https://github.com/Enchio86/Pixelmonster/releases/latest"
 }

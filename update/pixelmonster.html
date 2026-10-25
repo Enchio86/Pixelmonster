@@ -184,12 +184,14 @@ body.mini #toast{bottom:6px;font-size:12px;padding:6px 10px}
         <div class="seg"><button data-sub="training" class="on">💪 Training</button><button data-sub="kampf">⚔️ Kampf</button><button data-sub="bosse">🐉 Bosse</button></div>
         <div class="sub on" data-sub="training">
         <h3>Training</h3>
-        <div class="muted">Drück im richtigen Moment, wenn der Balken im grünen Bereich ist. Was du am meisten trainierst, wird später sein Titel und bekommt einen Bonus.</div>
+        <div class="muted">Drück im richtigen Moment, wenn der Balken im grünen Bereich ist. Pro Level kannst du 3× trainieren: ein Treffer bringt +2, daneben +1. Was du am meisten trainierst, bestimmt, zu welcher Form dein Monster heranwächst.</div>
         <div class="stats" id="statBox"></div>
+        <div id="ptsBox"></div>
         <div class="row">
-          <button onclick="startTrain('atk')">💪 Kraft</button>
-          <button onclick="startTrain('def')">🛡️ Abwehr</button>
-          <button onclick="startTrain('spd')">⚡ Tempo</button>
+          <button class="trainBtn" onclick="startTrain('atk')">💪 Kraft</button>
+          <button class="trainBtn" onclick="startTrain('def')">🛡️ Abwehr</button>
+          <button class="trainBtn" onclick="startTrain('spd')">⚡ Tempo</button>
+          <span class="muted" id="trainLeft"></span>
         </div>
         <div class="tgame" id="tgame">
           <div class="ttrack"><div class="zone" id="tzone"></div><div class="marker" id="tmark"></div></div>
@@ -232,8 +234,9 @@ body.mini #toast{bottom:6px;font-size:12px;padding:6px 10px}
       </div>
 
       <div class="card panel" data-panel="familie">
-        <div class="seg"><button data-sub="zucht" class="on">🥚 Zucht</button><button data-sub="sammlung">📚 Sammlung</button></div>
+        <div class="seg"><button data-sub="zucht" class="on">🥚 Zucht</button><button data-sub="pension">🏨 Pension</button><button data-sub="sammlung">📚 Sammlung</button></div>
         <div class="sub on" data-sub="zucht"><h3>🥚 Zucht und Nest</h3><div id="nestBox"></div></div>
+        <div class="sub" data-sub="pension"><h3>🏨 Pension</h3><div id="stableBox"></div></div>
         <div class="sub" data-sub="sammlung"><h3>📚 Monsterlexikon</h3><div id="dexBox"></div></div>
       </div>
 
@@ -249,7 +252,7 @@ body.mini #toast{bottom:6px;font-size:12px;padding:6px 10px}
   <div class="modal">
     <div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">⚙️ Einstellungen</h3><button onclick="closeSettings()" title="Schließen">✖</button></div>
     <div class="row">
-      <button onclick="togglePension()" id="pensionBtn">🏨 In die Pension geben</button>
+      <button onclick="togglePension()" id="pensionBtn">🧳 Urlaub (Zeit anhalten)</button>
       <button class="miniBtn" onclick="closeSettings();toggleMini(true)" title="Nur das Monster in einem kleinen Fenster zeigen">🗕 Mini-Ansicht</button>
       <label>Zeitraffer:
         <select id="speedSel" onchange="S.speed=+this.value;save();toast('Zeitraffer: '+this.value+'×')">
@@ -1311,7 +1314,7 @@ function evolve(sp){
   seen(S);effect('✨');toast(`${S.name} ist jetzt ${SPECIES[sp].name}!`);renderLists();
 }
 // Abwesenheit: War die App zu (oder der Rechner im Ruhezustand), sinken die Werte nur bis zur Hälfte.
-// So entstehen keine Pflegefehler, nur weil du ein paar Tage weg warst. In der Pension steht die Zeit ganz still.
+// So entstehen keine Pflegefehler, nur weil du ein paar Tage weg warst. Im Urlaub steht die Zeit ganz still.
 let OFFLINE=false;
 function tick(){
   const now=Date.now(),away=now-S.lastTick;
@@ -1326,7 +1329,7 @@ function tick(){
 
 // ---------- Pflege ----------
 function canAct(needAwake=true){
-  if(S.pension){toast(`${S.name} ist in der Pension. Hol es oben rechts unter ⚙️ ab.`);return false}
+  if(S.pension){toast(`${S.name} ist im Urlaub. Hol es oben rechts unter ⚙️ zurück.`);return false}
   if(S.stage===0){toast('Das Ei muss erst schlüpfen.');return false}
   if(S.quest){toast(`${S.name} ist gerade auf Quest.`);return false}
   if(needAwake&&S.sleeping){toast(`${S.name} schläft gerade. Psst!`);return false}
@@ -1364,7 +1367,7 @@ function eff(m){normMon(m);const md=SPECIES[m.species].mod,u=m.ult?1.15:1,g=gear
 const xpNeed=l=>40+l*30;
 function gainXp(n){
   if(S.trait==='schlau')n=Math.round(n*1.25);S.xp+=n;
-  while(S.xp>=xpNeed(S.level)){S.xp-=xpNeed(S.level);S.level++;S.atk++;S.def++;S.spd++;log(`⭐ ${S.name} ist jetzt Level ${S.level}!`);effect('⭐')}
+  while(S.xp>=xpNeed(S.level)){S.xp-=xpNeed(S.level);S.level++;S.pts=(S.pts||0)+PTS_PER_LVL;log(`⭐ ${S.name} ist jetzt Level ${S.level}! Du kannst ${PTS_PER_LVL} Punkte verteilen.`);effect('⭐')}
 }
 function power(m){const e=eff(m);return e.atk+e.def+e.spd+m.level*4}
 function chance(m,q){return clamp(power(m)/(q.diff*1.25)+weatherBonus(m),0.1,0.95)}
@@ -1372,8 +1375,13 @@ function chance(m,q){return clamp(power(m)/(q.diff*1.25)+weatherBonus(m),0.1,0.9
 // ---------- Training ----------
 let train=null;
 const STATN={atk:'Kraft',def:'Abwehr',spd:'Tempo'};
+// Pro Level: begrenzte Trainings und Punkte zum selbst Verteilen
+const TRAIN_PER_LVL=3,PTS_PER_LVL=3;
+function trainLeft(){if(S.trainLvl!==S.level){S.trainLvl=S.level;S.trainN=0}return TRAIN_PER_LVL-S.trainN}
+function spendPt(stat){if(!(S.pts>0))return;S.pts--;S[stat]++;toast(`${STATN[stat]} +1`);save();renderStatus()}
 function startTrain(stat){
   if(!canAct())return;
+  if(trainLeft()<=0){toast(`Auf Level ${S.level} hat ${S.name} schon ${TRAIN_PER_LVL}× trainiert. Kämpfe, Quests und Pflege bringen es zum nächsten Level.`);return}
   if(S.sick){toast(`${S.name} ist krank und kann nicht trainieren.`);return}
   if(S.energy<12){toast(`${S.name} ist zu müde zum Trainieren.`);return}
   const w=clamp(20-S.level,10,18);
@@ -1391,8 +1399,8 @@ function trainLoop(){
 function trainHit(){
   if(!train||!train.run)return;train.run=false;
   const p=train.pos,hit=p>=train.zone&&p<=train.zone+train.w,perfect=Math.abs(p-(train.zone+train.w/2))<2.5;
-  const gain=(perfect?3:hit?2:1)+((S.trait==='aktiv'&&train.stat==='spd')||(S.trait==='gemuetlich'&&train.stat==='def')?1:0);
-  S[train.stat]+=gain;S.train[train.stat]++;if(hit)bondUp(.5);S.energy-=12;S.hunger-=6;S.mood+=hit?5:-3;gainXp(hit?8:4);
+  const gain=(hit?2:1)+((S.trait==='aktiv'&&train.stat==='spd')||(S.trait==='gemuetlich'&&train.stat==='def')?1:0);
+  S[train.stat]+=gain;S.train[train.stat]++;trainLeft();S.trainN++;if(hit)bondUp(.5);S.energy-=12;S.hunger-=6;S.mood+=hit?5:-3;gainXp(hit?8:4);
   toast(`${perfect?'Perfekt!':hit?'Treffer!':'Daneben…'} ${STATN[train.stat]} +${gain}`);
   effect(hit?'💪':'💦');clampAll();save();renderStatus();
   setTimeout(()=>{if(train&&!train.run)$('#tgame').style.display='none'},700);
@@ -1867,7 +1875,7 @@ function elemMult(a,b){
 function migrate(s){
   s.bond??=50;s.nest??=[];s.hall??=[];s.dex??={};s.ach??={};s.cnt??={};s.trophies??=[];
   s.week??={id:'',quests:0,boss:null};s.items.stern??=0;
-  s.loot??={};s.gear??={armor:null,acc:null};
+  s.loot??={};s.gear??={armor:null,acc:null};s.stable??=[];s.stable.forEach(normMon);
   s.family??=EL_FAM[s.element]||'feuer';normMon(s);s.hall.forEach(normMon);s.friends.forEach(normMon);
   for(const e of s.nest)e.family??=EL_FAM[e.element]||'feuer';
   for(const k of Object.keys(s.dex)){const n=k.replace(/^(ult:)?(.*)$/,(_,u,sp)=>{const o=normMon({species:sp,element:s.element,family:s.family});return(u||'')+o.species});if(n!==k){s.dex[n]??=s.dex[k];delete s.dex[k]}}
@@ -1933,6 +1941,7 @@ function breedPartners(){
   const list=[];
   for(const f of NET?.friends||[])if(f.monster&&f.monster.stage>=3)list.push({key:'o:'+f.id,owner:f.name,m:f.monster});
   for(const f of S.friends)if(f.stage>=3)list.push({key:'f:'+f.exportId,owner:f.owner,m:f});
+  for(const m of S.stable||[])if(m.stage>=3&&m.species!=='schleim')list.push({key:'p:'+m.id,owner:S.owner,m});
   return list;
 }
 function breed(key){
@@ -1972,9 +1981,11 @@ async function hatchEgg(id){
   if(S.quest){toast(`${S.name} ist gerade auf Quest.`);return}
   const name=($('#eggName-'+id)?.value||'').trim();
   if(!name){toast('Gib dem Baby zuerst einen Namen.');return}
-  if(!await ask(`${S.name} zieht dann in die Ruhmeshalle, und aus dem Ei schlüpft ${name}. Fortfahren?`))return;
-  const keep={owner:S.owner,coins:S.coins,items:S.items,friends:S.friends,claimed:S.claimed,log:S.log,net:S.net,netGuests:S.netGuests,speed:S.speed,
-    dex:S.dex,ach:S.ach,cnt:S.cnt,trophies:S.trophies,week:S.week,lastTour:S.lastTour,loot:S.loot,raid:S.raid,nest:S.nest.filter(e=>e.id!==id),hall:[...S.hall,{...snapshot(),retired:Date.now()}].slice(-20)};
+  if(!parkOk())return;
+  const room=(S.stable||[]).length<STABLE_MAX;
+  if(!await ask(room?`${S.name} zieht dann in die Pension (Familie → Pension), und aus dem Ei schlüpft ${name}. Du kannst jederzeit zurücktauschen. Fortfahren?`:`Die Pension ist voll, darum zieht ${S.name} in die Ruhmeshalle, und aus dem Ei schlüpft ${name}. Fortfahren?`))return;
+  const keep={...playerData(),nest:S.nest.filter(e=>e.id!==id)};
+  if(room)keep.stable=[...(S.stable||[]),{...monPart(),parkedAt:S.gameTime}];else keep.hall=[...S.hall,{...snapshot(),retired:Date.now()}].slice(-20);
   const fam=egg.family||EL_FAM[egg.element];
   const n=newState(S.owner,name,egg.element,egg.trait,egg.hue,fam);
   Object.assign(n,{id:egg.id,look:makeLook(egg.id,egg.hue,egg.element,fam),gameTime:S.gameTime,born:S.gameTime,bond:egg.bond,parents:egg.parents});
@@ -1996,7 +2007,7 @@ function renderNest(){
       <h3 style="margin-top:14px">Nest</h3>
       ${S.nest.length?S.nest.map(e=>`<div class="item" style="align-items:flex-start"><img src="${spriteURL({species:'ei',look:makeLook(e.id,e.hue,e.element,e.family)})}"><div class="grow"><div class="t">${e.kind==='erbe'?'Erbe-Ei':'Zucht-Ei'}${RARE.includes(e.element)?' ✨':''}</div><div class="muted">Eltern: ${esc(e.parents.join(' und '))} · Familie ${FAMILIES[e.family]?.icon||''} ${FAMILIES[e.family]?.name||''}${e.mutation?' (Mutation!)':''}${RARE.includes(e.element)?' · Es schimmert geheimnisvoll.':''}</div>
         <div class="row" style="margin-top:6px"><input type="text" id="eggName-${e.id}" maxlength="16" placeholder="Name für das Baby" style="flex:1;width:auto"><button onclick="hatchEgg('${e.id}')">🐣 Ausbrüten</button></div></div></div>`).join(''):'<p class="muted">Das Nest ist leer.</p>'}
-      <p class="muted">Beim Ausbrüten zieht dein jetziges Monster in die Ruhmeshalle. Münzen, Gegenstände, Freunde und Erfolge bleiben erhalten.</p>
+      <p class="muted">Beim Ausbrüten zieht dein jetziges Monster in die Pension, solange dort Platz ist, sonst in die Ruhmeshalle. Münzen, Gegenstände, Freunde und Erfolge bleiben erhalten.</p>
       ${S.hall.length?`<h3 style="margin-top:14px">Ruhmeshalle</h3><div class="row">${S.hall.map(h=>`<div style="text-align:center;width:76px"><img src="${spriteURL(h)}" style="width:64px;height:64px"><div class="muted" style="font-size:11px">${esc(h.name)}<br>Lv ${h.level}</div></div>`).join('')}</div>`:''}`;
   });
 }
@@ -2378,14 +2389,16 @@ function dexImg(k,known){
   const m={species:sp,ult,stage:SPECIES[sp].stage,look:known?makeLook('dex'+k,fam?fam.h:120,fam?fam.element:'natur',fam?.key):SILHOUETTE};
   return`<img src="${spriteURL(m)}" title="${known?esc(DEX.find(d=>d[0]===k)[1]):'???'}">`;
 }
+function dexLabel(k){const ult=k.startsWith('ult:'),sp=SPECIES[ult?k.slice(4):k];return ult?'Ur-Form':sp.stage===0?'Anfang':k==='schleim'?'zu wenig Pflege':(sp.variant||['','Baby','Jung','Erwachsen'][sp.stage])}
 function renderDex(){
   const box=$('#dexBox');if(!box||!S)return;
-  const n=DEX.filter(([k])=>S.dex[k]).length,a=ACH.filter(([id])=>S.ach[id]).length;
-  const slot=(k,label)=>{const known=!!S.dex[k];return`<div class="dexslot ${known?'':'unknown'}">${dexImg(k,known)}<span>${known?esc(DEX.find(d=>d[0]===k)[1]):'???'}</span><i>${label}</i></div>`};
-  box.innerHTML=`<p class="muted">Entdeckt: ${n} von ${DEX.length} Formen in ${FAM_KEYS.length} Familien. Du entdeckst Formen durch eigene Monster, Zucht, Kämpfe und die Monster deiner Freunde. ☀️ Licht und 🌑 Dunkelheit gibt es nur durch Zucht mit viel Zuneigung.</p>
-    <div class="dexgrid">${FAM_KEYS.map(k=>{const f=FAMILIES[k],any=[1,2,3].some(st=>S.dex[k+st]);
-      return`<div class="dexfam"><div class="dexhead">${any||!RARE.includes(f.element)?f.icon+' '+f.name:'❔ ???'} <span class="muted">${ELEMENTS[f.element].icon}</span></div><div class="dexrow">${slot(k+'1','Baby')}${slot(k+'2','Jung')}${slot(k+'3','Erwachsen')}${slot('ult:'+k+'3','Ur-Form')}</div></div>`}).join('')}
-    <div class="dexfam"><div class="dexhead">🫠 Sonderformen</div><div class="dexrow">${slot('ei','Anfang')}${slot('schleim','zu wenig Pflege')}${slot('ult:schleim','Ur-Form')}</div></div></div>
+  const known=DEX.filter(([k])=>S.dex[k]),a=ACH.filter(([id])=>S.ach[id]).length;
+  const famOfKey=k=>SPECIES[k.replace(/^ult:/,'')]?.family||'_';
+  const slot=k=>`<div class="dexslot">${dexImg(k,true)}<span>${esc(DEX.find(d=>d[0]===k)[1])}</span><i>${dexLabel(k)}</i></div>`;
+  const groups=[...FAM_KEYS,'_'].map(f=>[f,known.filter(([k])=>famOfKey(k)===f).map(([k])=>k)]).filter(([,l])=>l.length);
+  box.innerHTML=`<p class="muted">Du hast ${known.length} ${known.length===1?'Form':'Formen'} aus ${groups.filter(([f])=>f!=='_').length} Familien entdeckt. Neue Monster kommen dazu, sobald du sie siehst: als eigenes Monster, bei Freunden, in Kämpfen gegen wilde Monster, bei Bossen und durch Zucht. Wie viele es noch gibt, findest du nur durch Entdecken heraus.</p>
+    <div class="dexgrid">${groups.map(([f,l])=>{const F=FAMILIES[f];
+      return`<div class="dexfam"><div class="dexhead">${F?F.icon+' '+F.name+` <span class="muted">${ELEMENTS[F.element].icon}</span>`:'🫠 Sonderformen'}</div><div class="dexrow">${l.map(slot).join('')}</div></div>`}).join('')}</div>
     <h3 style="margin-top:16px">🏅 Erfolge (${a}/${ACH.length})</h3>
     ${ACH.map(([id,name,desc,,coins])=>`<div class="item" style="padding:8px;${S.ach[id]?'':'opacity:.55'}"><div style="font-size:22px">${S.ach[id]?'🏅':'🔒'}</div><div class="grow"><div class="t">${name}</div><div class="muted">${desc}</div></div><span class="muted">${coins} 🪙</span></div>`).join('')}
     ${S.trophies.length?`<h3 style="margin-top:16px">🏆 Trophäen</h3>${S.trophies.map(t=>`<span class="pill">${t.type==='boss'?'👹 '+esc(t.name)+' ('+t.week+')':t.type==='raid'?'🐉 '+esc(t.name)+' ('+t.month+')':'🏆 Freundesturnier'}</span>`).join('')}`:''}`;
@@ -2394,17 +2407,17 @@ function useStern(){if(!S.items.stern){toast('Du hast keinen Sternenstaub. Den g
 
 // ---------- Shop ----------
 function buy(k){const it=ITEMS[k];if(S.coins<it.price){toast('Nicht genug Münzen.');return}S.coins-=it.price;S.items[k]=(S.items[k]||0)+1;toast(`${it.icon} ${it.name} gekauft.`);save();renderStatus();renderLists()}
-// Pension für Urlaub: die Zeit steht still, keine Pflegefehler, keine Entwicklung
+// Urlaub: die Zeit steht still, keine Pflegefehler, keine Entwicklung
 async function togglePension(){
   if(S.pension){
     const d=Math.max(1,Math.round((Date.now()-S.pension.since)/864e5));
     S.pension=null;S.lastTick=Date.now();for(const k of['hunger','mood','energy','clean','health'])S[k]=Math.max(S[k],85);S.poop=0;S.sick=false;
-    log(`🏨 ${S.name} ist nach ${d} ${d===1?'Tag':'Tagen'} aus der Pension zurück, satt, sauber und gut gelaunt.`);effect('❤️');
+    log(`🧳 ${S.name} ist nach ${d} ${d===1?'Tag':'Tagen'} aus dem Urlaub zurück, satt, sauber und gut gelaunt.`);effect('❤️');
   }else{
-    if(S.stage===0){toast('Ein Ei kann nicht in die Pension.');return}
+    if(S.stage===0){toast('Ein Ei kann nicht in den Urlaub.');return}
     if(S.quest){toast(`${S.name} ist gerade auf Quest.`);return}
-    if(!await ask(`${S.name} geht in die Pension. Dort steht die Zeit still: keine Pflegefehler, aber auch keine Entwicklung. Abholen kannst du es jederzeit oben rechts unter ⚙️.`,'In die Pension'))return;
-    S.pension={since:Date.now()};S.sleeping=false;log(`🏨 ${S.name} ist in der Pension. Gute Reise!`);
+    if(!await ask(`${S.name} macht Urlaub. Dabei steht die Zeit still: keine Pflegefehler, aber auch keine Entwicklung. Zurückholen kannst du es jederzeit oben rechts unter ⚙️.`,'In den Urlaub'))return;
+    S.pension={since:Date.now()};S.sleeping=false;log(`🧳 ${S.name} ist im Urlaub. Gute Reise!`);
   }
   save();renderStatus();renderLists();
 }
@@ -2420,9 +2433,43 @@ function ask(text,yes='Ja',no='Abbrechen'){
   });
 }
 // Freilassen: das Monster kehrt in die Wildnis zurück, über den Fragebogen gibt es ein neues Ei
-function keepData(extra={}){
-  return{owner:S.owner,coins:S.coins,items:S.items,friends:S.friends,claimed:S.claimed,log:S.log,net:S.net,netGuests:S.netGuests,speed:S.speed,
-    dex:S.dex,ach:S.ach,cnt:S.cnt,trophies:S.trophies,week:S.week,lastTour:S.lastTour,loot:S.loot,raid:S.raid,nest:S.nest,hall:[...S.hall,{...snapshot(),retired:Date.now()}].slice(-20),...extra};
+function playerData(){const o={};for(const k of PLAYER_KEYS)if(!['v','gameTime','lastTick','pension'].includes(k)&&k in S)o[k]=S[k];return o}
+function keepData(extra={}){return{...playerData(),hall:[...S.hall,{...snapshot(),retired:Date.now()}].slice(-20),...extra}}
+// ----- Pension: bis zu 3 eigene Monster warten hier, die Zeit steht für sie still -----
+const STABLE_MAX=3;
+const PLAYER_KEYS=['v','owner','coins','items','friends','claimed','log','net','netGuests','speed','dex','ach','cnt','trophies','week','lastTour','loot','raid','nest','hall','stable','gameTime','lastTick','pension','talk'];
+function monPart(){const m={};for(const k of Object.keys(S))if(!PLAYER_KEYS.includes(k))m[k]=S[k];return JSON.parse(JSON.stringify(m))}
+function parkOk(){
+  if(S.quest){toast(`${S.name} ist gerade auf Quest.`);return false}
+  if(S.pension){toast(`${S.name} ist gerade im Urlaub. Hol es zuerst unter ⚙️ zurück.`);return false}
+  if(B||train?.run||MG||tour){toast('Erst das Spiel oder den Kampf beenden.');return false}
+  return true;
+}
+async function swapMonster(id){
+  const i=S.stable.findIndex(x=>x.id===id),m=S.stable[i];if(!m||!parkOk())return;
+  if(!await ask(`${m.name} aus der Pension holen? ${S.name} wartet so lange dort, und für beide steht die Zeit still, solange sie in der Pension sind.`,'Tauschen'))return;
+  const cur={...monPart(),parkedAt:S.gameTime};
+  for(const k of Object.keys(cur))if(k!=='parkedAt')delete S[k];
+  const d=S.gameTime-(m.parkedAt??S.gameTime),back={...m};delete back.parkedAt;
+  back.born=(back.born||0)+d;if(back.lastBreed!=null)back.lastBreed+=d;
+  Object.assign(S,back);S.stable[i]=cur;S.lastTick=Date.now();migrate(S);if(S.net)S.net.sent='';
+  log(`🏨 ${cur.name} ruht sich in der Pension aus, und ${S.name} ist wieder bei dir.`);effect('❤️');
+  save();renderLists();renderOnline();renderChat();renderLog();
+}
+async function retireParked(id){
+  const m=S.stable.find(x=>x.id===id);if(!m)return;
+  if(!await ask(`${m.name} zieht in die Ruhmeshalle und macht in der Pension Platz. Das lässt sich nicht rückgängig machen.`,'In die Ruhmeshalle'))return;
+  S.stable=S.stable.filter(x=>x!==m);
+  S.hall=[...S.hall,{t:'monster',v:2,id:m.id,owner:S.owner,name:m.name,species:m.species,family:m.family,element:m.element,trait:m.trait,look:m.look,title:m.title,stage:m.stage,level:m.level,atk:m.atk,def:m.def,spd:m.spd,wins:m.wins,losses:m.losses,bond:Math.round(m.bond??50),ult:!!m.ult,shiny:!!m.shiny,elder:!!m.elder,gear:m.gear,retired:Date.now()}].slice(-20);
+  log(`🏛️ ${m.name} lebt jetzt in der Ruhmeshalle.`);save();renderLists();
+}
+function renderStable(){
+  const box=$('#stableBox');if(!box||!S)return;
+  const list=S.stable||[];
+  box.innerHTML=`<p class="muted">Hier können bis zu ${STABLE_MAX} deiner Monster wohnen. Für sie steht die Zeit still: kein Hunger, keine Pflegefehler, aber auch kein Wachstum. Wenn du ein Ei aus dem Nest ausbrütest, zieht dein jetziges Monster hierher, solange ein Platz frei ist. Erwachsene Monster aus der Pension können auch Zucht-Partner sein.</p>
+    <div class="item"><img src="${spriteURL(S)}"><div class="grow"><div class="t">${esc(S.name)} <span class="pill">bei dir</span></div><div class="muted">${esc(speciesLabel(S))} · Lv ${S.level}</div></div></div>
+    ${list.map(m=>`<div class="item"><img src="${spriteURL(m)}"><div class="grow"><div class="t">${esc(m.name)}</div><div class="muted">${esc(speciesLabel(m))} · Lv ${m.level}${m.stage?'':' · noch im Ei'}</div></div><button onclick="swapMonster('${m.id}')">🔄 Holen</button><button title="In die Ruhmeshalle" onclick="retireParked('${m.id}')">🏛️</button></div>`).join('')}
+    ${Array.from({length:STABLE_MAX-list.length},()=>`<div class="item" style="opacity:.5"><div style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-size:26px">🛏️</div><div class="grow muted">Freier Platz</div></div>`).join('')}`;
 }
 async function releaseMonster(){
   if(S.quest){toast(`${S.name} ist gerade auf Quest.`);return}
@@ -2450,6 +2497,10 @@ function renderStatus(){
   renderBadges();
   $('#miniBars').innerHTML=[['🍙',S.hunger],['😊',S.mood],['⚡',S.energy],['🧽',S.clean],['❤️',S.health],['💞',S.bond]].map(([i,v])=>`<div title="${i} ${Math.round(v)}"><div class="fill" style="width:${v}%;background:${col(v)}"></div></div>`).join('');
   const e=eff(S);
+  const tl=S.stage>0?trainLeft():0;
+  if($('#trainLeft'))$('#trainLeft').textContent=S.stage?`Noch ${tl} von ${TRAIN_PER_LVL} Trainings auf Level ${S.level}`:'';
+  document.querySelectorAll('.trainBtn').forEach(b=>b.disabled=S.stage>0&&tl<=0);
+  if($('#ptsBox'))$('#ptsBox').innerHTML=S.pts>0?`<div class="item"><div style="font-size:28px">⭐</div><div class="grow"><div class="t">${S.pts} ${S.pts===1?'Punkt':'Punkte'} zu verteilen</div><div class="muted">Jeder Punkt gibt +1 auf den Wert deiner Wahl.</div></div><button onclick="spendPt('atk')">+⚔️</button><button onclick="spendPt('def')">+🛡️</button><button onclick="spendPt('spd')">+⚡</button></div>`:'';
   $('#statBox').innerHTML=`<div class="stat">⚔️<b>${e.atk}</b>Kraft</div><div class="stat">🛡️<b>${e.def}</b>Abwehr</div><div class="stat">⚡<b>${e.spd}</b>Tempo</div><div class="stat">❤️<b>${e.maxHp}</b>KP</div>`;
   const t=S.train;
   $('#evoHint').textContent=S.stage===3?`Spezialangriff: ${SPECIALS[sp.sp].name} (${SPECIALS[sp.sp].desc}).${S.ult?'':` Ab Level 15 und 60 Zuneigung erreicht ${S.name} die Stufe Ultimativ.`}`:
@@ -2478,10 +2529,10 @@ function renderLists(){
   $('#oldGuests').style.display=fr.length?'':'none';
   // Shop
   renderRaid();
-  if($('#pensionBtn'))$('#pensionBtn').textContent=S.pension?`🏨 ${S.name} aus der Pension abholen`:'🏨 In die Pension geben';
+  if($('#pensionBtn'))$('#pensionBtn').textContent=S.pension?`🧳 ${S.name} aus dem Urlaub holen`:'🧳 Urlaub (Zeit anhalten)';
   $('#shop').innerHTML=Object.entries(ITEMS).filter(([,it])=>it.price>0).map(([k,it])=>`<div class="item"><div style="font-size:30px">${it.icon}</div><div class="grow"><div class="t">${it.name}</div><div class="muted">${it.desc} · Du hast ${S.items[k]||0}</div></div><button onclick="buy('${k}')">${it.price} 🪙 kaufen</button></div>`).join('')+
     `<div class="row"><button onclick="useTrank()">🧪 Heiltrank jetzt benutzen</button><button onclick="useStern()">✨ Sternenstaub benutzen (${S.items.stern||0})</button></div>`+`<h3 style="margin-top:16px">🎒 Raid-Beute</h3>${gearHtml()}`;
-  renderNest();renderBoss();renderDex();
+  renderNest();renderStable();renderBoss();renderDex();
   renderStatus();
 }
 function friendBattle(id){const f=S.friends.find(x=>x.exportId===id);if(f)startBattle(f,'friend',id)}
@@ -2491,8 +2542,8 @@ function drawScreen(t){
   if(S){
     drawScene(ctx,S.element,W,W,t);
     if(S.pension){
-      ctx.textAlign='center';ctx.font='64px serif';ctx.fillText('🏨',W/2,140);
-      ctx.font='bold 18px Georgia,serif';ctx.fillStyle='#f3dfb0';ctx.fillText('In der Pension',W/2,185);
+      ctx.textAlign='center';ctx.font='64px serif';ctx.fillText('🧳',W/2,140);
+      ctx.font='bold 18px Georgia,serif';ctx.fillStyle='#f3dfb0';ctx.fillText('Im Urlaub',W/2,185);
       ctx.font='13px sans-serif';ctx.fillText('Abholen unter ⚙️ oben rechts',W/2,208);
     }else if(S.quest){
       const q=QUESTS.find(x=>x.id===S.quest.id);
@@ -2622,8 +2673,9 @@ function renderBadges(){
     boss=bl<=0?!!(BOSS&&BOSS.hit!=null&&!BOSS.claimed):(!wk.boss&&wk.quests>=QUESTS_FOR_BOSS&&S.stage>0);
   }catch(e){}
   const busy=S.pension||S.stage===0;
-  set('#tabs [data-tab=arena]',!S.pension&&(raid||boss));
+  set('#tabs [data-tab=arena]',!S.pension&&(raid||boss||S.pts>0));
   set('[data-sub=bosse]',!S.pension&&(raid||boss));
+  set('[data-sub=training]',S.pts>0);
   set('#tabs [data-tab=abenteuer]',!busy&&!S.quest);
   set('#tabs [data-tab=freunde]',NET?.guests?.some(g=>!S.netGuests?.[g.id]));
   set('#tabs [data-tab=familie]',S.nest.length>0);
