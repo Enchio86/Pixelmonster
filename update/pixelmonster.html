@@ -543,7 +543,9 @@ function ribbon(ctx,sp,ws,c,c2,lw=2.4){
 }
 function tri(ctx,a,b,c,col,lw=2){return facet(ctx,[a,b,c],col,{lw})}
 // Kantiges Auge; dir zeigt zur Nase (Innenwinkel), f = wie grimmig
+let EYE_S=1;
 function eyeK(ctx,x,y,r,P,t,dir=1,f=.6){
+  r*=EYE_S;
   if(sleepy||(t+P.seed%3000)%4300<130){line(ctx,[[x-r,y-r*.1*dir],[x+r,y+r*.1*dir]],OUT,1.8);return}
   const s=dir,pts=[[x-r*s,y-r*.15],[x-r*.25*s,y-r*(.95-f*.15)],[x+r*s,y-r*(.45-f*.55)],[x+r*.35*s,y+r*.72],[x-r*.55*s,y+r*.55]];
   ctx.fillStyle='#0b0812';ctx.strokeStyle=OUT;ctx.lineWidth=1.3;ctx.lineJoin='miter';const p=poly(pts);ctx.stroke(p);ctx.fill(p);
@@ -1103,12 +1105,12 @@ const FAMILY_LIST=[
   ['boden','Boden','🪨','erde',30,38,45,'#ffb85c','dust',['Wühlchen','Gesteinling','Erdtitan'],['quad build:heavy ears:small','quad build:heavy rocks horns:small','brute rocks horns:small']],
   ['wind','Wind','🌪️','blitz',152,55,58,'#e9fff6','wind',['Windhauch','Luftling','Sturmdrache'],['imp ears:feather tail:feather float','flyer crest','drake wings:feather tail:feather horns:small mane:feather']],
   ['kaefer','Käfer','🪲','natur',78,55,40,'#ffe14d','none',['Krabbel','Panzerling','Käferkönig'],['imp antenna snout','bug','bug horn crown']],
-  ['gift','Gift','☠️','natur',290,55,48,'#9dff4d','poison',['Schleimi','Schlürfer','Giftschrecke'],['blob','quad ears:fin spikes tail:stinger','crab tail:stinger']],
+  ['gift','Gift','☠️','natur',290,55,48,'#9dff4d','poison',['Giftzwicker','Schlürfer','Giftschrecke'],['blob','quad ears:fin spikes tail:stinger','crab tail:stinger']],
   ['geist','Geist','👻','wasser',245,30,78,'#8fffe8','wisp',['Irrlicht','Spukling','Geisterdrache'],['imp float top:flame ears:small','imp float ears:long horns:small','drake float wings:bat horns:curved']],
   ['metall','Metall','⚙️','erde',215,12,60,'#5fe3ff','gear',['Mechling','Robotor','Stahlkoloss'],['imp helm antenna','biped head:helm','brute build:mech']],
   ['wald','Wald','🌳','natur',36,40,40,'#c6ff7a','leaf',['Baumgeist','Holzling','Waldgolem'],['imp top:sprout ears:leaf float','biped head:mask top:sprout ears:leaf','brute build:tree branches moss']],
   ['fels','Fels','⛰️','erde',25,14,52,'#ffcf6b','dust',['Steinchen','Felsling','Gesteinsriese'],['blob rock','brute build:beast rocks','brute rocks crystals']],
-  ['himmel','Himmel','☁️','blitz',205,70,82,'#ffe27a','star',['Wolkenling','Himmelsvogel','Seraph'],['imp float ears:feather top:halo','flyer crest','biped head:mask wings:feather halo weapon:staff']],
+  ['himmel','Himmel','☁️','blitz',205,70,82,'#ffe27a','star',['Wolkenling','Himmelswächter','Seraph'],['imp float ears:feather top:halo','flyer crest','biped head:mask wings:feather halo weapon:staff']],
   ['magie','Magie','🔮','blitz',265,60,50,'#ff7bf0','rune',['Zauberling','Magierling','Magierkönig'],['imp top:hat tail:spike','biped head:mask hat weapon:staff cape','biped head:mask horns:small crown weapon:staff cape']],
   ['vulkan','Vulkan','🌋','feuer',16,40,30,'#ff8a2a','ember',['Lavaglüh','Feuerzahn','Vulkanlord'],['imp horns:small top:flame tail:flame snout','quad build:heavy horns:small tail:flame mane:flame','brute rocks flames horns:curved']],
   ['nacht','Nacht','🌙','wasser',232,45,34,'#d6e4ff','star',['Mondling','Schattenwolf','Albtraum'],['imp ears:cat top:moon tail:fluff muzzle','quad ears:cat mane tail:fluff','quad horns:curved mane:flame wings:bat tail:flame']],
@@ -1119,9 +1121,9 @@ const FAMILY_LIST=[
   ['roboter','Roboter','🤖','erde',188,25,50,'#3dffb0','data',['Datenling','Killing','Cyberlord'],['imp helm antenna','biped head:helm weapon:sword','biped head:helm wings:mech weapon:sword cape']],
   ['insekt','Insekt','🦋','natur',165,60,48,'#b4ff4d','none',['Libelle','Libellenling','Insektenkönig'],['flyer insect','flyer insect','biped head:insect wings:insect crown']],
   ['sumpf','Sumpf','🐸','wasser',95,35,36,'#d4ff5a','bubble',['Schlammchen','Sumpfling','Sumpfkönig'],['blob moss','quad ears:fin moss tail:fin','brute build:beast moss crown']],
-  ['lava','Lava','🌋','feuer',4,75,40,'#ffb02e','ember',['Feuerwurm','Glutdrache','Lavarion'],['serpent','drake wings:bat tail:flame','quad mane:flame horns:curved tail:flame spikes']],
+  ['lava','Lava','🌋','feuer',4,75,40,'#ffb02e','ember',['Glutwelpe','Glutlöwe','Lavarion'],['serpent','drake wings:bat tail:flame','quad mane:flame horns:curved tail:flame spikes']],
   ['erdgeist','Erdgeist','🍄','erde',42,32,36,'#9bff7a','dust',['Moorling','Erdfresser','Erdgolem'],['imp top:sprout ears:small moss','quad ears:small spikes moss','brute build:tree moss shroom']],
-  ['luft','Luft','💨','blitz',180,45,76,'#ffffff','wind',['Wolkenbaby','Himmelsdrachen','Sturmkönig'],['imp float ears:feather tail:feather','drake wings:feather tail:feather','flyer crest crown']],
+  ['luft','Luft','💨','blitz',180,45,76,'#ffffff','wind',['Wolkenbaby','Himmelsfalke','Sturmkönig'],['imp float ears:feather tail:feather','drake wings:feather tail:feather','flyer crest crown']],
   ['kristall','Kristall','💎','erde',290,58,66,'#ffffff','crystal',['Kristallling','Kristallkrabbe','Kristallkönig'],['imp top:crystal ears:crystal','crab crystals','brute crystals crown']],
   ['daemon','Dämon','😈','feuer',352,65,40,'#ffcf3b','ember',['Imp','Dämonling','Höllenfürst'],['imp horns:small wings:bat tail:spike snout','biped head:beast horns:small wings:bat tail:spike','biped head:beast horns:curved wings:bat tail:spike weapon:trident crown']],
   ['maschine','Maschine','🛠️','erde',30,22,46,'#ffae3b','gear',['Kleindroide','Droidling','Mechazord'],['imp helm antenna','brute build:mech pipes:false','brute build:mech cannon treads']],
@@ -1133,9 +1135,33 @@ const FAMILIES={};
 const FAM_DET={feuer:'scales',wasser:'veins',pflanze:'veins',elektro:'marks',eis:'cracks',dunkelheit:'fur',licht:'feathers',drache:'scales',boden:'stone',wind:'feathers',
   kaefer:'shell',gift:'slime',geist:'runes',metall:'plates',wald:'bark',fels:'stone',himmel:'feathers',magie:'runes',vulkan:'cracks',nacht:'fur',dino:'scales',meer:'scales',
   psycho:'runes',unhold:'fur',roboter:'plates',insekt:'shell',sumpf:'slime',lava:'cracks',erdgeist:'bark',luft:'feathers',kristall:'cracks',daemon:'marks',maschine:'plates',arktis:'fur',kosmos:'stars'};
-for(const[key,name,icon,el,h,s,l,acc,fx,names,plans]of FAMILY_LIST)
-  FAMILIES[key]={key,name,icon,element:el,h,s,l,accent:acc,names,plans:plans.map(p=>({arch:p.split(' ')[0],F:{fx,det:FAM_DET[key],...parseFeat(p)}}))};
-const STAGE_SCALE={1:{imp:.84,serpent:.6,flyer:.66,blob:.76,quad:.72,drake:.7,rex:.68,bug:.72,_:.8},2:{imp:1,_:.9},3:{_:1}};
+// Entwicklungslinien: Baby und Jung haben denselben Körperbau wie das erwachsene Monster und bekommen nach und nach seine Merkmale
+const GROW_STRIP={1:['weapon','cape','crown','spikes','mane','plates','cannon','treads','branches','crystals','pipes','shroom','wings','flames','halo','gem','horn','rocks','helm'],2:['weapon','cape','crown','cannon','treads','pipes','shroom']};
+const GROW_KEEP={insekt:['wings'],himmel:['halo'],licht:['halo'],psycho:['gem'],metall:['helm'],roboter:['helm'],kristall:['crystals'],eis:['crystals']};
+function growPlan(pl,st,fam){
+  const F={...pl.F};
+  for(const k of GROW_STRIP[st]||[])if(F[k]&&!(GROW_KEEP[fam]||[]).includes(k))F[k]=false;
+  if(st<3&&F.horns)F.horns='small';if(st===1&&F.build==='heavy')F.build=false;
+  return{arch:pl.arch,F,grow:st};
+}
+// Erwachsene Formen je nach Training: Kraft (massig), Abwehr (gepanzert), Tempo (schlank, geflügelt)
+const VAR_TINT={'':[-8,12],w:[-4,-42],s:[8,6]};
+const VARIANTS={'':{stat:'atk',label:'Kraft-Form'},w:{stat:'def',label:'Panzer-Form'},s:{stat:'spd',label:'Tempo-Form'}};
+const CAN={horns:['imp','quad','drake','biped','brute','serpent','flyer','rex'],spikes:['quad','drake','rex'],wings:['imp','quad','drake','biped'],helm:['imp','biped']};
+function varPlan(pl,v){
+  const F={...pl.F},a=pl.arch,can=k=>CAN[k].includes(a);let sx=1,sy=1;
+  if(v===''){sx=1.14;sy=1.06;if(can('spikes'))F.spikes=F.spikes||true;if(can('horns'))F.horns=F.horns?'curved':'small';
+    if(a==='biped'&&!F.weapon)F.weapon='sword';if(a==='brute'&&!F.weapon&&!F.cannon)F.weapon='club';F.claws=true}
+  else if(v==='w'){sx=1.06;sy=.98;F.det='plates';F.armor=true;if(a==='brute')F.plates=true;if(a==='crab')F.crystals=true;
+    if(a==='quad')F.build='heavy';if(can('spikes'))F.spikes='crystal';if(a==='biped'&&F.head!=='insect')F.head='helm';if(a==='imp')F.helm=true}
+  else{sx=.9;sy=1.05;if(can('wings')&&!F.wings)F.wings='feather';if(a==='drake'||a==='quad')F.mane=F.mane||'feather';if(a==='brute'){F.plates=false;F.rocks=false}F.det=F.det==='plates'?'marks':F.det;F.swift=true}
+  return{arch:a,F,sx,sy,variant:v};
+}
+for(const[key,name,icon,el,h,s,l,acc,fx,names,plans]of FAMILY_LIST){
+  const adult={arch:plans[2].split(' ')[0],F:{fx,det:FAM_DET[key],...parseFeat(plans[2])}};
+  FAMILIES[key]={key,name,icon,element:el,h,s,l,accent:acc,names,plans:[growPlan(adult,1,key),growPlan(adult,2,key),adult],vars:Object.fromEntries(Object.keys(VARIANTS).map(v=>[v,varPlan(adult,v)]))};
+}
+const STAGE_SCALE={1:{serpent:.62,flyer:.68,bug:.66,crab:.62,kraken:.6,blob:.7,brute:.58,biped:.64,drake:.62,quad:.64,rex:.6,_:.62},2:{brute:.8,_:.82},3:{_:1}};
 function famScale(st,arch){const t=STAGE_SCALE[st];return t[arch]??t._??1}
 
 // Kopfhöhe (für Accessoires) und Wippen je Bauplan
@@ -1162,19 +1188,22 @@ const ART={
   schleim(ctx,P,t){ARCH.blob.draw(ctx,P,t,{});fxK(ctx,P,t,{fx:'poison'})}
 };
 const HEAD={schleim:[50,36]},BOBF={schleim:()=>0},NOACC={};
-function drawFam(ctx,P,t,f,st){
-  const pl=f.plans[st-1],s=famScale(st,pl.arch);
-  RIM=P.main!==P.dark;CUR_F=pl.F;
-  ctx.save();ctx.translate(50,91);ctx.scale(s,s);ctx.translate(-50,-91);(BUILDS[pl.arch]?.[pl.F.build]||ARCH[pl.arch].draw)(ctx,P,t,pl.F);fxK(ctx,P,t,pl.F);ctx.restore();
-  CUR_F={};RIM=true;
+function drawFam(ctx,P,t,f,st,v){
+  const pl=v!=null?f.vars[v]:f.plans[st-1],s=famScale(st,pl.arch),sx=st===1?1.08:pl.sx||1,sy=st===1?.92:pl.sy||1;
+  RIM=P.main!==P.dark;CUR_F=pl.F;EYE_S=st===1?1.4:st===2?1.15:1;
+  if(v!=null&&RIM){const[dl,ds]=VAR_TINT[v];P={...P,main:tone(P.main,dl,ds),light:tone(P.light,dl,ds),dark:tone(P.dark,dl,ds)}}
+  if(pl.F.swift&&RIM)for(let i=0;i<4;i++){const ph=((t/600+i/4)%1),y=44+i*11;ctx.globalAlpha=.8*(1-ph);line(ctx,[[18-ph*14,y],[42-ph*14,y]],P.accent,2.2);ctx.globalAlpha=1}
+  ctx.save();ctx.translate(50,91);if(pl.F.swift)ctx.rotate(.08);ctx.scale(s*sx,s*sy);ctx.translate(-50,-91);(BUILDS[pl.arch]?.[pl.F.build]||ARCH[pl.arch].draw)(ctx,P,t,pl.F);fxK(ctx,P,t,pl.F);ctx.restore();
+  CUR_F={};RIM=true;EYE_S=1;
 }
 const FAM_KEYS=Object.keys(FAMILIES),EL_FAM={feuer:'feuer',wasser:'wasser',erde:'boden',blitz:'elektro',natur:'pflanze',licht:'licht',dunkel:'dunkelheit'};
-for(const f of Object.values(FAMILIES))for(let st=1;st<=3;st++){
-  const key=f.key+st,pl=f.plans[st-1],sc=famScale(st,pl.arch),A=ARCH[pl.arch],rare=f.element==='licht'||f.element==='dunkel'?1.1:1;
-  SPECIES[key]={name:f.names[st-1],stage:st,family:f.key,mod:st===1?[1,1,1]:st===2?[1.1,1.1,1.1]:ARCH_MOD[pl.arch].map(v=>Math.round(v*rare*100)/100),sp:st===3?EL_SPECIAL[f.element]:'rempler'};
-  ART[key]=(ctx,P,t)=>drawFam(ctx,P,t,f,st);
-  const hd=pl.arch==='flyer'&&pl.F.insect?[73,31]:BUILD_HEAD[pl.F.build]||A.head;
-  HEAD[key]=[50+(hd[0]-50)*sc,91+(hd[1]-91)*sc];BOBF[key]=t=>ARCH_BOB[pl.arch](t,pl.F)*sc;
+for(const f of Object.values(FAMILIES))for(const[st,v]of[[1],[2],[3,''],[3,'w'],[3,'s']]){
+  const key=f.key+st+(v||''),pl=v!=null?f.vars[v]:f.plans[st-1],sc=famScale(st,pl.arch),A=ARCH[pl.arch],rare=f.element==='licht'||f.element==='dunkel'?1.1:1;
+  const mod=st===1?[1,1,1]:st===2?[1.1,1.1,1.1]:ARCH_MOD[pl.arch].map((m,i)=>Math.round(m*rare*(['atk','def','spd'][i]===VARIANTS[v].stat?1.12:1)*100)/100);
+  SPECIES[key]={name:f.names[st-1],stage:st,family:f.key,mod,sp:st===3?EL_SPECIAL[f.element]:'rempler',...(st===3?{variant:VARIANTS[v].label,vkey:v}:{})};
+  ART[key]=(ctx,P,t)=>drawFam(ctx,P,t,f,st,v);
+  const hd=pl.arch==='flyer'&&pl.F.insect?[73,31]:BUILD_HEAD[pl.F.build]||A.head,ssx=st===1?1.08:pl.sx||1,ssy=st===1?.92:pl.sy||1;
+  HEAD[key]=[50+(hd[0]-50)*sc*ssx,91+(hd[1]-91)*sc*ssy];BOBF[key]=t=>ARCH_BOB[pl.arch](t,pl.F)*sc;
   if(pl.F.crown||pl.F.hat||pl.F.top==='hat')NOACC[key]=1;
 }
 // Alte Arten (bis Version 0.7) auf die neuen Familien abbilden
@@ -1302,7 +1331,8 @@ function clampAll(){for(const k of['hunger','mood','energy','clean','health'])S[
 function adultForm(){
   const t=S.train,total=t.atk+t.def+t.spd;
   if(S.mistakes>=4||total<3)return'schleim';
-  return S.family+'3';
+  const best=t.atk>=t.def&&t.atk>=t.spd?'':t.spd>=t.def?'s':'w';
+  return S.family+'3'+best;
 }
 function evolve(sp){
   const from=S.species;S.species=sp;S.stage=SPECIES[sp].stage;
@@ -1411,7 +1441,7 @@ let B=null;
 function fighter(m){normMon(m);seen(m);const st=eff(m);return{name:m.name,species:m.species,element:m.element,look:lookOf(m),ult:m.ult,shiny:m.shiny,boss:m.boss,bond:m.bond??50,level:m.level,owner:m.owner,...st,hp:st.maxHp,cd:0,buff:0,guard:false}}
 function wildMonster(){
   const fams=FAM_KEYS.filter(k=>!RARE.includes(FAMILIES[k].element)),fam=fams[rint(0,fams.length-1)];
-  const st=S.level<3?rint(1,2):S.level<6?rint(1,3):rint(2,3),sp=Math.random()<.05&&S.level>=3?'schleim':fam+st,lv=Math.max(1,S.level+rint(-1,1));
+  const st=S.level<3?rint(1,2):S.level<6?rint(1,3):rint(2,3),sp=Math.random()<.05&&S.level>=3?'schleim':fam+st+(st===3?['','w','s'][rint(0,2)]:''),lv=Math.max(1,S.level+rint(-1,1));
   const el=FAMILIES[fam].element;return{name:'Wildes '+SPECIES[sp].name,species:sp,family:fam,stage:SPECIES[sp].stage,look:makeLook(rid(),rint(0,359),el,fam),element:el,level:lv,atk:4+lv*2+rint(0,3),def:4+lv*2+rint(0,3),spd:4+lv*2+rint(0,3)};
 }
 function wildBattle(){startBattle(wildMonster(),'wild')}
@@ -1860,7 +1890,7 @@ function renderOnline(){
 }
 
 // ---------- Erweiterungen: Zuneigung, Elemente, Zucht, Lebenszyklus, Wetter, Boss, Turnier, Minispiel, Lexikon ----------
-const ULT_NAMES={schleim:'Glibberkönig'};for(const k of FAM_KEYS)ULT_NAMES[k+'3']='Ur-'+FAMILIES[k].names[2];
+const ULT_NAMES={schleim:'Glibberkönig'};for(const k of FAM_KEYS)for(const v of Object.keys(VARIANTS))ULT_NAMES[k+'3'+v]='Ur-'+FAMILIES[k].names[2];
 const ADV={feuer:'natur',natur:'erde',erde:'blitz',blitz:'wasser',wasser:'feuer'};
 const RARE=['licht','dunkel'],BASIC=['feuer','wasser','erde','blitz','natur'];
 function elemMult(a,b){
@@ -1876,6 +1906,8 @@ function migrate(s){
   s.bond??=50;s.nest??=[];s.hall??=[];s.dex??={};s.ach??={};s.cnt??={};s.trophies??=[];
   s.week??={id:'',quests:0,boss:null};s.items.stern??=0;
   s.loot??={};s.gear??={armor:null,acc:null};s.stable??=[];s.stable.forEach(normMon);
+  // Erwachsene bekommen die Form, die zu ihrem Training passt (ab 1.0)
+  for(const m of[s,...s.stable])if(m.stage===3&&m.species===m.family+'3'&&m.title){const v={Wächter:'w',Sprinter:'s'}[m.title];if(v)m.species+=v}
   s.family??=EL_FAM[s.element]||'feuer';normMon(s);s.hall.forEach(normMon);s.friends.forEach(normMon);
   for(const e of s.nest)e.family??=EL_FAM[e.element]||'feuer';
   for(const k of Object.keys(s.dex)){const n=k.replace(/^(ult:)?(.*)$/,(_,u,sp)=>{const o=normMon({species:sp,element:s.element,family:s.family});return(u||'')+o.species});if(n!==k){s.dex[n]??=s.dex[k];delete s.dex[k]}}
@@ -2354,7 +2386,7 @@ document.addEventListener('keyup',e=>{if(MG)MG.keys[e.key]=false});
 
 // ----- Lexikon und Erfolge -----
 const DEX=[['ei','Das Ei'],['schleim','Glibber'],['ult:schleim','Glibberkönig']];
-for(const k of FAM_KEYS){const f=FAMILIES[k];for(let st=1;st<=3;st++)DEX.push([k+st,f.names[st-1]]);DEX.push(['ult:'+k+'3','Ur-'+f.names[2]])}
+for(const k of FAM_KEYS){const f=FAMILIES[k];for(let st=1;st<=2;st++)DEX.push([k+st,f.names[st-1]]);for(const v of Object.keys(VARIANTS))DEX.push([k+'3'+v,f.names[2]]);for(const v of Object.keys(VARIANTS))DEX.push(['ult:'+k+'3'+v,'Ur-'+f.names[2]])}
 const SILHOUETTE={main:'#0b0910',light:'#0b0910',dark:'#0b0910',accent:'#2a2433',pattern:'keine',accessory:'keins'};
 function dexKey(m){return(m.ult?'ult:':'')+m.species}
 function seen(m){normMon(m);if(S&&m&&SPECIES[m.species]&&!S.dex[dexKey(m)])S.dex[dexKey(m)]=Date.now()}
@@ -2389,7 +2421,7 @@ function dexImg(k,known){
   const m={species:sp,ult,stage:SPECIES[sp].stage,look:known?makeLook('dex'+k,fam?fam.h:120,fam?fam.element:'natur',fam?.key):SILHOUETTE};
   return`<img src="${spriteURL(m)}" title="${known?esc(DEX.find(d=>d[0]===k)[1]):'???'}">`;
 }
-function dexLabel(k){const ult=k.startsWith('ult:'),sp=SPECIES[ult?k.slice(4):k];return ult?'Ur-Form':sp.stage===0?'Anfang':k==='schleim'?'zu wenig Pflege':(sp.variant||['','Baby','Jung','Erwachsen'][sp.stage])}
+function dexLabel(k){const ult=k.startsWith('ult:'),sp=SPECIES[ult?k.slice(4):k];return ult?'Ur-'+(sp.variant||'Form'):sp.stage===0?'Anfang':k==='schleim'?'zu wenig Pflege':(sp.variant||['','Baby','Jung','Erwachsen'][sp.stage])}
 function renderDex(){
   const box=$('#dexBox');if(!box||!S)return;
   const known=DEX.filter(([k])=>S.dex[k]),a=ACH.filter(([id])=>S.ach[id]).length;

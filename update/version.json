@@ -1,6 +1,6 @@
 {
-  "version": "0.9.9",
-  "sha256": "997d6ca7841dbdf1e2a3d3c70095acfbd495e3be2ba5e4042790c7fb4ece1900",
-  "notes": "3 Trainings pro Level, Punkte selbst verteilen, Pension mit 3 Plätzen, Lexikon zeigt nur Entdecktes",
+  "version": "1.0.0",
+  "sha256": "52e49bbbca78700dd37411363ba90cf71dcbe5dbe81ef2fc8871681aea75950b",
+  "notes": "Aufbauende Entwicklungen und drei erwachsene Formen je nach Training",
   "download": "https://github.com/Enchio86/Pixelmonster/releases/latest"
 }
