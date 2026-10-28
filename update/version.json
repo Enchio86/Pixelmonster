@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "sha256": "52e49bbbca78700dd37411363ba90cf71dcbe5dbe81ef2fc8871681aea75950b",
-  "notes": "Aufbauende Entwicklungen und drei erwachsene Formen je nach Training",
+  "version": "1.1.0",
+  "sha256": "8f2c6c1926b19709df2b6979c93f24e7bc99f0fe762739a2fdb0891efe20a5b0",
+  "notes": "Neues Balancing: wilde Monster wachsen mit, 3 Stärken, neue Quests, größerer Shop",
   "download": "https://github.com/Enchio86/Pixelmonster/releases/latest"
 }
