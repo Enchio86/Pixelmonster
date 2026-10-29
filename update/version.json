@@ -1,6 +1,6 @@
 {
-  "version": "1.1.0",
-  "sha256": "8f2c6c1926b19709df2b6979c93f24e7bc99f0fe762739a2fdb0891efe20a5b0",
-  "notes": "Neues Balancing: wilde Monster wachsen mit, 3 Stärken, neue Quests, größerer Shop",
+  "version": "1.1.1",
+  "sha256": "a539f5378aa3ff1e5981cc14e609b62ae1efbd72a155bc482d8f566399f5f871",
+  "notes": "Das Spiel heißt jetzt Buddy Beast",
   "download": "https://github.com/Enchio86/Pixelmonster/releases/latest"
 }

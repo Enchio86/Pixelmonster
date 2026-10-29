@@ -6,11 +6,11 @@
 <meta name="theme-color" content="#120e18">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>Pixelmonster Fernbedienung</title>
+<title>Buddy Beast Fernbedienung</title>
 <link rel="manifest" href="/handy/manifest.json">
 <link rel="icon" href="/handy/icon-192.png">
 <link rel="apple-touch-icon" href="/handy/icon-192.png">
-<meta name="apple-mobile-web-app-title" content="Pixelmonster">
+<meta name="apple-mobile-web-app-title" content="Buddy Beast">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 :root{--bg:#120e18;--panel:#1f1a28;--panel2:#2c2538;--text:#f3ecdf;--muted:#a99fb8;--accent:#e2b65c;--good:#5fd38a;--bad:#ff6b6b;--warn:#ffb347}
@@ -55,7 +55,7 @@ a{color:var(--accent)}
 </head>
 <body>
 <main>
-<h1>📱 Pixelmonster</h1>
+<h1>📱 Buddy Beast</h1>
 <div id="app"></div>
 <div id="chat"></div>
 <div id="install"></div>
@@ -80,7 +80,7 @@ async function api(path,body){
 function unpairLocal(){token=null;try{localStorage.removeItem(KEY)}catch(e){}clearInterval(timer);$('#chat').innerHTML='';renderPair()}
 function renderPair(){
   $('#app').innerHTML=`<div class="card"><p>Steuere dein Monster vom Handy aus.</p>
-    <ol class="muted" style="padding-left:20px"><li>Öffne am PC die Pixelmonster-App, Tab <b>🌐 Online</b>.</li><li>Tippe dort auf <b>📱 Handy koppeln</b>.</li><li>Gib den Code hier ein.</li></ol>
+    <ol class="muted" style="padding-left:20px"><li>Öffne am PC die Buddy-Beast-App und klick oben rechts auf <b>⚙️</b>.</li><li>Tippe dort auf <b>📱 Handy koppeln</b>.</li><li>Gib den Code hier ein.</li></ol>
     <input id="code" maxlength="7" autocomplete="off" placeholder="ABC123">
     <button class="primary" id="pairBtn">Koppeln</button></div>
 `;
@@ -159,7 +159,7 @@ function renderInstall(){
   const b=$('#instBtn');if(b)b.onclick=async()=>{installEv.prompt();await installEv.userChoice.catch(()=>{});installEv=null;renderInstall()};
 }
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEv=e;renderInstall()});
-addEventListener('appinstalled',()=>{installEv=null;toast('Installiert! Du findest Pixelmonster jetzt bei deinen Apps.');$('#install').innerHTML=''});
+addEventListener('appinstalled',()=>{installEv=null;toast('Installiert! Du findest Buddy Beast jetzt bei deinen Apps.');$('#install').innerHTML=''});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('/handy/sw.js',{scope:'/handy/'}).catch(()=>{});
 renderInstall();
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&token)poll()});

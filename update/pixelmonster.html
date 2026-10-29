@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pixelmonster</title>
+<title>Buddy Beast</title>
 <style>
 :root{--bg:#120e18;--panel:#1f1a28;--panel2:#2c2538;--text:#f3ecdf;--muted:#a99fb8;--accent:#e2b65c;--gold:#b8945a;--good:#5fd38a;--bad:#ff6b6b;--warn:#ffb347}
 *{box-sizing:border-box}
@@ -145,7 +145,7 @@ body.mini #toast{bottom:6px;font-size:12px;padding:6px 10px}
 <body>
 <div class="wrap">
   <div class="top">
-    <h1>👾 Pixelmonster</h1>
+    <h1>👾 Buddy Beast</h1>
     <div class="row"><div id="topinfo"></div><button class="gear" onclick="openSettings()" title="Einstellungen">⚙️</button></div>
   </div>
   <div class="grid">
@@ -1739,7 +1739,7 @@ function cloudLoop(){
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)cloudPull();else if(cloudDirty)cloudPush()});
 // Koppeln auf dem Handy: Code vom PC eingeben, Spielstand laden, neu starten
 function renderPhonePair(){
-  $('#quiz').innerHTML=`<h3>📱 Monster vom PC holen</h3><ol class="muted" style="padding-left:20px"><li>Öffne am PC die Pixelmonster-App und klick oben rechts auf <b>⚙️</b>.</li><li>Tippe dort auf <b>📱 Handy koppeln</b>.</li><li>Gib den Code hier ein.</li></ol>
+  $('#quiz').innerHTML=`<h3>📱 Monster vom PC holen</h3><ol class="muted" style="padding-left:20px"><li>Öffne am PC die Buddy-Beast-App und klick oben rechts auf <b>⚙️</b>.</li><li>Tippe dort auf <b>📱 Handy koppeln</b>.</li><li>Gib den Code hier ein.</li></ol>
     <input type="text" id="pairIn" maxlength="7" placeholder="ABC123" style="font-size:22px;letter-spacing:4px;text-transform:uppercase;text-align:center">
     <div style="height:12px"></div><button class="primary" onclick="phonePair()">Koppeln</button> <button onclick="renderQuiz()">Zurück</button>`;
 }
@@ -2674,7 +2674,7 @@ let Q={step:-1,owner:'',name:'',el:{},trait:null,hue:null,pending:null};
 function renderQuiz(){
   const box=$('#quiz'),dots=`<div class="dots">${['',...QUIZ].map((_,i)=>`<i class="${i<=Q.step+1?'on':''}"></i>`).join('')}</div>`;
   if(Q.step<0){
-    box.innerHTML=`${dots}<h3>🥚 Willkommen bei Pixelmonster!</h3><p class="muted">Bevor du dein Ei bekommst, möchte ich dich kennenlernen. Aus deinen Antworten entsteht ein Monster, das genau zu dir passt. Kein Monster gleicht einem anderen.</p>
+    box.innerHTML=`${dots}<h3>🥚 Willkommen bei Buddy Beast!</h3><p class="muted">Bevor du dein Ei bekommst, möchte ich dich kennenlernen. Aus deinen Antworten entsteht ein Monster, das genau zu dir passt. Kein Monster gleicht einem anderen.</p>
       <label class="muted">Wie heißt du?</label><input type="text" id="ownerIn" maxlength="20" placeholder="z. B. Enchio" value="${esc(Q.owner)}">
       <div style="height:14px"></div><button class="primary" onclick="quizNames()">Weiter</button>
       ${location.protocol.startsWith('http')?'<div style="height:10px"></div><button onclick="renderPhonePair()" style="width:100%">📱 Ich habe schon ein Monster am PC</button>':''}`;

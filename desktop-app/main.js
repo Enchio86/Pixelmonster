@@ -2,6 +2,8 @@ const {app,BrowserWindow,Menu,ipcMain,screen,shell}=require('electron');
 const crypto=require('crypto');
 const path=require('path');
 const fs=require('fs');
+// Das Spiel heißt jetzt „Buddy Beast“. Spielstand, Einstellungen und Updates bleiben im alten Ordner „Pixelmonster“, damit nichts verloren geht
+app.setPath('userData',path.join(app.getPath('appData'),'Pixelmonster'));
 
 // Fenster-Einstellungen (Mini-Ansicht und ihre Position) bleiben über Neustarts erhalten
 const settingsFile=path.join(app.getPath('userData'),'fenster.json');
@@ -43,7 +45,7 @@ function notify(){if(pending&&win&&!win.isDestroyed())win.webContents.send('upda
 let win=null;
 
 function createWindow(){
-  const common={title:'Pixelmonster',webPreferences:{preload:path.join(__dirname,'preload.js')}};
+  const common={title:'Buddy Beast',webPreferences:{preload:path.join(__dirname,'preload.js')}};
   if(settings.mini){
     const wa=screen.getPrimaryDisplay().workArea;
     let [x,y]=settings.miniPos||[wa.x+wa.width-MINI.width-16,wa.y+wa.height-MINI.height-16];
